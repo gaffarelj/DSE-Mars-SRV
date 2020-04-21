@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Pycharm and Visual studio
+.idea/
+.vs/
