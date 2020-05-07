@@ -29,7 +29,7 @@ def ClassIest(DeltaV,Ve,m_tot,TWR,m_upper):
     m_tank = 0.15*m_prop    
     m_thr_str = 1.949*10**(-3)*(Fvac/4.448)**1.0687*0.453
     m_stage = 0.001148*m_upper
-    print(m_tank)
+    #print(m_tank)
 
     rho_f = 423
     rho_ox = 1140
@@ -40,7 +40,8 @@ def ClassIest(DeltaV,Ve,m_tot,TWR,m_upper):
     m_fuel_tank = (2.42-0.00271*rho_f*0.06242796047)*Vf*35.31466671**(0.8445+0.00047*rho_f*0.06242796047)*0.45359237
     m_oxid_tank = (2.42-0.00271*rho_ox*0.06242796047)*Vox*35.31466671**(0.8445+0.00047*rho_ox*0.06242796047)*0.45359237
     m_tank = m_oxid_tank+m_fuel_tank
-    print(m_tank,m_prop)
+
+    #print(m_tank,m_prop)
 
     if m_stage == 0 : 
     
@@ -64,6 +65,7 @@ def Class_I_spaceplane_est(DeltaV, Ve, m_tot, TWR, m_wing):
     m_eng = 0.00514 * Fvac ** 0.92068
     m_tank = 0.15 * m_prop
     m_thr_str = 1.949 * 10 ** (-3) * (Fvac / 4.448) ** 1.0687 * 0.453
+
     rho_f = 423
     rho_ox = 1140
     Mf = m_prop/(1+1/3.8) #3.8 is F/o ratio
