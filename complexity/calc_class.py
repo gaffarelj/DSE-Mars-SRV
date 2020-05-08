@@ -1,3 +1,4 @@
+"Written By Lasse Landergren"
 import numpy as np
 
 i=0
@@ -44,5 +45,6 @@ class complexity:
         self.C2 = 0
         for i in l:
             for val in i.connections_complexity:
-                self.C2 += val/2
+                self.C2 += val*i.complexity/2
         self.structural = self.C1 +self.C2*self.E/len(l)
+        self.average = self.structural/len(l)
