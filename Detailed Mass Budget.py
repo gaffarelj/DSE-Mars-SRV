@@ -52,7 +52,7 @@ m_av           = m_GNC*(1+MGA_GNC) + m_data_hand + m_Com*(1+MGA_com)
 
 M_TPS         = 2500
 
-m_cabin       = (28.31*(39.66*(N_crew*N_days)**1.002)**0.6916)*conv
+m_cabin       = (28.31*(39.66*(N_crew*N_days)**1.002)**0.6916)*conv #Includes crew equipment
 #m_pl_doors    = (0.257*barea/2)* conv
 
 
@@ -326,6 +326,9 @@ if k == "SPACEPLANE":
     #print(M_dry, M_total_new)
 
 def SpaceElevator():
+    climbermass = Mass_caps
+    power_per_climbermass = 2.4*10**6/20000
+    power = power_per_climbermass*climbermass
     maxheight = 100000000 #m
     steps = 51
     areostationary_height = 17032000 #m
@@ -340,9 +343,8 @@ def SpaceElevator():
         m_cablesegment = taper_ratio*A_base*1400*(maxheight/(steps-1))
         m_cable += m_cablesegment
         m_counterweight = 1400*A_base*48600000000*exp((3389000**2*1400*3.71)/(2*48600000000*17032000**3)*((2*17032000**3+3389000**3)/3389000-(2*17032000**3+(height)**3)/(height)))/((3389000**2*(height))/17032000**3*(1-(17032000/(height))**3)*1400*3.71)
-        m_total = m_cable + m_counterweight
+        m_total = m_cable + m_counterweight + Mass_caps
         m_totals.append(m_total)
     m_total = min(m_totals)*numcables
-    print(m_total)
-    return m_total
+    return m_total, power
 m_space_elevator = SpaceElevator()
