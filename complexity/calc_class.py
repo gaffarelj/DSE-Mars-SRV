@@ -17,16 +17,20 @@ class system:
         global i
         self.connections_complexity = []
         self.connections_destination = []
-        self.complexity = complexity 
+        self.complexity = complexity
         self.id = i
         i += 1
         
-
-    def add_c(self,conection,destanation):
-        self.connections_complexity.append(conection.cm*conection.lin)
-        destanation.connections_complexity.append(conection.cm*conection.lin)
-        self.connections_destination.append(destanation.id)
-        destanation.connections_destination.append(self.id)
+    def add_c(self,conection,destinations):
+        if type(destinations) == system:
+            destinations = [destinations]
+        if type(destinations) != list:
+            raise Exception("destination invalid")
+        for destination in destinations:
+            self.connections_complexity.append(conection.cm*conection.lin)
+            destination.connections_complexity.append(conection.cm*conection.lin)
+            self.connections_destination.append(destination.id)
+            destination.connections_destination.append(self.id)
 
 
 class complexity:
