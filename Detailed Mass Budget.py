@@ -347,4 +347,3 @@ def SpaceElevator():
     m_total = min(m_totals)*numcables
     return m_total
 m_space_elevator = SpaceElevator()
-print(m_space_elevator)
