@@ -52,7 +52,7 @@ class tradeoff:
             param = param_list[i]
             param_val = []
             for design in design_list:
-                param_val.append(design.sourcelist[i]())
+                param_val.append(design.sourcelist[i])
             Lv = min(param_val)
             Hv = max(param_val)
             eval_list = []
@@ -74,22 +74,25 @@ class tradeoff:
             
         if out == "latex":
             print("\\begin{table}[]")
-            print("\centering")
             print("\caption{}")
             print("\label{tab:my-table}")
+            print("\\begin{adjustbox}{width=\linewidth,center}")
 
             output = "\\begin{tabular}{|c|l|"
             for param in param_list:
                 output += "p{" +str(width*param.weight) +"cm}|"
                 output += "p{" +str(width*param.weight) +"cm}|"
-            output +="}\hline"
+            output +="c|}\hline"
             print(output)
 
-            print("\multicolumn{2}{|c|}{\\textbf{Criteria}} & \multicolumn{2}{c|}{}\\\\")
+            output = "\multicolumn{2}{|c|}{\\textbf{Criteria}}"
+            for param in param_list:
+                output += "& \multicolumn{2}{c|}{}"
+            print(str(output)+"\\\\")
             output = "\cline{1-2}\multicolumn{2}{|l|}{\\textbf{Design Option}}"
             for param in param_list:
                 output += "& \multicolumn{2}{c|}{\multirow{-2}{*}{"+param.name+"}}"
-            print(str(output)+"\\\\ \hline")
+            print(str(output)+"& \multirow{-2}{*}{\\textbf{Total}} \\\\ \hline")
             for i in range(len(design_list)):
                 design = design_list[i]
                 output = "\multicolumn{2}{|c|}{}"
@@ -99,15 +102,18 @@ class tradeoff:
                     output += "   & \cellcolor[HTML]{"+str(param.color[i].HTML)+"} & \cellcolor[HTML]{"+str(param.color[i].HTML)+"}"+str(param.color[i].name)+""
                     end_output += " \cline{" +str(k)+"-"+str(k)+"} "
                     k += 2
-                print(str(output) + "\\\\" + str(end_output))
+                print(str(output) + " & \\\\" + str(end_output))
                 output = "\multicolumn{2}{|c|}{}"
                 for param in param_list:
                     output += "   & \multicolumn{2}{c|}{\cellcolor[HTML]{"+str(param.color[i].HTML)+"}}"
-                print(str(output)+"  \\\\")
+                print(str(output)+"& \\\\")
                 output = "\multicolumn{2}{|c|}{\multirow{-3}{*}{"+str(design.name)+"}}"
+                total = 0
                 for param in param_list:
-                    output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor[HTML]{"+str(param.color[i].HTML)+"}" + str(param.values[i]) + "}}"
-                print(str(output)+"\\\\ \hline")
+                    output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor[HTML]{"+str(param.color[i].HTML)+"}" + str(param.values[i])[:5] + "}}"
+                    total += param.values[i]*param.weight
+                print(str(output)+" & \multirow{-3}{*}{"+str(total)[:5]+"} \\\\ \hline")
             print("\end{tabular}")
+            print("\end{adjustbox}")
             print("\end{table}")
 
