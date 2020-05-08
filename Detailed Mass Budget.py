@@ -343,7 +343,7 @@ def SpaceElevator():
         m_cablesegment = taper_ratio*A_base*1400*(maxheight/(steps-1))
         m_cable += m_cablesegment
         m_counterweight = 1400*A_base*48600000000*exp((3389000**2*1400*3.71)/(2*48600000000*17032000**3)*((2*17032000**3+3389000**3)/3389000-(2*17032000**3+(height)**3)/(height)))/((3389000**2*(height))/17032000**3*(1-(17032000/(height))**3)*1400*3.71)
-        m_total = m_cable + m_counterweight
+        m_total = m_cable + m_counterweight + Mass_caps
         m_totals.append(m_total)
     m_total = min(m_totals)*numcables
     return m_total, power
