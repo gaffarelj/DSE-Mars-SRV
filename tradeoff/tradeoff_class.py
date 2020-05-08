@@ -49,24 +49,21 @@ class tradeoff:
 			param_val = []
 			for design in design_list:
 				param_val.append(design.sourcelist[i])
-			Lv = min(param_val)
-			Hv = max(param_val)
-			eval_list = []
-			for val in param_val:
-				eval_list.append(round(param.func_eval(Hv, Lv, val),  5))
+			Lv, Hv = min(param_val), max(param_val)
+			eval_list = [round(param.func_eval(Hv, Lv, val),  5) for val in param_val]
 
 			param.set_colors(eval_list, color_list)
 			#param.values = eval_list
 
 			if out == "python":
-				output = param.name + ",  Actual value:  "
+				print(param.name, ",\t actual value:", end="\t", sep="")
 				for val in param_val:
-					output += str(val) + ",    "
-				print(output)
-				output = param.name + ",  scaled and weighted value:  "
+					print(val, end=",\t")
+				print()
+				print(param.name, ",\t scaled and weighted value:", end="\t", sep="")
 				for val in eval_list:
-					output += str(val) + ",    "
-				print(output)
+					print(val, end=",\t")
+				print()
 			
 		if out == "latex":
 			print("\\begin{table}[]")
