@@ -32,39 +32,9 @@ anchor_point = cs.system(5)
 counterweight = cs.system(5)
 mirror = cs.system(4)
 laser_cooling = cs.system(5)
-Laser_generator = cs.system(5)
+laser_generator = cs.system(5)
 power_delivery = cs.system(3)
 energy_reciever = cs.system(4)
-
-
-l = [locking_mechanism,
-hatch,
-deceleration_system,
-gn_comp,
-sensors,
-launch_abort,
-bio_monitoring,
-f_comp,
-enc_dec,
-amplifiers,
-receving_ant,
-transmitting,
-pcdu,
-heater,
-atmos,
-oxygentanks,
-cargo_compartment,
-cooling_system,
-capulse_struc,
-tether,
-anchor_point,
-counterweight,
-mirror,
-laser_cooling,
-Laser_generator,
-power_delivery,
-energy_reciever]
-
 
 locking_mechanism.add_c(structural,capulse_struc)
 hatch.add_c(structural,capulse_struc)
@@ -74,33 +44,22 @@ oxygentanks.add_c(structural,capulse_struc)
 oxygentanks.add_c(flow,atmos)
 atmos.add_c(data,heater)
 sensors.add_c(data,gn_comp)
-gn_comp.add_c(data,deceleration_system)
-gn_comp.add_c(data,launch_abort)
-gn_comp.add_c(data,f_comp)
-pcdu.add_c(power,heater)
-pcdu.add_c(power,atmos)
-pcdu.add_c(power,amplifiers)
-pcdu.add_c(power,gn_comp)
-pcdu.add_c(power,f_comp)
-bio_monitoring.add_c(data,f_comp)
-bio_monitoring.add_c(data,enc_dec)
-bio_monitoring.add_c(data,atmos)
-f_comp.add_c(data,cooling_system)
-f_comp.add_c(data,enc_dec)
+gn_comp.add_c(data,[deceleration_system, launch_abort, f_comp])
+pcdu.add_c(power,[heater, atmos, amplifiers, gn_comp, f_comp])
+bio_monitoring.add_c(data,[f_comp, enc_dec, atmos])
+f_comp.add_c(data,[cooling_system, enc_dec])
 enc_dec.add_c(data,amplifiers)
-amplifiers.add_c(data,receving_ant)
-amplifiers.add_c(data,transmitting)
+amplifiers.add_c(data,[receving_ant, transmitting])
 cooling_system.add_c(flow,mirror)
 anchor_point.add_c(structural_spec,tether)
-tether.add_c(structural_spec,counterweight)
-tether.add_c(structural_spec,capulse_struc)
+tether.add_c(structural_spec,[counterweight, capulse_struc])
 energy_reciever.add_c(structural,capulse_struc)
-laser_cooling.add_c(hydra,Laser_generator)
-power_delivery.add_c(power,Laser_generator)
-Laser_generator.add_c(laser,energy_reciever)
+laser_cooling.add_c(hydra,laser_generator)
+power_delivery.add_c(power,laser_generator)
+laser_generator.add_c(laser,energy_reciever)
 mirror.add_c(structural,capulse_struc)
 energy_reciever.add_c(power,pcdu)
 
-result = cs.complexity(l)
-print(result.structural)
-print(result.average)
+result = cs.complexity()
+print(result.structural, result.structural == 203.6399180773697)
+print(result.average, result.average == 7.54221918805073)

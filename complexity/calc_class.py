@@ -39,17 +39,13 @@ class complexity:
         M = np.zeros((len(l),len(l)))
         for i in l:
             for k in i.connections_destination:
-                M[i.id,k]=1
+                M[i.id, k] = 1
         vec = np.linalg.eigvals(M)
-        self.E = 0
-        for val in vec:
-            self.E += abs(val)
-        self.C1 = 0
-        for i in l:
-            self.C1 += i.complexity
+        self.E = sum(abs(vec))
+        self.C1 = sum([i.complexity for i in l])
         self.C2 = 0
         for i in l:
             for val in i.connections_complexity:
                 self.C2 += val*i.complexity/2
-        self.structural = self.C1 +self.C2*self.E/len(l)
+        self.structural = self.C1 + self.C2*self.E/len(l)
         self.average = self.structural/len(l)
