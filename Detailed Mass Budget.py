@@ -5,7 +5,8 @@ Created on Wed May  6 14:34:44 2020
 @author: Dimitris
 """
 
-from math import * 
+from math import *
+import numpy as np 
 
 k = "2_stage"
 
@@ -275,4 +276,24 @@ if k == "SPACEPLANE":
     M_dry = m_eng + m_thr_str + m_tank + m_caps
         
 
-    
+def SpaceElevator():
+    maxheight = 100000000 #m
+    steps = 51
+    areostationary_height = 17032000 #m
+    numcables = 3
+    safety_factor = 1
+    A_base = 0.0000105*safety_factor
+    height_steps = np.linspace(areostationary_height,maxheight,steps)
+    m_cable = A_base*1400*areostationary_height
+    m_totals = []
+    for height in height_steps:
+        taper_ratio = exp(3389000*1400*3.71/(2*48600000000)*((3389000/height)**3-3*(3389000/height)+2))
+        m_cablesegment = taper_ratio*A_base*1400*(maxheight/(steps-1))
+        m_cable += m_cablesegment
+        m_counterweight = 1400*A_base*48600000000*exp((3389000**2*1400*3.71)/(2*48600000000*17032000**3)*((2*17032000**3+3389000**3)/3389000-(2*17032000**3+(height)**3)/(height)))/((3389000**2*(height))/17032000**3*(1-(17032000/(height))**3)*1400*3.71)
+        m_total = m_cable + m_counterweight
+        m_totals.append(m_total)
+    m_total = min(m_totals)*numcables
+    return m_total
+m_space_elevator = SpaceElevator()
+print(m_space_elevator)
