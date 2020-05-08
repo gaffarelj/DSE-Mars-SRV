@@ -65,8 +65,8 @@ def ClassIest(DeltaV,Ve,m_tot,TWR,m_upper,m_tot2):
     m_stage = 0.001148*m_upper
 
 
-    rho_f = 423
-    rho_ox = 1140
+    rho_f = 423 #kg/m^3
+    rho_ox = 1140 #kg/m^3
     Mf = m_prop/(1+1/3.8) #3.8 is F/o ratio
     Vf = Mf/rho_f
     Mox = m_prop - Mf
@@ -334,7 +334,7 @@ def SpaceElevator():
     numcables = 3
     safety_factor = 1
     A_base = 0.0000105*safety_factor
-    height_steps = np.linspace(areostationary_height,maxheight,steps)
+    height_steps = np.linspace(areostationary_height+10,maxheight,steps)
     m_cable = A_base*1400*areostationary_height
     m_totals = []
     for height in height_steps:
@@ -345,5 +345,6 @@ def SpaceElevator():
         m_total = m_cable + m_counterweight
         m_totals.append(m_total)
     m_total = min(m_totals)*numcables
+    print(m_total)
     return m_total
 m_space_elevator = SpaceElevator()
