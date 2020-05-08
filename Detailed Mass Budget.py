@@ -9,7 +9,7 @@ from math import *
 
 k = "SSTO"
 
-Isp       = 450
+Isp       = 410
 g         = 9.81
 f         = 1
 Ve        = Isp*g
@@ -37,11 +37,17 @@ def ClassIest(DeltaV,Ve,m_tot,TWR,m_upper):
     Vf = Mf/rho_f
     Mox = m_prop - Mf
     Vox = Mox/rho_ox
-    m_fuel_tank = (2.42-0.00271*rho_f*0.06242796047)*Vf*35.31466671**(0.8445+0.00047*rho_f*0.06242796047)*0.45359237
-    m_oxid_tank = (2.42-0.00271*rho_ox*0.06242796047)*Vox*35.31466671**(0.8445+0.00047*rho_ox*0.06242796047)*0.45359237
-    m_tank = m_oxid_tank+m_fuel_tank
+    #m_fuel_tank = (2.42-0.00271*rho_f*0.06242796047)*(Vf*35.31466671)**(0.8445+0.00047*rho_f*0.06242796047)*0.45359237
+    #m_oxid_tank = (2.42-0.00271*rho_ox*0.06242796047)*(Vox*35.31466671)**(0.8445+0.00047*rho_ox*0.06242796047)*0.45359237
+    #m_tank = m_oxid_tank+m_fuel_tank
+    #print(m_tank,m_fuel_tank,m_oxid_tank,m_prop)
+    #print(m_tank)
 
-    #print(m_tank,m_prop)
+    m_tank = (Vf+Vox)*3*10**6/(6.43*10**4) #3MPa assumed MEOP, based on a reference
+    #print(m_tank, m_prop)
+    #print("-----")
+
+
 
     if m_stage == 0 : 
     
@@ -72,9 +78,15 @@ def Class_I_spaceplane_est(DeltaV, Ve, m_tot, TWR, m_wing):
     Vf = Mf/rho_f
     Mox = m_prop - Mf
     Vox = Mox/rho_ox
-    m_fuel_tank = (2.42-0.00271*rho_f*0.06242796047)*Vf*35.31466671**(0.8445+0.00047*rho_f*0.06242796047)*0.45359237
-    m_oxid_tank = (2.42-0.00271*rho_ox*0.06242796047)*Vox*35.31466671**(0.8445+0.00047*rho_ox*0.06242796047)*0.45359237
-    m_tank = m_oxid_tank+m_fuel_tank
+    #m_fuel_tank = (2.42-0.00271*rho_f*0.06242796047)*(Vf*35.31466671)**(0.8445+0.00047*rho_f*0.06242796047)*0.45359237
+    #m_oxid_tank = (2.42-0.00271*rho_ox*0.06242796047)*(Vox*35.31466671)**(0.8445+0.00047*rho_ox*0.06242796047)*0.45359237
+    #m_tank = m_oxid_tank+m_fuel_tank
+
+    #print(m_tank)
+
+    m_tank = (Vf+Vox)*3*10**6/(6.43*10**4)
+    #print(m_tank, m_prop)
+    #print("-----")
     M_total = m_t + m_prop + m_tank + m_thr_str + m_eng + m_RCS + m_wing
 
     M_dry = m_t + m_tank + m_eng + m_thr_str + m_wing
