@@ -39,9 +39,6 @@ landing_legs = cs.system(1)
 vehicle_struc = cs.system(4.5)
 capsule_struc = cs.system(4)
 
-l = [locking_mechanism,hatch,deceleration_system,gn_comp,sensors,launch_abort,bio_monitoring,f_comp,enc_dec,amplifiers,receving_ant,transmitting,batteries,fuel_cells,pcdu,heater,atmos,oxygentanks,cargo_compartment,
-    heat_shield,cooling_system,actuator_tanks,actuator_feedsystem,control_actuators,tanks,hydraulics,chamber,feedsystem,pressurization,landing_legs,vehicle_struc,capsule_struc]
-
 locking_mechanism.add_c(structural,capsule_struc)
 hatch.add_c(structural,capsule_struc)
 deceleration_system.add_c(structural,capsule_struc)
@@ -76,6 +73,6 @@ feedsystem.add_c(flow,chamber)
 chamber.add_c(structural,vehicle_struc)
 landing_legs.add_c(structural,vehicle_struc)
 
-result = cs.complexity(l)
+result = cs.complexity()
 print(result.structural, result.structural == 165.94289402807976)
 print(result.average, result.average == 5.185715438377493)

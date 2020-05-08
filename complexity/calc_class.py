@@ -1,7 +1,9 @@
 "Written By Lasse Landergren"
+"Verified by Jérémie Gaffarel"
 import numpy as np
 
-i=0
+l = []
+
 class line:
     def __init__(self,complexity,direction="uni"):
         self.cm = complexity
@@ -14,12 +16,11 @@ class line:
 
 class system:
     def __init__(self,complexity):
-        global i
         self.connections_complexity = []
         self.connections_destination = []
         self.complexity = complexity
-        self.id = i
-        i += 1
+        self.id = len(l)
+        l.append(self)
         
     def add_c(self,conection,destinations):
         if type(destinations) == system:
@@ -34,7 +35,7 @@ class system:
 
 
 class complexity:
-    def __init__(self,l):
+    def __init__(self):
         M = np.zeros((len(l),len(l)))
         for i in l:
             for k in i.connections_destination:
