@@ -6,9 +6,9 @@ Created on Wed May  6 14:34:44 2020
 """
 
 from math import *
-import numpy as np 
+import numpy as np
 
-k = "2_stage"
+k = "SPACEPLANE"
 
 N_crew = 6
 N_days = 4
@@ -50,11 +50,11 @@ Mass_caps = m_EPS*(1-fEPs) + m_Life_support*(1-fls) + m_av + m_cabin + m_pl + m_
 DV1       = 2200*f
 DV2       = 3200*f
 
+mt_margin   = 0.2
+mts_margin  = 0.2
+me_margin   = 0.2
+mc_margin   = 0.2
 mlg_margin  = 0.2
-mt_margin = 0.2
-mts_margin = 0.2
-me_margin  = 0.2
-mc_margin    = 0.2
 
 def ClassIest(DeltaV,Ve,m_tot,TWR,m_upper,m_tot2):
     
@@ -91,10 +91,17 @@ def ClassIest(DeltaV,Ve,m_tot,TWR,m_upper,m_tot2):
         M_total = m_t + m_prop + m_tank + m_thr_str + m_eng + m_stage + m_RCS + Mlg
     
     if m_stage != 0 :
-        M_dry   = m_t + m_tank + m_eng +  m_thr_str
 
-    return m_frac,m_prop,m_RCS,Fvac,m_eng,m_tank,m_thr_str,m_stage,M_total, M_dry
 
+        Fvac   = TWR*3.7*m_tot2
+        m_RCS  = 0.0126*m_tot2
+        m_eng  = 0.00514*Fvac**0.92068
+        m_thr_str = 1.949*10**(-3)*(Fvac/4.448)**1.0687*0.453
+        M_dry     = m_eng + m_thr_str + m_tank + Mass_caps
+        Mlg       = klg * M_dry*1.15
+        M_total =  m_tot + m_prop + m_tank + m_thr_str + m_eng + m_stage + m_RCS + Mlg
+
+    return m_frac,m_prop,m_RCS,Fvac,m_eng,m_tank,m_thr_str,m_stage,M_total,Mlg
 
 def Class_I_spaceplane_est(DeltaV, Ve, m_tot, TWR, m_wing):
     m_t = Mass_caps
@@ -105,37 +112,19 @@ def Class_I_spaceplane_est(DeltaV, Ve, m_tot, TWR, m_wing):
     m_eng = 0.00514 * Fvac ** 0.92068
     m_thr_str = 1.949 * 10 ** (-3) * (Fvac / 4.448) ** 1.0687 * 0.453
     m_landinggear = 0.010784* ((m_tot-m_prop-m_RCS)*0.453)**1.0861 * 0.453
+
     rho_f = 423
     rho_ox = 1140
     Mf = m_prop/(1+1/3.8) #3.8 is F/o ratio
     Vf = Mf/rho_f
     Mox = m_prop - Mf
     Vox = Mox/rho_ox
-    #m_fuel_tank = (2.42-0.00271*rho_f*0.06242796047)*(Vf*35.31466671)**(0.8445+0.00047*rho_f*0.06242796047)*0.45359237
-    #m_oxid_tank = (2.42-0.00271*rho_ox*0.06242796047)*(Vox*35.31466671)**(0.8445+0.00047*rho_ox*0.06242796047)*0.45359237
-    #m_tank = m_oxid_tank+m_fuel_tank
-    Fvac   = TWR*3.7*m_tot
-    m_RCS  = 0.0126*m_tot
-    m_eng  = 0.00514*Fvac**0.92068
-    m_thr_str = 1.949*10**(-3)*(Fvac/4.448)**1.0687*0.453
-    #M_total =  m_tot + m_prop + m_tank + m_thr_str + m_eng + m_stage + m_RCS
-
-    #return m_frac,m_prop,m_RCS,Fvac,m_eng,m_tank,m_thr_str,m_stage,M_total
-    #M_dry     = m_eng + m_thr_str + m_tank + Mass_caps
-    #Mlg       = klg * M_dry*1.15
-    #M_total =  m_tot + m_prop + m_tank + m_thr_str + m_eng + m_stage + m_RCS + Mlg
-
-    #return m_frac,m_prop,m_RCS,Fvac,m_eng,m_tank,m_thr_str,m_stage,M_total,Mlg
-
-    #print(m_tank)
-
     m_tank = (Vf+Vox)*3*10**6/(6.43*10**4)
-    #print(m_tank, m_prop)
-    #print("-----")
+
     M_total = m_t + m_prop + m_tank + m_thr_str + m_eng + m_RCS + m_wing + m_landinggear
 
     M_dry = m_t + m_tank + m_eng + m_thr_str + m_wing + m_landinggear
-
+    print(m_t, m_tank, m_eng,m_thr_str,m_wing,m_landinggear, M_dry)
     return m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, M_total, M_dry,m_wing
 
 
@@ -275,7 +264,7 @@ def AVID_wing_mass( M_land , b , S_exp , c_root , tc ):
     #Mwing = 1575*((M_land*3.75*b*S_exp)/(c_root*tc*10**9))**0.67
     #Mwing = Mwing * 0.4536
 
-    Mwing = 1.498 * S_exp **1.176 * 0.4536 * 0.4
+    Mwing = 1.498 * S_exp **1.176 * 0.4536 * 0.5
     print("Wing Mass:", Mwing)
 
     return Mwing
@@ -283,7 +272,7 @@ def AVID_wing_mass( M_land , b , S_exp , c_root , tc ):
 if k == "SPACEPLANE":
     m_upper = 0
     TWR = 1.5
-    DeltaV = 5400 * f - 500 # Assumed no DeltaV for landing
+    DeltaV = 5400 * f - 300 # Assumed less DeltaV for landing
     m_tot = Mass_caps
     mt_margin = 0.1
     mts_margin = 0.1
@@ -293,9 +282,9 @@ if k == "SPACEPLANE":
 
     m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, M_total, M_dry, m_wing = Class_I_spaceplane_est(DeltaV,Ve,m_tot,TWR,m_wing)
 
-    print(m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, M_total, M_dry, m_wing)
+    #print(m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, M_total, M_dry, m_wing)
 
-    S,b,c_root,c_tip = takeoff_wing_sizing_shuttle_like(M_total,0.8,1.5)
+    S,b,c_root,c_tip = takeoff_wing_sizing_shuttle_like(M_dry,0.8,1)
 
     m_wing = AVID_wing_mass(M_dry,b,S,c_root,0.15)
 
@@ -307,15 +296,15 @@ if k == "SPACEPLANE":
     while M_total_new > M_total + 0.001:
         M_total = M_total_new
 
-        S, b, c_root, c_tip = takeoff_wing_sizing_shuttle_like(M_dry*1.1, 0.8, 1.5)
+        S, b, c_root, c_tip = takeoff_wing_sizing_shuttle_like(M_dry, 0.8, 1)
         m_wing = AVID_wing_mass(M_dry,b,S, c_root, 0.15)
 
         m_tot = M_total
 
         m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, M_total_new, M_dry, m_wing = Class_I_spaceplane_est(
             DeltaV, Ve, m_tot, TWR, m_wing)
-        print(m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, M_total, M_dry, m_wing)
-        #print(M_total_new,m_wing,"--------------",M_total)
+        #print(m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, M_total, M_dry, m_wing)
+        print(M_total_new,m_wing,"--------------",M_total)
 
     # print(m_frac,m_prop,m_RCS,Fvac,m_eng,m_tank,m_thr_str,m_stage,M_total_new, M_dry)
 
