@@ -33,7 +33,7 @@ def dynamic_pressure(V, altitude, gamma=gamma):
     a= atm.get_speed_of_sound(temperature)
     mach = V/a
 
-    if altitude > 100000:                 # Altitude too high to cause significant dynamic pressure 
+    if altitude > 100000:                       #Altitude too high to cause significant dynamic pressure 
         q = 0
     else:
         q = mach**2 * 0.5*gamma*pressure
@@ -71,12 +71,11 @@ def drdt(flight_path_angle, V, h):
     return mean_radius*V*np.cos(flight_path_angle)/(mean_radius+h)
 
 # Integration scheme 
-
 def forward_euler(y_n, dy):
     return y_n + dy
 
 
-# Reentry trajectory
+# Initial Conditions 
 v_reentry = reentry_orbit(reentry_altitude, insertion_orbit_a, insertion_orbit_p)
 height = [reentry_altitude]
 velocity = [v_reentry]
@@ -87,6 +86,7 @@ deceleration = [0]
 dyn_pressure = [0]
 dt = 0.01
 
+# Reentry trajectory
 while height[-1] > 1000:
     time.append(time[-1] + dt)
     
@@ -113,27 +113,21 @@ while height[-1] > 1000:
     distance.append(r) 
 
 
-plt.plot(np.array(height)/1000, velocity)
-plt.xlabel("Altitude [km]")
-plt.ylabel("Velocity [m/s]")
+fig, ax1 = plt.subplots()
+
+color = 'tab:red'
+ax1.set_xlabel('Time [s]')
+ax1.set_ylabel('Altitude [km]', color=color)
+ax1.plot(time, np.array(height)/1000, color=color)
+ax1.tick_params(axis='y', labelcolor=color)
+
+ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+color = 'tab:blue'
+ax2.set_ylabel('Velocity [m/s]', color=color)  # we already handled the x-label with ax1
+ax2.plot(time, velocity, color=color)
+ax2.tick_params(axis='y', labelcolor=color)
+
+fig.tight_layout()  # otherwise the right y-label is slightly clipped
 plt.grid()
 plt.show()
-
-plt.plot(np.array(height)/1000, deceleration)
-plt.xlabel("Altitude [km]")
-plt.ylabel("Deceleration [m/s^2]")
-plt.grid()
-plt.show()
-
-plt.plot(np.array(height)/1000, time)
-plt.xlabel("Altitude [km]")
-plt.ylabel("Time [s]")
-plt.grid()
-plt.show()
-
-plt.plot(np.array(height)/1000, dyn_pressure)
-plt.xlabel("Altitude [km]")
-plt.ylabel("Dynamic Pressure [Pa]")
-plt.grid()
-plt.show()
-
