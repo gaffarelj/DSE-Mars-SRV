@@ -56,9 +56,9 @@ class param:
 		self.color = []
 		for val in self.val_out:
 			if val != 1:
-				self.color.append(color_list[int(val / len(color_list))])
+				self.color.append(color_list[int(val * len(color_list))])
 			else:
-				self.color.append(color_list[int(val / len(color_list)) - 1])
+				self.color.append(color_list[int(val * len(color_list)) - 1])
 	
 	
 class design:
@@ -109,37 +109,42 @@ class tradeoff:
 			print("\\begin{adjustbox}{width=\linewidth, center}")
 
 			output = "\\begin{tabular}{|c|l|"
-			for param in param_list:
+			for param in self.param_list:
 				output += "p{" + str(width * param.weight) + "cm}|"
 				output += "p{" + str(width * param.weight) + "cm}|"
 			output +="c|}\hline"
 			print(output)
 
 			output = "\multicolumn{2}{|c|}{\\textbf{Criteria}}"
-			for param in param_list:
-				output += "& \multicolumn{2}{c|}{}"
-			print(str(output) + "&\\\\")
-			output = "\cline{1-2}\multicolumn{2}{|l|}{\\textbf{Design Option}}"
-			for param in param_list:
-				output += "& \multicolumn{2}{c|}{\multirow{-2}{*}{" + param.name + "}}"
+			for param in self.param_list:
+				output += "& \multicolumn{2}{c|}{"+ param.name +"}"
+			print(str(output) + "&\\\\ \cline{1-2}")
+			output = "\multicolumn{2}{|l|}{\\textbf{Design Option}}"
+			for param in self.param_list:
+				output += "& \multicolumn{2}{c|}{\\textit{("+ str(round(param.Lv,2)) + " / " + str(round(param.Hv,2)) + ")," 
+				if param.dir == "HB":
+					output += " High Best}}"
+				else:
+					output += " High Best}}"
+				
 			print(str(output) + "& \multirow{-2}{*}{\\textbf{Total}} \\\\ \hline")
-			for i in range(len(design_list)):
-				design = design_list[i]
+			for i in range(len(self.design_list)):
+				design = self.design_list[i]
 				output = "\multicolumn{2}{|c|}{}"
 				end_output = ""
 				k = 4
-				for param in param_list:
+				for param in self.param_list:
 					output += "   & \cellcolor[HTML]{" + str(param.color[i].HTML) + "} & \cellcolor[HTML]{" + str(param.color[i].HTML) + "}" + str(param.color[i].name) + ""
 					end_output += " \cline{" + str(k) + "-" + str(k) + "} "
 					k += 2
 				print(str(output) + " & \\\\" + str(end_output))
 				output = "\multicolumn{2}{|c|}{}"
-				for param in param_list:
+				for param in self.param_list:
 					output += "   & \multicolumn{2}{c|}{\cellcolor[HTML]{" + str(param.color[i].HTML) + "}}"
 				print(str(output) + "& \\\\")
 				output = "\multicolumn{2}{|c|}{\multirow{-3}{*}{" + str(design.name) + "}}"
-				for param in param_list:
-					output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor[HTML]{" + str(param.color[i].HTML) + "}" + str(round(param.values[i],5)) + "}}"
+				for param in self.param_list:
+					output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor[HTML]{" + str(param.color[i].HTML) + "}" + str(round(param.val_in[i])) + " / " + str(round(param.val_out[i],5)) + "}}"
 				print(str(output) + " & \multirow{-3}{*}{" + str(round(self.total[i],5)) + "} \\\\ \hline")
 			print("\end{tabular}")
 			print("\end{adjustbox}")
@@ -189,9 +194,10 @@ class sensitivity:
 			tro_temp.get_tradeoff()
 			ret = np.zeros(len(tro_temp.design_list))
 			ret[np.where(tro_temp.total == np.amax(tro_temp.total))] = 1
+			tro_temp.get_output()
 			return ret
 
 	def get_sens(self):
-		pool = mp.Pool(mp.cpu_count())
+		pool = mp.Pool(1)
 		self.per = np.sum(pool.map(self.sens,range(self.n)),0)
 		self.per /= self.n
