@@ -11,13 +11,8 @@ pump = cs.system(2)
 fil = cs.system(1)
 motor = cs.system(3)
 
-l = [valve,controller,pump,fil,motor]
-
-valve.add_c(mech,controller)
-valve.add_c(mech,fil)
-valve.add_c(mech,pump)
-valve.add_c(fluid,fil)
-valve.add_c(fluid,pump)
+valve.add_c(mech,[controller, fil, pump])
+valve.add_c(fluid,[fil, pump])
 valve.add_c(elec,controller)
 valve.add_c(data,controller)
 controller.add_c(mech,motor)
@@ -25,6 +20,5 @@ controller.add_c(elec,motor)
 pump.add_c(mech,motor)
 pump.add_c(elec,motor)
 
-result = cs.complexity(l)
-
-print(result.structural)
+result = cs.complexity()
+print(result.structural, result.structural == 45.57519182318174)

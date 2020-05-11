@@ -1,113 +1,203 @@
 import numpy as np
+import multiprocessing as mp
+
 class color:
-    def __init__(self,code,name):
-        self.HTML = code
-        self.name = name
-
-    
+	def __init__(self, code, name):
+		self.HTML = code
+		self.name = name
+	
 class param:
-    def __init__(self,name,weight,func = "LRTS", direc="HB", p = 1):
-        self.name = name
-        self.func = func
-        self.dir = direc
-        self.p = p
-        self.weight = weight
+	def __init__(self, name, weight, func="LRTS",  direc="HB",  p=1,Limitype ="minmax"):
+		self.name = name
+		self.func = func
+		self.dir = direc
+		self.p = p
+		self.weight = weight
+		self.Ltype = Limitype
+		self.val_in = []
+		self.val_out = []
+	
+	def stat(self):
+		self.sd = np.std(self.val_in)
+		self.mu = np.average(self.val_in)
 
-    def func_eval(self,Hv,Lv,evalv):
-        if self.dir == "LB":
-            temp = Hv
-            Hv = Lv
-            Lv = temp
-        if self.func == "LRTS":
-            return (evalv-Lv)/(Hv-Lv)
-        elif self.func == "IRTS":
-            return (1-exp(-(evalv-Lv)/self.p))/(1-exp(-(Hv-Lv)/self.p))
-        elif self.func == "DRTS":
-            return (1-exp(-(Hv-evalv)/self.p))/(1-exp(-(Hv-Lv)/self.p))
-        else:
-            raise Exception("not valid input")
-    
-    def set_colors(self,eval_list,color_list):
-        self.values = eval_list
-        self.color = []
-        for val in eval_list:
+		if self.Ltype == "minmax":
+			self.Lv, self.Hv = min(self.val_in), max(self.val_in)
+		elif self.Ltype == "1SD":
+			self.Lv, self.Hv = self.mu-self.sd, self.mu+self.sd
+		elif self.Ltype == "2SD":
+			self.Lv, self.Hv = self.mu-2*self.sd, self.mu+2*self.sd
+		elif self.Ltype == "3SD":
+			self.Lv, self.Hv = self.mu-3*self.sd, self.mu+3*self.sd
+		else:
+			raise Exception("not valid boundary determination method")
+		if self.dir == "LB":
+			self.Hv, self.Lv = self.Lv, self.Hv
 
-            if val!= 1:
-                self.color.append(color_list[int(val/len(color_list))])
-            else:
-                self.color.append(color_list[int(val/len(color_list))-1])
-        
 
-        
 
+	def func_eval(self, evalv):
+		if (evalv <= self.Lv and self.dir == "HB") or (evalv >= self.Hv and self.dir == "LB") :
+			return 0
+		if (evalv >= self.Hv and self.dir == "HB") or (evalv <= self.Lv and self.dir == "LB") :
+
+			return 1
+		
+		if self.func == "LRTS":
+			return (evalv - self.Lv) / (self.Hv - self.Lv)
+		elif self.func == "IRTS":
+			return (1 - exp(-(evalv - self.Lv) / self.p)) / (1 - exp(-(self.Hv - self.Lv) / self.p))
+		elif self.func == "DRTS":
+			return (1 - exp(-(self.Hv - evalv) / self.p)) / (1 - exp(-(self.Hv - self.Lv) / self.p))
+		else:
+			raise Exception("not valid scoring scheme")
+	
+	def set_colors(self, color_list):
+		self.color = []
+		for val in self.val_out:
+			if val != 1:
+				self.color.append(color_list[int(val * len(color_list))])
+			else:
+				self.color.append(color_list[int(val * len(color_list)) - 1])
+	
+	
 class design:
-    def __init__(self,name,sourcelist):
-        self.name=name
-        self.sourcelist = sourcelist
+	def __init__(self, name, sourcelist):
+		self.name = name
+		self.sourcelist = sourcelist
 
 
 class tradeoff:
-    def __init__(self,design_list,param_list,out="python",width =8,color_list=[]):
-        for i in range(len(param_list)):
-            param = param_list[i]
-            param_val = []
-            for design in design_list:
-                param_val.append(design.sourcelist[i]())
-            Lv = min(param_val)
-            Hv = max(param_val)
-            eval_list = []
-            for val in param_val:
-                eval_list.append(param.func_eval(Hv,Lv,val))
+	def __init__(self, design_list, param_list):
+		self.param_list = param_list
+		self.design_list = design_list
 
-            param.set_colors(eval_list,color_list)
-            #param.values = eval_list
 
-            if out == "python":
-                output = param.name + ", Actual value:  "
-                for val in param_val:
-                    output += str(val) + ",   "
-                print(output)
-                output = param.name + ", scaled and weighted value:  "
-                for val in eval_list:
-                    output += str(val) + ",   "
-                print(output)
-            
-        if out == "latex":
-            print("\\begin{table}[]")
-            print("\centering")
-            print("\caption{}")
-            print("\label{tab:my-table}")
+	def get_tradeoff(self):
+		self.total = np.zeros(len(self.design_list))
+		for i in range(len(self.param_list)):
+			param = self.param_list[i]
+			param.val_in = np.array([design.sourcelist[i] for design in self.design_list])
+			param.stat()
+			param.val_out = np.array([param.func_eval(val) for val in param.val_in])
+			self.total += param.val_out*param.weight
+		
+	
+	def get_output(self,language = "python",color_list=[],width=8):
+		if language == "python":
+			for param in self.param_list:
+				print(param.name, ",\t actual value:", end="\t", sep="")
+				for val in param.val_in:
+					print(val, end=",\t")
+				print()
+				print(param.name, ",\t scaled value:", end="\t", sep="")
+				for val in param.val_out:
+					print(val, end=",\t")
+				print()
+			print("\t final value:", end="\t", sep="")
+			for val in self.total:
+				print(val, end=",\t")
+			print()
+		if language == "latex":
+			if len(color_list)==0:
+				raise Exception("color_list is mandatory for Latex output")
+			for param in self.param_list:
+				param.set_colors(color_list)
+			print("\\begin{table}[]")
+			print("\caption{}")
+			print("\label{tab:my-table}")
+			print("\\begin{adjustbox}{width=\linewidth, center}")
 
-            output = "\\begin{tabular}{|c|l|"
-            for param in param_list:
-                output += "p{" +str(width*param.weight) +"cm}|"
-                output += "p{" +str(width*param.weight) +"cm}|"
-            output +="}\hline"
-            print(output)
+			output = "\\begin{tabular}{|c|l|"
+			for param in self.param_list:
+				output += "p{" + str(width * param.weight) + "cm}|"
+				output += "p{" + str(width * param.weight) + "cm}|"
+			output +="c|}\hline"
+			print(output)
 
-            print("\multicolumn{2}{|c|}{\\textbf{Criteria}} & \multicolumn{2}{c|}{}\\\\")
-            output = "\cline{1-2}\multicolumn{2}{|l|}{\\textbf{Design Option}}"
-            for param in param_list:
-                output += "& \multicolumn{2}{c|}{\multirow{-2}{*}{"+param.name+"}}"
-            print(str(output)+"\\\\ \hline")
-            for i in range(len(design_list)):
-                design = design_list[i]
-                output = "\multicolumn{2}{|c|}{}"
-                end_output = ""
-                k=4
-                for param in param_list:
-                    output += "   & \cellcolor[HTML]{"+str(param.color[i].HTML)+"} & \cellcolor[HTML]{"+str(param.color[i].HTML)+"}"+str(param.color[i].name)+""
-                    end_output += " \cline{" +str(k)+"-"+str(k)+"} "
-                    k += 2
-                print(str(output) + "\\\\" + str(end_output))
-                output = "\multicolumn{2}{|c|}{}"
-                for param in param_list:
-                    output += "   & \multicolumn{2}{c|}{\cellcolor[HTML]{"+str(param.color[i].HTML)+"}}"
-                print(str(output)+"  \\\\")
-                output = "\multicolumn{2}{|c|}{\multirow{-3}{*}{"+str(design.name)+"}}"
-                for param in param_list:
-                    output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor[HTML]{"+str(param.color[i].HTML)+"}" + str(param.values[i]) + "}}"
-                print(str(output)+"\\\\ \hline")
-            print("\end{tabular}")
-            print("\end{table}")
+			output = "\multicolumn{2}{|c|}{\\textbf{Criteria}}"
+			for param in self.param_list:
+				output += "& \multicolumn{2}{c|}{"+ param.name +"}"
+			print(str(output) + "&\\\\ \cline{1-2}")
+			output = "\multicolumn{2}{|l|}{\\textbf{Design Option}}"
+			for param in self.param_list:
+				output += "& \multicolumn{2}{c|}{\\textit{("+ str(round(param.Lv,2)) + " / " + str(round(param.Hv,2)) + ")," 
+				if param.dir == "HB":
+					output += " High Best}}"
+				else:
+					output += " High Best}}"
+				
+			print(str(output) + "& \multirow{-2}{*}{\\textbf{Total}} \\\\ \hline")
+			for i in range(len(self.design_list)):
+				design = self.design_list[i]
+				output = "\multicolumn{2}{|c|}{}"
+				end_output = ""
+				k = 4
+				for param in self.param_list:
+					output += "   & \cellcolor[HTML]{" + str(param.color[i].HTML) + "} & \cellcolor[HTML]{" + str(param.color[i].HTML) + "}" + str(param.color[i].name) + ""
+					end_output += " \cline{" + str(k) + "-" + str(k) + "} "
+					k += 2
+				print(str(output) + " & \\\\" + str(end_output))
+				output = "\multicolumn{2}{|c|}{}"
+				for param in self.param_list:
+					output += "   & \multicolumn{2}{c|}{\cellcolor[HTML]{" + str(param.color[i].HTML) + "}}"
+				print(str(output) + "& \\\\")
+				output = "\multicolumn{2}{|c|}{\multirow{-3}{*}{" + str(design.name) + "}}"
+				for param in self.param_list:
+					output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor[HTML]{" + str(param.color[i].HTML) + "}" + str(round(param.val_in[i])) + " / " + str(round(param.val_out[i],5)) + "}}"
+				print(str(output) + " & \multirow{-3}{*}{" + str(round(self.total[i],5)) + "} \\\\ \hline")
+			print("\end{tabular}")
+			print("\end{adjustbox}")
+			print("\end{table}")
 
+class sensitivity:
+	def __init__(self,tradeoff,samples = 10000):
+		self.tro = tradeoff
+		self.n = samples
+		self.to_tech = False
+		self.to_p = False
+		self.to_weights = False
+
+	def addto_technical(self,variation):
+		self.to_tech = True
+		self.to_tech_var = variation
+
+	def addto_p(self,variation):
+		self.to_p = True
+		self.to_p_var = variation
+
+	def addto_weights(self,variation):
+		self.to_weights = True
+		self.to_weights_var = variation
+
+	def sens(self,n):
+			tro_temp = tradeoff(self.tro.design_list.copy(),self.tro.param_list.copy())
+
+			if self.to_p:
+				for param in tro_temp.param_list:
+					param.p = np.random.normal(param.p,self,self.to_p_var)
+
+			if self.to_weights:
+				total = 0
+				for param in tro_temp.param_list:
+					param.weight = np.random.normal(param.weight,self.to_weights_var)
+					total += param.weight
+				
+				for param in tro_temp.param_list:
+					param.weight /= total
+
+			if self.to_tech:
+				for design in tro_temp.design_list:
+					for i in range(len(design.sourcelist)):
+						design.sourcelist[i] = np.random.normal(design.sourcelist[i],self.tro.param_list[i].sd*self.to_tech_var)
+			
+			tro_temp.get_tradeoff()
+			ret = np.zeros(len(tro_temp.design_list))
+			ret[np.where(tro_temp.total == np.amax(tro_temp.total))] = 1
+			tro_temp.get_output()
+			return ret
+
+	def get_sens(self):
+		pool = mp.Pool(1)
+		self.per = np.sum(pool.map(self.sens,range(self.n)),0)
+		self.per /= self.n
