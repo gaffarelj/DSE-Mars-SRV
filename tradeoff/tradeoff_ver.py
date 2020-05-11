@@ -13,7 +13,7 @@ color2 = tc.color("FE0000","red")
 tradeoff =tc.tradeoff(design_list = [design1,design2,design3],param_list= [mass,param2])
 
 tradeoff.get_tradeoff()
-tradeoff.get_output(language="latex",color_list=[color1,color2])
+tradeoff.get_output(language="python",color_list=[color1,color2])
 
 sens = tc.sensitivity(tradeoff,10000)
 sens.addto_technical(0.1)
