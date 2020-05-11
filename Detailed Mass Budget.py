@@ -8,7 +8,7 @@ Created on Wed May  6 14:34:44 2020
 from math import *
 import numpy as np
 
-def Mass_conc(DV1,DV2,Isp,MGA) :
+def Mass_conc(DV1,DV2,Isp,MGA,k) :
     
     mass_cons = []
 
@@ -136,173 +136,173 @@ def Mass_conc(DV1,DV2,Isp,MGA) :
 
         return m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, M_total, M_dry,m_wing
     
-    for k in ["SSTO","2_stage","SPACEPLANE","SE"]: 
+     
     
-        if k == "SSTO" :
-            m_tot2  =  0 
-            m_upper = 0 
-            DeltaV  = (DV1 + DV2)*f
-            m_tot   = Mass_caps
+    if k == "SSTO" :
+        m_tot2  =  0 
+        m_upper = 0 
+        DeltaV  = (DV1 + DV2)*f
+        m_tot   = Mass_caps
+        
+        m_frac,m_prop,m_RCS,Fvac,m_eng,m_tank,m_thr_str,m_stage,M_total,Mlg  = ClassIest(DeltaV,Ve,m_tot,TWR,m_upper,m_tot2)
+               
+        m_tot = M_total 
+        
+        m_frac,m_prop,m_RCS,Fvac,m_eng,m_tank,m_thr_str,m_stage,M_total_new,Mlg = ClassIest(DeltaV,Ve,m_tot,TWR,m_upper,m_tot2)
+        
+        while M_total_new > M_total + 0.001 : 
+            M_total = M_total_new 
             
-            m_frac,m_prop,m_RCS,Fvac,m_eng,m_tank,m_thr_str,m_stage,M_total,Mlg  = ClassIest(DeltaV,Ve,m_tot,TWR,m_upper,m_tot2)
-                   
-            m_tot = M_total 
+            m_tot   = M_total
             
-            m_frac,m_prop,m_RCS,Fvac,m_eng,m_tank,m_thr_str,m_stage,M_total_new,Mlg = ClassIest(DeltaV,Ve,m_tot,TWR,m_upper,m_tot2)
-            
-            while M_total_new > M_total + 0.001 : 
-                M_total = M_total_new 
-                
-                m_tot   = M_total
-                
-                m_frac,m_prop,m_RCS,Fvac,m_eng,m_tank,m_thr_str,m_stage,M_total_new,Mlg  = ClassIest(DeltaV,Ve,m_tot,TWR,m_upper,m_tot2)
-                 
-            M_dry  = m_eng + m_thr_str + m_tank + Mass_caps + Mlg
-            
-            mass_cons.append([M_dry,m_prop])
-            
-            
-        if k =="2_stage" : 
-            m_upper     = 0 
-            m_tot       = Mass_caps
-            m_tot2      = 0
-            
-            # 1st stage calculation 
-            
-            m_frac1,m_prop1,m_RCS1,Fvac1,m_eng1,m_tank1,m_thr_str1,m_stage1,M_total1,Mlg1 = ClassIest(DV1,Ve,m_tot,TWR,m_upper,m_tot2)
-            
-            m_upper     = M_total1 
+            m_frac,m_prop,m_RCS,Fvac,m_eng,m_tank,m_thr_str,m_stage,M_total_new,Mlg  = ClassIest(DeltaV,Ve,m_tot,TWR,m_upper,m_tot2)
+             
+        M_dry  = m_eng + m_thr_str + m_tank + Mass_caps + Mlg
+        
+        mass_cons.append([M_dry,m_prop])
+        
+        
+    if k =="2_stage" : 
+        m_upper     = 0 
+        m_tot       = Mass_caps
+        m_tot2      = 0
+        
+        # 1st stage calculation 
+        
+        m_frac1,m_prop1,m_RCS1,Fvac1,m_eng1,m_tank1,m_thr_str1,m_stage1,M_total1,Mlg1 = ClassIest(DV1,Ve,m_tot,TWR,m_upper,m_tot2)
+        
+        m_upper     = M_total1 
+        m_tot       = M_total1 
+        m_tot2      = 0 
+    
+        m_frac,m_prop,m_RCS,Fvac,m_eng,m_tank,m_thr_str,m_stage,M_total,Mlg  = ClassIest(DV2,Ve,m_tot,TWR,m_upper,m_tot2)
+    
+        m_tot       = M_total1
+        m_upper     = 0 
+        m_tot2      = M_total 
+    
+        m_frac1,m_prop1,m_RCS1,Fvac1,m_eng1,m_tank1,m_thr_str1,m_stage1,M_total1,Mlg1 = ClassIest(DV1,Ve,m_tot,TWR,m_upper,m_tot2)
+        
+        m_upper = M_total1 
+        m_tot   = M_total1 
+    
+        m_frac,m_prop,m_RCS,Fvac,m_eng,m_tank,m_thr_str,m_stage,M_total_new,Mlg  = ClassIest(DV2,Ve,m_tot,TWR,m_upper,m_tot2)
+              
+        while M_total_new > M_total + 0.001 : 
+            M_total     = M_total_new 
             m_tot       = M_total1 
-            m_tot2      = 0 
-        
-            m_frac,m_prop,m_RCS,Fvac,m_eng,m_tank,m_thr_str,m_stage,M_total,Mlg  = ClassIest(DV2,Ve,m_tot,TWR,m_upper,m_tot2)
-        
-            m_tot       = M_total1
+            m_tot2      = M_total_new 
             m_upper     = 0 
-            m_tot2      = M_total 
-        
-            m_frac1,m_prop1,m_RCS1,Fvac1,m_eng1,m_tank1,m_thr_str1,m_stage1,M_total1,Mlg1 = ClassIest(DV1,Ve,m_tot,TWR,m_upper,m_tot2)
             
+            m_frac1,m_prop1,m_RCS1,Fvac1,m_eng1,m_tank1,m_thr_str1,m_stage1,M_total1,Mlg1= ClassIest(DV1,Ve,m_tot,TWR,m_upper,m_tot2)
+        
             m_upper = M_total1 
             m_tot   = M_total1 
-        
+            
             m_frac,m_prop,m_RCS,Fvac,m_eng,m_tank,m_thr_str,m_stage,M_total_new,Mlg  = ClassIest(DV2,Ve,m_tot,TWR,m_upper,m_tot2)
-                  
-            while M_total_new > M_total + 0.001 : 
-                M_total     = M_total_new 
-                m_tot       = M_total1 
-                m_tot2      = M_total_new 
-                m_upper     = 0 
-                
-                m_frac1,m_prop1,m_RCS1,Fvac1,m_eng1,m_tank1,m_thr_str1,m_stage1,M_total1,Mlg1= ClassIest(DV1,Ve,m_tot,TWR,m_upper,m_tot2)
-            
-                m_upper = M_total1 
-                m_tot   = M_total1 
-                
-                m_frac,m_prop,m_RCS,Fvac,m_eng,m_tank,m_thr_str,m_stage,M_total_new,Mlg  = ClassIest(DV2,Ve,m_tot,TWR,m_upper,m_tot2)
-                   
-            M_dry       = m_eng + m_thr_str + m_tank 
+               
+        M_dry       = m_eng + m_thr_str + m_tank 
+    
+        M_dry1      = m_eng1 + m_thr_str1 + m_tank1 + Mlg1
+    
+        M_dry_tot   = M_dry1 + M_dry + Mass_caps + Mlg
         
-            M_dry1      = m_eng1 + m_thr_str1 + m_tank1 + Mlg1
+        m_prop_tot  = m_prop1+m_prop
         
-            M_dry_tot   = M_dry1 + M_dry + Mass_caps + Mlg
-            
-            m_prop_tot  = m_prop1+m_prop
-            
-            mass_cons.append([M_dry_tot,m_prop_tot])
+        mass_cons.append([M_dry_tot,m_prop_tot])
+    
+    def takeoff_wing_sizing_shuttle_like(M_takeoff,takeoff_mach,takeoff_cl):
         
-        def takeoff_wing_sizing_shuttle_like(M_takeoff,takeoff_mach,takeoff_cl):
-            
-            rho     = 0.02 #Density at surface on Mars
-            vel     = 240 * takeoff_mach #takeoff speed as function of speed of sound (240) in m/s
-            S       = M_takeoff*3.7/(0.5*rho*vel**2*takeoff_cl)
-            b       = 30.5/874.5* 8 * S #Adjusted manually from spaceshuttle planform
-            taper   = 0.2 #Roughly, from spaceshuttle planform again
-            c_root  = S / (0.5*b)*(1/(1+taper))
-            c_tip   = taper * c_root
-            
-            return S, b, c_root, c_tip
+        rho     = 0.02 #Density at surface on Mars
+        vel     = 240 * takeoff_mach #takeoff speed as function of speed of sound (240) in m/s
+        S       = M_takeoff*3.7/(0.5*rho*vel**2*takeoff_cl)
+        b       = 30.5/874.5* 8 * S #Adjusted manually from spaceshuttle planform
+        taper   = 0.2 #Roughly, from spaceshuttle planform again
+        c_root  = S / (0.5*b)*(1/(1+taper))
+        c_tip   = taper * c_root
         
+        return S, b, c_root, c_tip
+    
+    
+    def AVID_wing_mass( M_land , b , S_exp , c_root , tc ):
         
-        def AVID_wing_mass( M_land , b , S_exp , c_root , tc ):
-            
-            M_land  = M_land * 2.205
-            b       = b / 0.3048
+        M_land  = M_land * 2.205
+        b       = b / 0.3048
 
-            S_exp   = S_exp / (0.3048**2) * 0.8 #90% of wing exposed
+        S_exp   = S_exp / (0.3048**2) * 0.8 #90% of wing exposed
+    
+        c_root  = c_root / 0.3048
+    
+        Mwing   = 1.498 * S_exp **1.176 * 0.4536 * 0.5
+    
+        return Mwing
+    
+    if k == "SPACEPLANE":
         
-            c_root  = c_root / 0.3048
-        
-            Mwing   = 1.498 * S_exp **1.176 * 0.4536 * 0.5
-        
-            return Mwing
-        
-        if k == "SPACEPLANE":
-            
-            m_upper     = 0
-            TWR         = 1.5
-            DeltaV      = 5400 * f - 431 # Assumed less DeltaV for landing
-            m_tot       = Mass_caps
-            m_wing      = 1000
-        
-            m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, M_total, M_dry, m_wing = Class_I_spaceplane_est(DeltaV,Ve,m_tot,TWR,m_wing)
-        
-            S,b,c_root,c_tip = takeoff_wing_sizing_shuttle_like(M_dry*1.1,0.8,1.5)
-        
-            m_wing           = AVID_wing_mass(M_dry,b,S,c_root,0.15)
-        
-            m_tot            = M_total
-        
+        m_upper     = 0
+        TWR         = 1.5
+        DeltaV      = (DV1+DV2)*f # Assumed less DeltaV for landing
+        m_tot       = Mass_caps
+        m_wing      = 1000
+    
+        m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, M_total, M_dry, m_wing = Class_I_spaceplane_est(DeltaV,Ve,m_tot,TWR,m_wing)
+    
+        S,b,c_root,c_tip = takeoff_wing_sizing_shuttle_like(M_dry*1.1,0.8,1.5)
+    
+        m_wing           = AVID_wing_mass(M_dry,b,S,c_root,0.15)
+    
+        m_tot            = M_total
+    
+        m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, M_total_new, M_dry, m_wing = Class_I_spaceplane_est(
+            DeltaV, Ve, m_tot, TWR, m_wing)
+    
+        while M_total_new > M_total + 0.001:
+            M_total = M_total_new
+    
+            S, b, c_root, c_tip     = takeoff_wing_sizing_shuttle_like(M_dry*1.1, 0.8, 1.5)
+            m_wing                  = AVID_wing_mass(M_dry,b,S, c_root, 0.15)
+    
+            m_tot                   = M_total
+    
             m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, M_total_new, M_dry, m_wing = Class_I_spaceplane_est(
                 DeltaV, Ve, m_tot, TWR, m_wing)
-        
-            while M_total_new > M_total + 0.001:
-                M_total = M_total_new
-        
-                S, b, c_root, c_tip     = takeoff_wing_sizing_shuttle_like(M_dry*1.1, 0.8, 1.5)
-                m_wing                  = AVID_wing_mass(M_dry,b,S, c_root, 0.15)
-        
-                m_tot                   = M_total
-        
-                m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, M_total_new, M_dry, m_wing = Class_I_spaceplane_est(
-                    DeltaV, Ve, m_tot, TWR, m_wing)
-                
-            mass_cons.append([M_dry,m_prop])
-        
-        def SpaceElevator():
             
-            climbermass             = Mass_caps
-            power_per_climbermass   = 2.4*10**6/20000
-            power                   = power_per_climbermass*climbermass
-            maxheight               = 100000000 #m
-            steps                   = 51
-            areostationary_height   = 17032000 #m
-            numcables               = 3
-            safety_factor           = 1
-            A_base                  = 0.0000105*safety_factor
-            height_steps            = np.linspace(areostationary_height+10,maxheight,steps)
-            m_cable                 = A_base*1400*areostationary_height
-            m_totals                = []
+        mass_cons.append([M_dry,m_prop])
+    
+    def SpaceElevator():
+        
+        climbermass             = Mass_caps
+        power_per_climbermass   = 2.4*10**6/20000
+        power                   = power_per_climbermass*climbermass
+        maxheight               = 100000000 #m
+        steps                   = 51
+        areostationary_height   = 17032000 #m
+        numcables               = 3
+        safety_factor           = 1
+        A_base                  = 0.0000105*safety_factor
+        height_steps            = np.linspace(areostationary_height+10,maxheight,steps)
+        m_cable                 = A_base*1400*areostationary_height
+        m_totals                = []
+        
+        for height in height_steps:
             
-            for height in height_steps:
-                
-                taper_ratio             = exp(3389000*1400*3.71/(2*48600000000)*((3389000/height)**3-3*(3389000/height)+2))
-                m_cablesegment          = taper_ratio*A_base*1400*(maxheight/(steps-1))
-                m_cable                 += m_cablesegment
-                m_counterweight         = 1400*A_base*48600000000*exp((3389000**2*1400*3.71)/(2*48600000000*17032000**3)*((2*17032000**3+3389000**3)/3389000-(2*17032000**3+(height)**3)/(height)))/((3389000**2*(height))/17032000**3*(1-(17032000/(height))**3)*1400*3.71)
-                m_total                 = m_cable + m_counterweight + Mass_caps
-                m_totals.append(m_total)
-                
-            m_total = min(m_totals)*numcables
-            return m_total, power
-        
-        if k == "SE" : 
-        
-            m_total_se, power = SpaceElevator()
-        
-            mass_cons.append([m_total_se,power])        
+            taper_ratio             = exp(3389000*1400*3.71/(2*48600000000)*((3389000/height)**3-3*(3389000/height)+2))
+            m_cablesegment          = taper_ratio*A_base*1400*(maxheight/(steps-1))
+            m_cable                 += m_cablesegment
+            m_counterweight         = 1400*A_base*48600000000*exp((3389000**2*1400*3.71)/(2*48600000000*17032000**3)*((2*17032000**3+3389000**3)/3389000-(2*17032000**3+(height)**3)/(height)))/((3389000**2*(height))/17032000**3*(1-(17032000/(height))**3)*1400*3.71)
+            m_total                 = m_cable + m_counterweight + Mass_caps
+            m_totals.append(m_total)
+            
+        m_total = min(m_totals)*numcables
+        return m_total, power
+    
+    if k == "SE" : 
+    
+        m_total_se, power = SpaceElevator()
+    
+        mass_cons.append([m_total_se,power])        
  
     return mass_cons
 
 
-Mass_conc(2200,3200,410,"YES")
+Mass_conc(2200,3200,410,"YES","SSTO")
