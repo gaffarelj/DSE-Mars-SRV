@@ -192,6 +192,9 @@ class sensitivity:
 			return ret
 
 	def get_sens(self):
-		pool = mp.Pool(mp.cpu_count())
-		self.per = np.sum(pool.map(self.sens,range(self.n)),0)
-		self.per /= self.n
+		if False:#__name__ == 'tradeoff_class':
+			mp.freeze_support()
+		else:
+			pool = mp.Pool(mp.cpu_count())
+			self.per = np.sum(pool.map(self.sens,range(self.n)),0)
+			self.per /= self.n
