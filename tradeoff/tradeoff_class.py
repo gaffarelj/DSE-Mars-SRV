@@ -60,7 +60,6 @@ class tradeoff:
                 eval_list.append(param.func_eval(Hv,Lv,val))
 
             param.set_colors(eval_list,color_list)
-            #param.values = eval_list
 
             if out == "python":
                 output = param.name + ", Actual value:  "
@@ -80,15 +79,15 @@ class tradeoff:
 
             output = "\\begin{tabular}{|c|l|"
             for param in param_list:
-                output += "p{" +str(width*param.weight) +"cm}|"
-                output += "p{" +str(width*param.weight) +"cm}|"
+                output += "p{" +str(width*param.weight)[:5] +"cm}|"
+                output += "p{" +str(width*param.weight)[:5] +"cm}|"
             output +="c|}\hline"
             print(output)
 
             output = "\multicolumn{2}{|c|}{\\textbf{Criteria}}"
             for param in param_list:
                 output += "& \multicolumn{2}{c|}{}"
-            print(str(output)+"\\\\")
+            print(str(output)+"& \\\\")
             output = "\cline{1-2}\multicolumn{2}{|l|}{\\textbf{Design Option}}"
             for param in param_list:
                 output += "& \multicolumn{2}{c|}{\multirow{-2}{*}{"+param.name+"}}"
