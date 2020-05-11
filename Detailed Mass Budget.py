@@ -272,8 +272,12 @@ def Mass_conc(DV1,DV2,Isp,MGA,k) :
     def SpaceElevator():
         
         climbermass             = Mass_caps
+        power_specific          = 1002 #W/kg
+        efficiency              = 0.03*0.59*0.82
         power_per_climbermass   = 2.4*10**6/20000
-        power                   = power_per_climbermass*climbermass
+        power                   = power_per_climbermass*climbermass/efficiency
+        mprop_equivalent        = power/power_specific
+
         maxheight               = 100000000 #m
         steps                   = 51
         areostationary_height   = 17032000 #m
@@ -285,43 +289,25 @@ def Mass_conc(DV1,DV2,Isp,MGA,k) :
         m_totals                = []
         
         for height in height_steps:
-            
-            climbermass             = Mass_caps
-            time                    = 7*24*3600
-            power_specific          = 1002 #W/kg
-            efficiency              = 0.03*0.59*0.82
-            power_per_climbermass   = 2.4*10**6/20000
-            power                   = power_per_climbermass*climbermass/efficiency
-            mprop_equivalent        = power/power_specific
-            maxheight               = 100000000 #m
-            steps                   = 51
-            areostationary_height   = 17032000 #m
-            numcables               = 3
-            safety_factor           = 1
-            A_base                  = 0.0000105*safety_factor
-            height_steps            = np.linspace(areostationary_height+10,maxheight,steps)
-            m_cable                 = A_base*1400*areostationary_height
-            m_totals                = []
-            
-            for height in height_steps:
                 
-                taper_ratio             = exp(3389000*1400*3.71/(2*48600000000)*((3389000/height)**3-3*(3389000/height)+2))
-                m_cablesegment          = taper_ratio*A_base*1400*(maxheight/(steps-1))
-                m_cable                 += m_cablesegment
-                m_counterweight         = 1400*A_base*48600000000*exp((3389000**2*1400*3.71)/(2*48600000000*17032000**3)*((2*17032000**3+3389000**3)/3389000-(2*17032000**3+(height)**3)/(height)))/((3389000**2*(height))/17032000**3*(1-(17032000/(height))**3)*1400*3.71)
-                m_total                 = m_cable + m_counterweight + Mass_caps
-                m_totals.append(m_total)
-                
-            m_total = min(m_totals)*numcables
-            maxheight = height_steps[m_totals.index(min(m_totals))]
-            return m_total, mprop_equivalent
+            taper_ratio             = exp(3389000*1400*3.71/(2*48600000000)*((3389000/height)**3-3*(3389000/height)+2))
+            m_cablesegment          = taper_ratio*A_base*1400*(maxheight/(steps-1))
+            m_cable                 += m_cablesegment
+            m_counterweight         = 1400*A_base*48600000000*exp((3389000**2*1400*3.71)/(2*48600000000*17032000**3)*((2*17032000**3+3389000**3)/3389000-(2*17032000**3+(height)**3)/(height)))/((3389000**2*(height))/17032000**3*(1-(17032000/(height))**3)*1400*3.71)
+            m_total                 = m_cable + m_counterweight + Mass_caps
+            m_totals.append(m_total)
+            
+        m_total = min(m_totals)*numcables
+        maxheight = height_steps[m_totals.index(min(m_totals))]
+        return m_total, mprop_equivalent
         
-        if k == "SE" : 
+    if k == "SE" : 
         
-            m_total_se, mprop_equivalent = SpaceElevator()
-            mass_cons.append([m_total_se,mprop_equivalent])        
+        m_total_se, mprop_equivalent = SpaceElevator()
+        print(m_total_se, mprop_equivalent)
+        mass_cons.append([m_total_se,mprop_equivalent])        
  
     return mass_cons
 
 
-Mass_conc(2200,3200,410,"YES","SSTO")
+print(Mass_conc(2200,3200,410,"YES","SE"))
