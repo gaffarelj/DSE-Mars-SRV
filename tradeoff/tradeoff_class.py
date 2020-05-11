@@ -204,3 +204,10 @@ class sensitivity:
 		pool = mp.Pool(mp.cpu_count())
 		self.per = np.sum(pool.map(self.sens,range(self.n)),0)
 		self.per /= self.n
+	
+	def get_RMS(self):
+		self.RMS = np.zeros(len(self.tro.design_list))
+		for param in self.tro.param_list:
+			self.RMS += np.multiply(param.val_in-param.mu,param.val_in-param.mu)/(param.sd*param.sd)
+		
+
