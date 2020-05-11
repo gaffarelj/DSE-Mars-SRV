@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 import multiprocessing as mp
 
 class color:
@@ -31,8 +32,6 @@ class param:
 			self.Lv, self.Hv = self.mu-3*self.sd, self.mu+3*self.sd
 		else:
 			raise Exception("not valid boundary determination method")
-		if self.dir == "LB":
-			self.Hv, self.Lv = self.Lv, self.Hv
 
 
 
@@ -40,15 +39,20 @@ class param:
 		if (evalv <= self.Lv and self.dir == "HB") or (evalv >= self.Hv and self.dir == "LB") :
 			return 0
 		if (evalv >= self.Hv and self.dir == "HB") or (evalv <= self.Lv and self.dir == "LB") :
-
 			return 1
-		
+
+		if self.dir == "LB":
+			temHv, temLv = self.Lv, self.Hv
+		else:
+			temHv, temLv = self.Hv, self.Lv
+
 		if self.func == "LRTS":
-			return (evalv - self.Lv) / (self.Hv - self.Lv)
+			return (evalv - temLv) / (temHv - temLv)
 		elif self.func == "IRTS":
-			return (1 - exp(-(evalv - self.Lv) / self.p)) / (1 - exp(-(self.Hv - self.Lv) / self.p))
+			return (1 - np.exp(-(evalv - temLv) / self.p)) / (1 - np.exp(-(temHv - temLv) / self.p))
 		elif self.func == "DRTS":
-			return (1 - exp(-(self.Hv - evalv) / self.p)) / (1 - exp(-(self.Hv - self.Lv) / self.p))
+
+			return (1 - np.exp(-(temHv - evalv) / self.p)) / (1 - np.exp(-(temHv- temLv) / self.p))
 		else:
 			raise Exception("not valid scoring scheme")
 	
@@ -92,11 +96,11 @@ class tradeoff:
 				print()
 				print(param.name, ",\t scaled value:", end="\t", sep="")
 				for val in param.val_out:
-					print(val, end=",\t")
+					print(round(val,5), end=",\t")
 				print()
 			print("\t final value:", end="\t", sep="")
 			for val in self.total:
-				print(val, end=",\t")
+				print(round(val,5), end=",\t")
 			print()
 		if language == "latex":
 			if len(color_list)==0:
@@ -168,11 +172,11 @@ class sensitivity:
 
 	def addto_weights(self,variation):
 		self.to_weights = True
-		self.to_weights_var = variation
+		weight_list = np.array([param.weight for param in self.tro.param_list])
+		self.to_weights_var = variation*np.std(weight_list)
 
 	def sens(self,n):
-			tro_temp = tradeoff(self.tro.design_list.copy(),self.tro.param_list.copy())
-
+			tro_temp = copy.deepcopy(self.tro)
 			if self.to_p:
 				for param in tro_temp.param_list:
 					param.p = np.random.normal(param.p,self,self.to_p_var)
@@ -194,10 +198,9 @@ class sensitivity:
 			tro_temp.get_tradeoff()
 			ret = np.zeros(len(tro_temp.design_list))
 			ret[np.where(tro_temp.total == np.amax(tro_temp.total))] = 1
-			tro_temp.get_output()
 			return ret
 
 	def get_sens(self):
-		pool = mp.Pool(1)
+		pool = mp.Pool(mp.cpu_count())
 		self.per = np.sum(pool.map(self.sens,range(self.n)),0)
 		self.per /= self.n
