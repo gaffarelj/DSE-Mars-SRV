@@ -87,7 +87,7 @@ class tradeoff:
 			self.total += param.val_out*param.weight
 		
 	
-	def get_output(self,language = "python",color_list=[],width=8):
+	def get_output(self,language = "python",color_list=[],width=10):
 		if language == "python":
 			for param in self.param_list:
 				print(param.name, ",\t actual value:", end="\t", sep="")
@@ -96,26 +96,26 @@ class tradeoff:
 				print()
 				print(param.name, ",\t scaled value:", end="\t", sep="")
 				for val in param.val_out:
-					print(round(val,5), end=",\t")
+					print(round(val,3), end=",\t")
 				print()
 			print("\t final value:", end="\t", sep="")
 			for val in self.total:
-				print(round(val,5), end=",\t")
+				print(round(val,3), end=",\t")
 			print()
 		if language == "latex":
 			if len(color_list)==0:
 				raise Exception("color_list is mandatory for Latex output")
 			for param in self.param_list:
 				param.set_colors(color_list)
-			print("\\begin{table}[]")
+			print("\\begin{table}[H]")
 			print("\caption{}")
-			print("\label{tab:my-table}")
+			print("\label{tab:tradeoff-x}")
 			print("\\begin{adjustbox}{width=\linewidth, center}")
 
 			output = "\\begin{tabular}{|c|l|"
 			for param in self.param_list:
-				output += "p{" + str(width * param.weight) + "cm}|"
-				output += "p{" + str(width * param.weight) + "cm}|"
+				output += "p{" + str(round(width * param.weight, 3)) + "cm}|"
+				output += "p{" + str(round(width * param.weight, 3)) + "cm}|"
 			output +="c|}\hline"
 			print(output)
 
@@ -129,7 +129,7 @@ class tradeoff:
 				if param.dir == "HB":
 					output += " High Best}}"
 				else:
-					output += " High Best}}"
+					output += " Low Best}}"
 				
 			print(str(output) + "& \multirow{-2}{*}{\\textbf{Total}} \\\\ \hline")
 			for i in range(len(self.design_list)):
