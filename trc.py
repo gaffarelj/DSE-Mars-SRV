@@ -22,7 +22,7 @@ d2 = tc.design(name="Multi stage",sourcelist=d2_in_list)
 d3_in_list = [dmb.Mass_conc(5023.57,0,410,"SPACEPLANE")[0][0],dmb.Mass_conc(5023.57,0,410,"SPACEPLANE")[0][1],4,c3.comp(),1/42.1071,1/74.4518]
 d3 = tc.design(name="Spaceplane",sourcelist=d3_in_list)
 
-d4_in_list = [dmb.Mass_conc(0,,0,410,"SE")[0][0],dmb.Mass_conc(0,0,410,"SE")[0][1],4,c4.comp(),1/82.3690,1/280.0512]
+d4_in_list = [dmb.Mass_conc(0,0,410,"SE")[0][0],dmb.Mass_conc(0,0,410,"SE")[0][1],4,c4.comp(),1/82.3690,1/280.0512]
 d4 = tc.design(name="Space Elevator",sourcelist=d1_in_list)
 
 color1 = tc.color("FFFC9E","yellow")
