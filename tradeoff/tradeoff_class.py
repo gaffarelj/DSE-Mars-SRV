@@ -81,7 +81,7 @@ class tradeoff:
 			output = "\multicolumn{2}{|c|}{\\textbf{Criteria}}"
 			for param in param_list:
 				output += "& \multicolumn{2}{c|}{}"
-			print(str(output) + "\\\\")
+			print(str(output) + "&\\\\")
 			output = "\cline{1-2}\multicolumn{2}{|l|}{\\textbf{Design Option}}"
 			for param in param_list:
 				output += "& \multicolumn{2}{c|}{\multirow{-2}{*}{" + param.name + "}}"
