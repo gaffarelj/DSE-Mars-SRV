@@ -8,7 +8,7 @@ class color:
 		self.name = name
 	
 class param:
-	def __init__(self, name, weight, func="LRTS",  direc="HB",  p=1,Limitype ="minmax"):
+	def __init__(self, name, weight, func="LRTS",  direc="HB",  p=1,Limitype ="minmax",Limit_val=2):
 		self.name = name
 		self.func = func
 		self.dir = direc
@@ -17,6 +17,7 @@ class param:
 		self.Ltype = Limitype
 		self.val_in = []
 		self.val_out = []
+		self.l_val = Limit_val
 	
 	def stat(self):
 		self.sd = np.std(self.val_in)
@@ -24,12 +25,14 @@ class param:
 
 		if self.Ltype == "minmax":
 			self.Lv, self.Hv = min(self.val_in), max(self.val_in)
-		elif self.Ltype == "1SD":
-			self.Lv, self.Hv = self.mu-self.sd, self.mu+self.sd
-		elif self.Ltype == "2SD":
-			self.Lv, self.Hv = self.mu-2*self.sd, self.mu+2*self.sd
-		elif self.Ltype == "3SD":
-			self.Lv, self.Hv = self.mu-3*self.sd, self.mu+3*self.sd
+		elif self.Ltype == "SD":
+			if type(self.l_val) != int and type(self.l_val) != float:
+				raise Exception("for SD Limits Limit_val must be of type float or int")
+			self.Lv, self.Hv = self.mu-self.l_val*self.sd, self.mu+l_val*self.sd
+		elif self.Ltype == "fixed":
+			if len(self.l_val) != 2:
+				raise Exception("for fixed Limits Limit_val must contain two values")
+			self.Lv, self.Hv = self.l_val[0], self.l_val[1]
 		else:
 			raise Exception("not valid boundary determination method")
 
