@@ -108,9 +108,10 @@ class tradeoff:
 			for param in self.param_list:
 				param.set_colors(color_list)
 			print("\\begin{table}[H]")
+			print("\centering")
 			print("\caption{}")
 			print("\label{tab:tradeoff-x}")
-			print("\\begin{adjustbox}{width=\linewidth, center}")
+			print("\\begin{adjustbox}{width=0.85\paperheight, angle=-90}")
 
 			output = "\\begin{tabular}{|c|l|"
 			for param in self.param_list:
