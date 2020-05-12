@@ -3,6 +3,9 @@ import numpy as np
 
 def Mass_conc(DV1, DV2, Isp, k, MGA="YES", N_crew=6, N_days=4):
 	conv = 0.4535
+
+	m = dict()
+	Fvac = None
 	
 	MGA_data = {
 		"EPS": 0.117, 
@@ -17,7 +20,6 @@ def Mass_conc(DV1, DV2, Isp, k, MGA="YES", N_crew=6, N_days=4):
 	if MGA.lower() != "yes":
 		MGA_data = dict.fromkeys(MGA_data, 0)
 
-	m = dict()
 	
 	m["fuel_cells"] = (3030 * N_crew / 7) * conv
 	m["bat"] = 216
@@ -47,86 +49,71 @@ def Mass_conc(DV1, DV2, Isp, k, MGA="YES", N_crew=6, N_days=4):
 	DV2 = DV2 * f
 
 	def m_frac_prop(DeltaV, Ve, m_tot):
-		m_frac = np.exp(DeltaV / Ve)    
-		m_prop = m_frac * m_tot / (1 + m_frac)
-		return m_frac, m_prop
+		m["frac"] = np.exp(DeltaV / Ve)    
+		m["prop"] = m["frac"] * m_tot / (1 + m["frac"])
 
 	def m_propuls(TWR, m_tot):
 		Fvac = TWR * 3.7 * m_tot
 		m["RCS"] = 0.0126 * m_tot
 		m["eng"] = 0.00514 * Fvac ** 0.92068
 		m["thr_str"] = 1.949 * 10 ** (-3) * (Fvac / 4.448) ** 1.0687 * 0.453
-		return Fvac
-	
-	def ClassIest(DeltaV, Ve, m_tot, TWR, m_upper, m_tot2, F_o=3.8, MEOP=3e6):
-		klg = 0.033
-		m_t = m["caps"]
-		m["frac"], m["prop"] = m_frac_prop(DeltaV, Ve, m_tot)
-		m_stage = 0.001148 * m_upper
-	
-		rho_f = 423
-		rho_ox = 1140
+
+	def m_tank(rho_f=423, rho_ox=1140, F_o=3.8, MEOP=3e6):
 		Mf = m["prop"] / (1 + 1 / F_o)
 		Vf = Mf / rho_f
 		Mox = m["prop"] - Mf
 		Vox = Mox / rho_ox
-
-		m_tank = (Vf + Vox) * MEOP / (6.43 * 10 ** 4) #3MPa assumed MEOP, based on a reference
-		
-		Fvac = m_propuls(TWR, m_tot) if m_stage == 0 else m_propuls(TWR, m_tot2)
-		M_dry = m["eng"] + m["thr_str"] + m_tank + m["caps"]
-		Mlg = klg * M_dry * 1.15
-
-		M_total = m["prop"] + m_tank + m["thr_str"] + m["eng"] + m_stage + m["RCS"] + Mlg
-		M_total += m_t if m_stage == 0 else m_tot
-	
-		return m["frac"], m["prop"], m["RCS"], Fvac, m["eng"], m_tank, m["thr_str"], m_stage, M_total, Mlg
-	
-	def Class_I_spaceplane_est(DeltaV, Ve, m_tot, TWR, m_wing, F_o=3.8, MEOP=3e6):
-		m_t = m["caps"]
-		m["frac"], m["prop"] = m_frac_prop(DeltaV, Ve, m_tot)
-		Fvac = m_propuls(TWR, m_tot)
-		m["landinggear"] = 0.010784 * ((m_tot - m["prop"] - m["RCS"]) * 0.453) ** 1.0861 * 0.453
-		rho_f = 423
-		rho_ox = 1140
-		Mf = m["prop"] / (1 + 1 / F_o) #3.8 is F/o ratio
-		Vf = Mf / rho_f
-		Mox = m["prop"] - Mf
-		Vox = Mox / rho_ox
-
-		Fvac = m_propuls(TWR, m_tot)
-	
 		m["tank"] = (Vf + Vox) * MEOP / (6.43 * 10 ** 4)
 
-		M_dry = m_t + m["tank"] + m["eng"] + m["thr_str"] + m_wing + m["landinggear"]
-		M_total = m_t + m["prop"] + m["tank"] + m["thr_str"] + m["eng"] + m["RCS"] + m_wing + m["landinggear"]
+	
+	def ClassIest(DeltaV, Ve, m_tot, TWR, m_upper=0, m_tot2=0):
+		klg = 0.033
+		m_frac_prop(DeltaV, Ve, m_tot)
+		m["stage"] = 0.001148 * m_upper
+	
+		m_tank()
+
+		m_propuls(TWR, m_tot) if m["stage"] == 0 else m_propuls(TWR, m_tot2)
+
+		m["dry"] = m["eng"] + m["thr_str"] + m["tank"] + m["caps"]
+		m["lg"] = klg * m["dry"] * 1.15
+
+		m["total"] = m["prop"] + m["tank"] + m["thr_str"] + m["eng"] + m["stage"] + m["RCS"] + m["lg"]
+		m["total"] += m["caps"] if m["stage"] == 0 else m_tot
+	
+		return m["frac"], m["prop"], m["RCS"], Fvac, m["eng"], m["tank"], m["thr_str"], m["stage"], m["total"], m["lg"]
+	
+	def Class_I_spaceplane_est(DeltaV, Ve, m_tot, TWR, m_wing, F_o=3.8, MEOP=3e6):
+		m_frac_prop(DeltaV, Ve, m_tot)
+		m_propuls(TWR, m_tot)
+		m["landinggear"] = 0.010784 * ((m_tot - m["prop"] - m["RCS"]) * 0.453) ** 1.0861 * 0.453
+		
+		m_tank()
+
+		m_propuls(TWR, m_tot)
+
+		M_dry = m["caps"] + m["tank"] + m["eng"] + m["thr_str"] + m_wing + m["landinggear"]
+		M_total = m["caps"] + m["prop"] + m["tank"] + m["thr_str"] + m["eng"] + m["RCS"] + m_wing + m["landinggear"]
 	
 
 		return m["frac"], m["prop"], m["RCS"], Fvac, m["eng"], m["tank"], m["thr_str"], M_total, M_dry, m_wing
 	
 
 	if k == "SSTO" :
-		m_tot2 = 0 
-		m_upper = 0 
 		DeltaV = (DV1 + DV2) * f
-		m_tot = m["caps"]
 		
-		m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, m_stage, M_total, Mlg = ClassIest(DeltaV, Ve, m_tot, TWR, m_upper, m_tot2)
-			   
-		m_tot = M_total 
-		
-		m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, m_stage, M_total_new, Mlg = ClassIest(DeltaV, Ve, m_tot, TWR, m_upper, m_tot2)
-		
-		while M_total_new > M_total + 0.001 : 
-			M_total = M_total_new 
-			
-			m_tot = M_total
-			
-			m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, m_stage, M_total_new, Mlg = ClassIest(DeltaV, Ve, m_tot, TWR, m_upper, m_tot2)
+		ClassIest(DeltaV, Ve, m["caps"], TWR)
+		m_old = m["total"]
+		m_new = m_old + 1
+
+		while m_new > m_old + 0.001 : 
+			m_old = m_new
+			ClassIest(DeltaV, Ve, m_old, TWR)
+			m_new = m["total"]
 			 
-		M_dry = m_eng + m_thr_str + m_tank + m["caps"] + Mlg
+		m["dry"] = m["eng"] + m["thr_str"] + m["tank"] + m["caps"] + m["lg"]
 		
-		return [M_dry, m_prop]
+		return m
 		
 		
 	if k == "2_stage" : 
@@ -142,7 +129,7 @@ def Mass_conc(DV1, DV2, Isp, k, MGA="YES", N_crew=6, N_days=4):
 		m_tot = M_total1 
 		m_tot2 = 0 
 	
-		m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, m_stage, M_total, Mlg = ClassIest(DV2, Ve, m_tot, TWR, m_upper, m_tot2)
+		m_frac, m_prop, m_RCS, Fvac, m_eng, _t, m_thr_str, m_stage, M_total, Mlg = ClassIest(DV2, Ve, m_tot, TWR, m_upper, m_tot2)
 	
 		m_tot = M_total1
 		m_upper = 0 
@@ -153,7 +140,7 @@ def Mass_conc(DV1, DV2, Isp, k, MGA="YES", N_crew=6, N_days=4):
 		m_upper = M_total1 
 		m_tot = M_total1 
 	
-		m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, m_stage, M_total_new, Mlg = ClassIest(DV2, Ve, m_tot, TWR, m_upper, m_tot2)
+		m_frac, m_prop, m_RCS, Fvac, m_eng, _t, m_thr_str, m_stage, M_total_new, Mlg = ClassIest(DV2, Ve, m_tot, TWR, m_upper, m_tot2)
 			  
 		while M_total_new > M_total + 0.001 : 
 			M_total = M_total_new 
@@ -166,9 +153,9 @@ def Mass_conc(DV1, DV2, Isp, k, MGA="YES", N_crew=6, N_days=4):
 			m_upper = M_total1 
 			m_tot = M_total1 
 			
-			m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, m_stage, M_total_new, Mlg = ClassIest(DV2, Ve, m_tot, TWR, m_upper, m_tot2)
+			m_frac, m_prop, m_RCS, Fvac, m_eng, _t, m_thr_str, m_stage, M_total_new, Mlg = ClassIest(DV2, Ve, m_tot, TWR, m_upper, m_tot2)
 			   
-		M_dry = m_eng + m_thr_str + m_tank 
+		M_dry = m_eng + m_thr_str + m["tank"]
 	
 		M_dry1 = m_eng1 + m_thr_str1 + m_tank1 + Mlg1
 	
@@ -179,15 +166,13 @@ def Mass_conc(DV1, DV2, Isp, k, MGA="YES", N_crew=6, N_days=4):
 		return [M_dry_tot, m_prop_tot]
 	
 	def takeoff_wing_sizing_shuttle_like(M_takeoff, takeoff_mach, takeoff_cl):
-		
-		rho = 0.02 #Density at surface on Mars
-		vel = 240 * takeoff_mach #takeoff speed as function of speed of sound (240) in m/s
+		rho = 0.02					# Air density at surface on Mars
+		vel = 240 * takeoff_mach	# Takeoff speed as function of speed of sound (240) in m/s
 		S = M_takeoff * 3.7 / (0.5 * rho * vel ** 2 * takeoff_cl)
-		b = 30.5 / 874.5 * 8 * S #Adjusted manually from spaceshuttle planform
-		taper = 0.2 #Roughly, from spaceshuttle planform again
-		c_root = S / (0.5 * b) * (1 / (1 + taper))
+		b = 30.5 / 874.5 * 8 * S	# Adjusted manually from spaceshuttle planform
+		taper = 0.2					# Roughly from spaceshuttle planform
+		c_root = S / (b/2) * (1 / (1 + taper))
 		c_tip = taper * c_root
-		
 		return S, b, c_root, c_tip
 	
 	
@@ -212,7 +197,7 @@ def Mass_conc(DV1, DV2, Isp, k, MGA="YES", N_crew=6, N_days=4):
 		m_tot = m["caps"]
 		m_wing = 1000
 	
-		m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, M_total, M_dry, m_wing = Class_I_spaceplane_est(DeltaV, Ve, m_tot, TWR, m_wing)
+		m_frac, m_prop, m_RCS, Fvac, m_eng, _t, m_thr_str, M_total, M_dry, m_wing = Class_I_spaceplane_est(DeltaV, Ve, m_tot, TWR, m_wing)
 	
 		S, b, c_root, c_tip = takeoff_wing_sizing_shuttle_like(M_dry * 1.1, 0.8, 1.5)
 	
@@ -220,7 +205,7 @@ def Mass_conc(DV1, DV2, Isp, k, MGA="YES", N_crew=6, N_days=4):
 	
 		m_tot = M_total
 	
-		m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, M_total_new, M_dry, m_wing = Class_I_spaceplane_est(DeltaV, Ve, m_tot, TWR, m_wing)
+		m_frac, m_prop, m_RCS, Fvac, m_eng, _t, m_thr_str, M_total_new, M_dry, m_wing = Class_I_spaceplane_est(DeltaV, Ve, m_tot, TWR, m_wing)
 	
 		while M_total_new > M_total + 0.001:
 			M_total = M_total_new
@@ -230,7 +215,7 @@ def Mass_conc(DV1, DV2, Isp, k, MGA="YES", N_crew=6, N_days=4):
 	
 			m_tot = M_total
 	
-			m_frac, m_prop, m_RCS, Fvac, m_eng, m_tank, m_thr_str, M_total_new, M_dry, m_wing = Class_I_spaceplane_est(DeltaV, Ve, m_tot, TWR, m_wing)
+			m_frac, m_prop, m_RCS, Fvac, m_eng, _t, m_thr_str, M_total_new, M_dry, m_wing = Class_I_spaceplane_est(DeltaV, Ve, m_tot, TWR, m_wing)
 			
 		return [M_dry, m_prop]
 	
