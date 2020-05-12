@@ -63,7 +63,7 @@ def Mass_conc(DV1, DV2, Isp, concept, MGA="YES", N_crew=6, N_days=4):
 		Vox = Mox / rho_ox
 		m["tank"] = (Vf + Vox) * MEOP / (6.43 * 10 ** 4)
 	
-	def ClassIest(DeltaV, Ve, m_tot, TWR, m_upper=0, m_tot2=0):
+	def ClassIest(DeltaV, m_tot, m_upper=0, m_tot2=0):
 		klg = 0.033
 		m_frac_prop(DeltaV, m_tot)
 		m["stage"] = 0.001148 * m_upper
@@ -80,7 +80,7 @@ def Mass_conc(DV1, DV2, Isp, concept, MGA="YES", N_crew=6, N_days=4):
 	
 		return m["frac"], m["prop"], m["RCS"], Fvac, m["eng"], m["tank"], m["thr_str"], m["stage"], m["total"], m["lg"]
 	
-	def Class_I_spaceplane_est(DeltaV, Ve, m_tot, TWR, F_o=3.8, MEOP=3e6):
+	def Class_I_spaceplane_est(DeltaV, m_tot, F_o=3.8, MEOP=3e6):
 		m_frac_prop(DeltaV, m_tot)
 		m_propuls(m_tot)
 		m["landinggear"] = 0.010784 * ((m_tot - m["prop"] - m["RCS"]) * 0.453) ** 1.0861 * 0.453
@@ -111,78 +111,55 @@ def Mass_conc(DV1, DV2, Isp, concept, MGA="YES", N_crew=6, N_days=4):
 		c_root = c_root / 0.3048
 		m["wing"] = 1.498 * S_exp ** 1.176 * 0.4536 * 0.5
 	
-	if concept.lower() == "ssto" :
+	if concept.lower() == "ssto":
 		DeltaV = DV1 + DV2
 		
-		ClassIest(DeltaV, Ve, m["caps"], TWR)
+		ClassIest(DeltaV, m["caps"])
 		m_old = m["total"]
 		m_new = m_old + 1
 
 		while m_new > m_old + 0.001 : 
 			m_old = m_new
-			ClassIest(DeltaV, Ve, m_old, TWR)
+			ClassIest(DeltaV, m_old)
 			m_new = m["total"]
 			 
 		m["dry"] = m["eng"] + m["thr_str"] + m["tank"] + m["caps"] + m["lg"]
 		
 		return m
 		
-	elif concept.lower() == "2_stage" : 
-		m_upper = 0 
-		m_tot = m["caps"]
-		m_tot2 = 0
-		
-		# 1st stage calculation
-		
-		m_frac1, m_prop1, m_RCS1, Fvac1, m_eng1, m_tank1, m_thr_str1, m_stage1, M_total1, Mlg1 = ClassIest(DV1, Ve, m_tot, TWR, m_upper, m_tot2)
-		
-		m_upper = M_total1 
-		m_tot = M_total1 
-		m_tot2 = 0 
-	
-		m_frac, m_prop, m_RCS, Fvac, m_eng, _t, m_thr_str, m_stage, M_total, Mlg = ClassIest(DV2, Ve, m_tot, TWR, m_upper, m_tot2)
-	
-		m_tot = M_total1
-		m_upper = 0 
-		m_tot2 = M_total 
-	
-		m_frac1, m_prop1, m_RCS1, Fvac1, m_eng1, m_tank1, m_thr_str1, m_stage1, M_total1, Mlg1 = ClassIest(DV1, Ve, m_tot, TWR, m_upper, m_tot2)
-		
-		m_upper = M_total1 
-		m_tot = M_total1 
-	
-		m_frac, m_prop, m_RCS, Fvac, m_eng, _t, m_thr_str, m_stage, M_total_new, Mlg = ClassIest(DV2, Ve, m_tot, TWR, m_upper, m_tot2)
-			  
-		while M_total_new > M_total + 0.001 : 
-			M_total = M_total_new 
-			m_tot = M_total1 
-			m_tot2 = M_total_new 
-			m_upper = 0 
+	elif concept.lower() == "2_stage":
+		# 1st stage
+		ClassIest(DV1, m["caps"])
+		m_stage1 = m["total"]
+		# 2nd stage
+		ClassIest(DV2, m["total"], m["total"])
+		m_old = m["total"]
+		m_new = m_old + 1
+		while m_new > m_old + 0.001 : 
+			m_old = m_new 
+			m_tot = m_stage1 
 			
-			m_frac1, m_prop1, m_RCS1, Fvac1, m_eng1, m_tank1, m_thr_str1, m_stage1, M_total1, Mlg1 = ClassIest(DV1, Ve, m_tot, TWR, m_upper, m_tot2)
-		
-			m_upper = M_total1 
-			m_tot = M_total1 
-			
-			m_frac, m_prop, m_RCS, Fvac, m_eng, _t, m_thr_str, m_stage, M_total_new, Mlg = ClassIest(DV2, Ve, m_tot, TWR, m_upper, m_tot2)
+			# 1st stage
+			ClassIest(DV1, m_tot, m_tot2=m_new)
+			m_stage1 = m["total"]
+			m_dry1 = m["eng"] + m["thr_str"] + m["tank"] + m["lg"]
+			m_prop1 = m["prop"]
+
+			# 2nd stage
+			ClassIest(DV2, m["total"], m_upper=m["total"], m_tot2=m_new)
+			m_new = m["total"]
 			   
-		M_dry = m_eng + m_thr_str + m["tank"]
-	
-		M_dry1 = m_eng1 + m_thr_str1 + m_tank1 + Mlg1
-	
-		M_dry_tot = M_dry1 + M_dry + m["caps"] + Mlg
+		m_dry = m["eng"] + m["thr_str"] + m["tank"]
+		m_dry_tot = m_dry1 + m_dry + m["caps"] + m["lg"]
+		m_prop_tot = m_prop1 + m["prop"]
 		
-		m_prop_tot = m_prop1 + m_prop
-		
-		return [M_dry_tot, m_prop_tot]
+		return [m_dry_tot, m_prop_tot]
 
 	elif concept.lower() == "spaceplane":
-		m_upper = 0
-		TWR = 1.5
 		DeltaV = DV1 + DV2
 		m["wing"] = 1000
 	
-		Class_I_spaceplane_est(DeltaV, Ve, m["caps"], TWR)
+		Class_I_spaceplane_est(DeltaV, m["caps"])
 		m_old = m["total"]
 		S, b, c_root, c_tip = takeoff_wing_sizing_shuttle_like(m["dry"] * 1.1)
 		AVID_wing_mass(m["dry"], b, S, c_root, 0.15)
@@ -194,7 +171,7 @@ def Mass_conc(DV1, DV2, Isp, concept, MGA="YES", N_crew=6, N_days=4):
 			S, b, c_root, c_tip = takeoff_wing_sizing_shuttle_like(m["dry"] * 1.1)
 			AVID_wing_mass(m["dry"], b, S, c_root, 0.15)
 	
-			Class_I_spaceplane_est(DeltaV, Ve, m["total"], TWR)
+			Class_I_spaceplane_est(DeltaV, m["total"])
 			m_new = m["total"]
 			
 		return m
@@ -218,13 +195,14 @@ def Mass_conc(DV1, DV2, Isp, concept, MGA="YES", N_crew=6, N_days=4):
 		m_cables = []
 		m_totals = []
 		m_counterweights = []
+		modulus = 48.6e9
 		
 		for height in height_steps:
-			taper_ratio = np.exp(3389e3 * 1400 * 3.71 / (2 * 48.6e9) * ((3389e3 / height) ** 3 - 3 * (3389e3 / height) + 2))
+			taper_ratio = np.exp(3389e3 * 1400 * 3.71 / (2 * modulus) * ((3389e3 / height) ** 3 - 3 * (3389e3 / height) + 2))
 			m_cablesegment = taper_ratio * A_base * 1400 * (maxheight / (steps - 1)) * numcables
 			m_cable += m_cablesegment
-			m_counterweight = 1400 * A_base * 48.6e9 * np.exp((3389e3 ** 2 * 1400 * 3.71) / (2 * 48.6e9 * areostationary_height ** 3) \
-				* ((2 * areostationary_height ** 3 + 3389000 ** 3) / 3389000 - (2 * 17032000 ** 3 + (height) ** 3) / (height))) / ((3389000 ** 2 \
+			m_counterweight = 1400 * A_base * modulus * np.exp((3389e3 ** 2 * 1400 * 3.71) / (2 * modulus * areostationary_height ** 3) 
+				* ((2 * areostationary_height ** 3 + 3389000 ** 3) / 3389000 - (2 * areostationary_height ** 3 + (height) ** 3) / (height))) / ((3389000 ** 2 
 				* (height)) / areostationary_height ** 3 * (1 - (areostationary_height / (height)) ** 3) * 1400 * 3.71)
 			m_total = m_cable + m_counterweight + m["caps"]
 			m_cables.append(m_cable)
@@ -236,7 +214,4 @@ def Mass_conc(DV1, DV2, Isp, concept, MGA="YES", N_crew=6, N_days=4):
 		m_cable = m_cables[m_totals.index(min(m_totals))]
 		return m_total, mprop_equivalent
 	
-	else:
-		raise Exception("Undefined concept name")
-
-	return mass_cons
+	raise Exception("Undefined concept name")

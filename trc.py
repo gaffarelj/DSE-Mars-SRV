@@ -17,7 +17,8 @@ d1_m = dmb.Mass_conc(5894.46, 0, Isp, "SSTO")
 d1_in_list = [d1_m["dry"], d1_m["prop"], 5, c1.comp(), 1/38.3, 1/140.1152]
 d1 = tc.design(name="Singe stage", sourcelist=d1_in_list)
 
-d2_in_list = [*dmb.Mass_conc(1730.17, 3951.455, Isp, "2_stage"), 5, c2.comp(), 1/19.8203, 1/86.7670]
+d2_m = dmb.Mass_conc(1730.17, 3951.455, Isp, "2_stage")
+d2_in_list = [d2_m[0], d2_m[1], 5, c2.comp(), 1/19.8203, 1/86.7670]
 d2 = tc.design(name="Multi stage", sourcelist=d2_in_list)
 
 d3_m = dmb.Mass_conc(5023.57, 0, Isp, "SPACEPLANE")
