@@ -13,27 +13,18 @@ def Mass_conc(DV1,DV2,Isp,k,MGA="YES") :
 	N_days = 4
 	conv   = 0.4535
 	
-	if MGA == "YES":
-	
-		MGAEPS          = 0.117
-		MGA_data_hand   = 0.25 
-		MGATPS          = 0.25
-		MGA_com         = 0.461
-		MGA_GNC         = 0.215
-		MGA_cab         = 0.375
-		MGA_ls          = 0.225
-		MGA_se_power    = 0.5
-	
-	else :
-	
-		MGAEPS  = 0
-		MGA_data_hand   = 0
-		MGATPS  = 0
-		MGA_com = 0
-		MGA_GNC = 0
-		MGA_cab = 0
-		MGA_ls  = 0
-		MGA_se_power    = 0
+	MGA_data = {
+		"EPS": 0.117,
+		"data_hand": 0.25,
+		"TPS": 0.25,
+		"com": 0.461,
+		"GNC": 0.215,
+		"cab": 0.375,
+		"ls": 0.225,
+		"se_power": 0.5
+		}
+	if MGA.lower() != "yes":
+		MGA_data = dict.fromkeys(MGA_data, 0)
 	
 	m_fuel_cells   = (3030*N_crew/7)*conv
 	m_bat          = 216
@@ -46,7 +37,7 @@ def Mass_conc(DV1,DV2,Isp,k,MGA="YES") :
 	m_data_hand    = (302 + 828*N_days/7 + 1010*N_crew/7)*conv 
 	m_GNC          = (242 + 108*N_days/7 + 617*N_crew/7)*conv 
 	
-	m_av           = m_GNC*(1+MGA_GNC) + m_data_hand*(1+MGA_data_hand) + m_Com*(1+MGA_com)
+	m_av           = m_GNC*(1+MGA_data["GNC"]) + m_data_hand*(1+MGA_data["data_hand"]) + m_Com*(1+MGA_data["com"])
 	
 	M_TPS          = 2500
 	
@@ -61,7 +52,7 @@ def Mass_conc(DV1,DV2,Isp,k,MGA="YES") :
 	f         = 1
 	Ve        = Isp*g
 	TWR       = 1.5
-	Mass_caps = m_EPS*(1+MGAEPS) + m_Life_support*(1+MGA_ls) + m_av + m_cabin*(1+MGA_cab) + m_pl + m_payl_cont + M_TPS*(1+MGATPS)
+	Mass_caps = m_EPS*(1+MGA_data["EPS"]) + m_Life_support*(1+MGA_data["ls"]) + m_av + m_cabin*(1+MGA_data["cab"]) + m_pl + m_payl_cont + M_TPS*(1+MGA_data["TPS"])
 	DV1       = DV1*f
 	DV2       = DV2*f
 	
@@ -273,7 +264,7 @@ def Mass_conc(DV1,DV2,Isp,k,MGA="YES") :
 		power_specific          = 1002 #W/kg
 		efficiency              = 0.03*0.59*0.82
 		power_per_climbermass   = 2.4*10**6/20000
-		power                   = power_per_climbermass*climbermass/efficiency*(1+MGA_se_power)
+		power                   = power_per_climbermass*climbermass/efficiency*(1+MGA_data["se_power"])
 		mprop_equivalent        = power/power_specific
 
 		maxheight               = 100000000 #m
