@@ -5,12 +5,12 @@ from complexity import ms as c2
 from complexity import spaceplane as c3
 from complexity import elevator as c4
 
-dmass = tc.param(name="Dry Mass", weight=0.10963, direc="LB", Limitype="minmax")
-prmass = tc.param(name="Propellant Mass", weight=0.24875, direc="LB", Limitype="minmax")
+dmass = tc.param(name="Dry Mass", weight=0.10963, direc="LB", Limitype="SD",Limit_val=1.5)
+prmass = tc.param(name="Propellant Mass", weight=0.24875, direc="LB", Limitype="SD",Limit_val=1.5)
 trl = tc.param(name="TRL", weight=0.0525)
-comp = tc.param(name="Complexity", weight=0.28913, direc="LB", func="DRTS", Limitype="minmax")
-lov = tc.param(name="LOV Risk", weight=0.285, direc="LB", func="IRTS", Limitype="minmax")
-lom = tc.param(name="LOM Risk", weight=0.015, direc="LB", func="IRTS", Limitype="minmax")
+comp = tc.param(name="Complexity", weight=0.28913, direc="LB", func="IRTS", Limitype="SD",Limit_val=1.5)
+lov = tc.param(name="LOV Risk", weight=0.285, direc="LB", func="IRTS", Limitype="SD",Limit_val=1.2)
+lom = tc.param(name="LOM Risk", weight=0.015, direc="LB", func="IRTS", Limitype="SD",Limit_val=1.2)
 
 Isp = 410
 d1_m = dmb.Mass_conc(5894.46, 0, Isp, "SSTO")
@@ -32,14 +32,15 @@ if not ([d1_in_list, d2_in_list, d3_in_list, d4_in_list] == [[32270.711046302436
 
 #tradeoff =tc.tradeoff(design_list = [d1, d2, d3], param_list= [dmass, prmass, trl, comp, lov, lom])
 
-#tradeoff.get_tradeoff()
-#colors = [tc.color("EF5350", "red"), tc.color("FB8C00", "orange"), tc.color("FFEB3B", "yellow"), tc.color("8BC34A", "green"), tc.color("00BCD4", "blue")]
+tradeoff.get_tradeoff()
+colors = [tc.color("EF5350", "red"), tc.color("FB8C00", "orange"), tc.color("FFEB3B", "yellow"), tc.color("8BC34A", "green"), tc.color("00BCD4", "blue")]
+tradeoff.get_output()
 #tradeoff.get_output(language="latex", color_list=colors, width=15)
-"""
-sens = tc.sensitivity(tradeoff, 10000)
-sens.addto_technical(0.1)
-sens.addto_weights(0.1)
+
+sens = tc.sensitivity(tradeoff, 5000000)
+sens.addto_technical(0.25)
+sens.addto_weights(0.25)
 sens.get_RMS()
 sens.get_sens()
 print(sens.per)
-print(sens.RMS)"""
+print(sens.RMS)
