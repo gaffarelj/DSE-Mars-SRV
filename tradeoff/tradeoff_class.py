@@ -87,7 +87,7 @@ class tradeoff:
 			self.total += param.val_out*param.weight
 		
 	
-	def get_output(self,language = "python",color_list=[],width=10):
+	def get_output(self,language = "python",color_list=[],width=10,r=3):
 		if language == "python":
 			for param in self.param_list:
 				print(param.name, ",\t actual value:", end="\t", sep="")
@@ -96,7 +96,7 @@ class tradeoff:
 				print()
 				print(param.name, ",\t scaled value:", end="\t", sep="")
 				for val in param.val_out:
-					print(round(val,3), end=",\t")
+					print(round(val, r), end=",\t")
 				print()
 			print("\t final value:", end="\t", sep="")
 			for val in self.total:
@@ -114,8 +114,8 @@ class tradeoff:
 
 			output = "\\begin{tabular}{|c|l|"
 			for param in self.param_list:
-				output += "p{" + str(round(width * param.weight, 3)) + "cm}|"
-				output += "p{" + str(round(width * param.weight, 3)) + "cm}|"
+				output += "p{" + str(round(width * param.weight, r)) + "cm}|"
+				output += "p{" + str(round(width * param.weight, r)) + "cm}|"
 			output +="c|}\hline"
 			print(output)
 
@@ -125,7 +125,7 @@ class tradeoff:
 			print(str(output) + "&\\\\ \cline{1-2}")
 			output = "\multicolumn{2}{|l|}{\\textbf{Design Option}}"
 			for param in self.param_list:
-				output += "& \multicolumn{2}{c|}{\\textit{("+ str(round(param.Lv,2)) + " / " + str(round(param.Hv,2)) + ")," 
+				output += "& \multicolumn{2}{c|}{\\textit{("+ str(round(param.Lv, r)) + " / " + str(round(param.Hv, r)) + ")," 
 				if param.dir == "HB":
 					output += " High Best}}"
 				else:
@@ -148,8 +148,8 @@ class tradeoff:
 				print(str(output) + "& \\\\")
 				output = "\multicolumn{2}{|c|}{\multirow{-3}{*}{" + str(design.name) + "}}"
 				for param in self.param_list:
-					output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor[HTML]{" + str(param.color[i].HTML) + "}" + str(round(param.val_in[i])) + " / " + str(round(param.val_out[i],5)) + "}}"
-				print(str(output) + " & \multirow{-3}{*}{" + str(round(self.total[i],5)) + "} \\\\ \hline")
+					output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor[HTML]{" + str(param.color[i].HTML) + "}" + str(round(param.val_in[i], r)) + " / " + str(round(param.val_out[i], r)) + "}}"
+				print(str(output) + " & \multirow{-3}{*}{" + str(round(self.total[i], r)) + "} \\\\ \hline")
 			print("\end{tabular}")
 			print("\end{adjustbox}")
 			print("\end{table}")
