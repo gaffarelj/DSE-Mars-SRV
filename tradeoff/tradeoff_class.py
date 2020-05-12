@@ -114,8 +114,9 @@ class tradeoff:
 
 			output = "\\begin{tabular}{|c|l|"
 			for param in self.param_list:
-				output += "p{" + str(round(width * param.weight, r)) + "cm}|"
-				output += "p{" + str(round(width * param.weight, r)) + "cm}|"
+				w = width * param.weight if param.weight > 0.15 else width * 0.15
+				output += "p{" + str(round(w, r)) + "cm}|"
+				output += "p{" + str(round(w, r)) + "cm}|"
 			output +="c|}\hline"
 			print(output)
 

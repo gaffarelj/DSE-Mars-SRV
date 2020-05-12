@@ -38,7 +38,7 @@ col2 = tc.color("FB8C00", "orange")
 col3 = tc.color("FFEB3B", "yellow")
 col4 = tc.color("8BC34A", "green")
 col5 = tc.color("00BCD4", "blue")
-tradeoff.get_output(language="latex", color_list=[col1, col2, col3, col4, col5])
+tradeoff.get_output(language="latex", color_list=[col1, col2, col3, col4, col5], width=15)
 """
 sens = tc.sensitivity(tradeoff, 10000)
 sens.addto_technical(0.1)
