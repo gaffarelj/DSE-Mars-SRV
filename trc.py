@@ -1,5 +1,5 @@
 from tradeoff import tradeoff_class as tc
-import Detailed_Mass_Budget as dmb
+from mass import Detailed_Mass_Budget as dmb
 from complexity import ssto as c1
 from complexity import ms as c2
 from complexity import spaceplane as c3
