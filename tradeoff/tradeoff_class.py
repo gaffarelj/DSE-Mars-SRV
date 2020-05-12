@@ -122,8 +122,8 @@ class tradeoff:
 			output = "\\begin{tabular}{|c|l|"
 			for param in self.param_list:
 				w = width * param.weight if param.weight > 0.15 else width * 0.15
-				output += "p{" + str(round(w, r)) + "cm}|"
-				output += "p{" + str(round(w, r)) + "cm}|"
+				output += "p{" + str(round(w, 3)) + "cm}|"
+				output += "p{" + str(round(w, 3)) + "cm}|"
 			output +="c|}\hline"
 			print(output)
 			
@@ -139,7 +139,7 @@ class tradeoff:
 
 			output = "\multicolumn{2}{|l|}{\multirow{-2}{*}{}}"
 			for param in self.param_list:
-				output += "& \multicolumn{2}{c|}{\\textit{("+ str(round(param.Lv, param.r)) + " / " + str(round(param.Hv, param.r)) + "),}}"
+				output += "& \multicolumn{2}{c|}{\\textit{$("+ str(round(param.Lv, param.r)) + " / " + str(round(param.Hv, param.r)) + ")$}}"
 			print(str(output) + "& \multirow{-4}{*}{} \\\\")
 				
 			output = "\multicolumn{2}{|l|}{\multirow{-2}{*}{\\textbf{Design Option}}}"
@@ -149,7 +149,7 @@ class tradeoff:
 					output += " High Best"
 				else:
 					output += " Low Best"
-				output += "}}"
+				output += ",$\sigma="+str(round(param.sd,param.r)) + "$}}"
 
 			print(str(output) + "& \multirow{-4}{*}{\\textbf{Total}} \\\\ \hline")
 			for i in range(len(self.design_list)):
@@ -171,8 +171,8 @@ class tradeoff:
 
 				output = "\multicolumn{2}{|c|}{\multirow{-3}{*}{" + str(design.name) + "}}"
 				for param in self.param_list:
-					output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor[HTML]{" + str(param.color[i].HTML) + "}" + str(round(param.val_in[i], param.r)) + " / " + str(round(param.val_out[i], 3)) + "}}"
-				print(str(output) + " & \multirow{-3}{*}{" + str(round(self.total[i], 3)) + "} \\\\ \hline")
+					output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor[HTML]{" + str(param.color[i].HTML) + "}$" + str(round(param.val_in[i], param.r)) + " / " + str(round(param.val_out[i], 3)) + "$}}"
+				print(str(output) + " & \multirow{-3}{*}{$" + str(round(self.total[i], 3)) + "$} \\\\ \hline")
 
 			print("\end{tabular}")
 			print("\end{adjustbox}")
