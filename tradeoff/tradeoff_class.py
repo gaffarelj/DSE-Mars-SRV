@@ -8,7 +8,7 @@ class color:
 		self.name = name
 	
 class param:
-	def __init__(self, name, weight, func="LRTS",  direc="HB",  p=1,Limitype ="minmax",Limit_val=2,roundoff=3):
+	def __init__(self, name, weight, func="LRTS", direc="HB", p=1, Limitype ="minmax", Limit_val=2, roundoff=3):
 		self.name = name
 		self.func = func
 		self.dir = direc
@@ -36,8 +36,6 @@ class param:
 			self.Lv, self.Hv = self.l_val[0], self.l_val[1]
 		else:
 			raise Exception("not valid boundary determination method")
-
-
 
 	def func_eval(self, evalv):
 		if (evalv <= self.Lv and self.dir == "HB") or (evalv >= self.Hv and self.dir == "LB") :
@@ -90,23 +88,22 @@ class tradeoff:
 			self.total += param.val_out*param.weight
 		
 	
-	def get_output(self,language = "python",color_list=[],width=10):
+	def get_output(self, language = "python", color_list=[], width=10):
 		if language == "python":
 			for param in self.param_list:
-				print(param.name, ",\t actual value:", end="\t", sep="")
+				print(param.name, ", \t actual value:", end="\t", sep="")
 				for val in param.val_in:
-					print(val, end=",\t")
+					print(val, end=", \t")
 				print()
-				print(param.name, ",\t scaled value:", end="\t", sep="")
+				print(param.name, ", \t scaled value:", end="\t", sep="")
 				for val in param.val_out:
-					print(round(val, param.r), end=",\t")
+					print(round(val, param.r), end=", \t")
 				print()
 			print("\t final value:", end="\t", sep="")
 			for val in self.total:
-				print(round(val,3), end=",\t")
+				print(round(val, 3), end=", \t")
 			print()
 
-		
 		if language == "latex":
 			if len(color_list)==0:
 				raise Exception("color_list is mandatory for Latex output")
@@ -149,7 +146,7 @@ class tradeoff:
 					output += " High Best"
 				else:
 					output += " Low Best"
-				output += ",$\sigma="+str(round(param.sd,param.r)) + "$}}"
+				output += ", $\sigma="+str(round(param.sd, param.r)) + "$}}"
 
 			print(str(output) + "& \multirow{-4}{*}{\\textbf{Total}} \\\\ \hline")
 			for i in range(len(self.design_list)):
@@ -179,59 +176,58 @@ class tradeoff:
 			print("\end{table}")
 
 class sensitivity:
-	def __init__(self,tradeoff,samples = 10000):
+	def __init__(self, tradeoff, samples=10000):
 		self.tro = tradeoff
 		self.n = samples
 		self.to_tech = False
 		self.to_p = False
 		self.to_weights = False
+		self.per = None
 
-	def addto_technical(self,variation):
+	def addto_technical(self, variation):
 		self.to_tech = True
 		self.to_tech_var = variation
 
-	def addto_p(self,variation):
+	def addto_p(self, variation):
 		self.to_p = True
 		self.to_p_var = variation
 
-	def addto_weights(self,variation):
+	def addto_weights(self, variation):
 		self.to_weights = True
 		weight_list = np.array([param.weight for param in self.tro.param_list])
 		self.to_weights_var = variation*np.std(weight_list)
 
-	def sens(self,n):
-			tro_temp = copy.deepcopy(self.tro)
-			if self.to_p:
-				for param in tro_temp.param_list:
-					param.p = np.random.normal(param.p,self,self.to_p_var)
+	def sens(self, n):
+		tro_temp = copy.deepcopy(self.tro)
+		if self.to_p:
+			for param in tro_temp.param_list:
+				param.p = np.random.normal(param.p, self, self.to_p_var)
 
-			if self.to_weights:
-				total = 0
-				for param in tro_temp.param_list:
-					param.weight = np.random.normal(param.weight,self.to_weights_var)
-					total += param.weight
+		if self.to_weights:
+			total = 0
+			for param in tro_temp.param_list:
+				param.weight = np.random.normal(param.weight, self.to_weights_var)
+				total += param.weight
 				
-				for param in tro_temp.param_list:
-					param.weight /= total
+			for param in tro_temp.param_list:
+				param.weight /= total
 
-			if self.to_tech:
-				for design in tro_temp.design_list:
-					for i in range(len(design.sourcelist)):
-						design.sourcelist[i] = np.random.normal(design.sourcelist[i],self.tro.param_list[i].sd*self.to_tech_var)
+		if self.to_tech:
+			for design in tro_temp.design_list:
+				for i in range(len(design.sourcelist)):
+					design.sourcelist[i] = np.random.normal(design.sourcelist[i], self.tro.param_list[i].sd*self.to_tech_var)
 			
-			tro_temp.get_tradeoff()
-			ret = np.zeros(len(tro_temp.design_list))
-			ret[np.where(tro_temp.total == np.amax(tro_temp.total))] = 1
-			return ret
+		tro_temp.get_tradeoff()
+		ret = np.zeros(len(tro_temp.design_list))
+		ret[np.where(tro_temp.total == np.amax(tro_temp.total))] = 1
+		return ret
 
-	def get_sens(self):
-		pool = mp.Pool(mp.cpu_count())
-		self.per = np.sum(pool.map(self.sens,range(self.n)),0)
-		self.per /= self.n
+	#def get_sens(self):
+	#	pool = mp.Pool(mp.cpu_count())
+	#	self.per = np.sum(pool.map(self.sens, range(self.n)), 0)
+	#	self.per /= self.n
 	
 	def get_RMS(self):
 		self.RMS = np.zeros(len(self.tro.design_list))
 		for param in self.tro.param_list:
-			self.RMS += np.multiply(param.val_in-param.mu,param.val_in-param.mu)/(param.sd*param.sd)
-		
-
+			self.RMS += np.multiply(param.val_in-param.mu, param.val_in-param.mu)/(param.sd*param.sd)
