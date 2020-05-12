@@ -8,7 +8,7 @@ class color:
 		self.name = name
 	
 class param:
-	def __init__(self, name, weight, func="LRTS",  direc="HB",  p=1,Limitype ="minmax",Limit_val=2):
+	def __init__(self, name, weight, func="LRTS",  direc="HB",  p=1,Limitype ="minmax",Limit_val=2,roundoff=3):
 		self.name = name
 		self.func = func
 		self.dir = direc
@@ -18,6 +18,7 @@ class param:
 		self.val_in = []
 		self.val_out = []
 		self.l_val = Limit_val
+		self.r = roundoff
 	
 	def stat(self):
 		self.sd = np.std(self.val_in)
@@ -28,7 +29,7 @@ class param:
 		elif self.Ltype == "SD":
 			if type(self.l_val) != int and type(self.l_val) != float:
 				raise Exception("for SD Limits Limit_val must be of type float or int")
-			self.Lv, self.Hv = self.mu-self.l_val*self.sd, self.mu+l_val*self.sd
+			self.Lv, self.Hv = self.mu-self.l_val*self.sd, self.mu+self.l_val*self.sd
 		elif self.Ltype == "fixed":
 			if len(self.l_val) != 2:
 				raise Exception("for fixed Limits Limit_val must contain two values")
@@ -54,7 +55,6 @@ class param:
 		elif self.func == "IRTS":
 			return (1 - np.exp(-(evalv - temLv) / self.p)) / (1 - np.exp(-(temHv - temLv) / self.p))
 		elif self.func == "DRTS":
-
 			return (1 - np.exp(-(temHv - evalv) / self.p)) / (1 - np.exp(-(temHv- temLv) / self.p))
 		else:
 			raise Exception("not valid scoring scheme")
@@ -90,7 +90,7 @@ class tradeoff:
 			self.total += param.val_out*param.weight
 		
 	
-	def get_output(self,language = "python",color_list=[],width=10,r=3):
+	def get_output(self,language = "python",color_list=[],width=10):
 		if language == "python":
 			for param in self.param_list:
 				print(param.name, ",\t actual value:", end="\t", sep="")
@@ -99,17 +99,20 @@ class tradeoff:
 				print()
 				print(param.name, ",\t scaled value:", end="\t", sep="")
 				for val in param.val_out:
-					print(round(val, r), end=",\t")
+					print(round(val, param.r), end=",\t")
 				print()
 			print("\t final value:", end="\t", sep="")
 			for val in self.total:
 				print(round(val,3), end=",\t")
 			print()
+
+		
 		if language == "latex":
 			if len(color_list)==0:
 				raise Exception("color_list is mandatory for Latex output")
 			for param in self.param_list:
 				param.set_colors(color_list)
+			
 			print("\\begin{table}[H]")
 			print("\centering")
 			print("\caption{}")
@@ -123,38 +126,54 @@ class tradeoff:
 				output += "p{" + str(round(w, r)) + "cm}|"
 			output +="c|}\hline"
 			print(output)
+			
+			output = "\multicolumn{2}{|c|}{\multirow{-2}{*}{}}"
+			for param in self.param_list:
+				output += "& \multicolumn{2}{c|}{\multirow{-2}{*}{}}"
+			print(str(output) + "& \multirow{-4}{*}{}\\\\")
 
-			output = "\multicolumn{2}{|c|}{\\textbf{Criteria}}"
+			output = "\multicolumn{2}{|c|}{\multirow{-2}{*}{\\textbf{Criteria}}}"
 			for param in self.param_list:
-				output += "& \multicolumn{2}{c|}{"+ param.name +"}"
-			print(str(output) + "&\\\\ \cline{1-2}")
-			output = "\multicolumn{2}{|l|}{\\textbf{Design Option}}"
+				output += "& \multicolumn{2}{c|}{\multirow{-2}{*}{\\textbf{"+ param.name +"}}}"
+			print(str(output) + "& \multirow{-4}{*}{} \\\\ \cline{1-2}")
+
+			output = "\multicolumn{2}{|l|}{\multirow{-2}{*}{}}"
 			for param in self.param_list:
-				output += "& \multicolumn{2}{c|}{\\textit{("+ str(round(param.Lv, r)) + " / " + str(round(param.Hv, r)) + ")," 
-				if param.dir == "HB":
-					output += " High Best}}"
-				else:
-					output += " Low Best}}"
+				output += "& \multicolumn{2}{c|}{\\textit{("+ str(round(param.Lv, param.r)) + " / " + str(round(param.Hv, param.r)) + "),}}"
+			print(str(output) + "& \multirow{-4}{*}{} \\\\")
 				
-			print(str(output) + "& \multirow{-2}{*}{\\textbf{Total}} \\\\ \hline")
+			output = "\multicolumn{2}{|l|}{\multirow{-2}{*}{\\textbf{Design Option}}}"
+			for param in self.param_list:
+				output += "& \multicolumn{2}{c|}{\\textit{"
+				if param.dir == "HB":
+					output += " High Best"
+				else:
+					output += " Low Best"
+				output += "}}"
+
+			print(str(output) + "& \multirow{-4}{*}{\\textbf{Total}} \\\\ \hline")
 			for i in range(len(self.design_list)):
 				design = self.design_list[i]
 				output = "\multicolumn{2}{|c|}{}"
 				end_output = ""
 				k = 4
+
 				for param in self.param_list:
 					output += "   & \cellcolor[HTML]{" + str(param.color[i].HTML) + "} & \cellcolor[HTML]{" + str(param.color[i].HTML) + "}" + str(param.color[i].name) + ""
 					end_output += " \cline{" + str(k) + "-" + str(k) + "} "
 					k += 2
 				print(str(output) + " & \\\\" + str(end_output))
+
 				output = "\multicolumn{2}{|c|}{}"
 				for param in self.param_list:
 					output += "   & \multicolumn{2}{c|}{\cellcolor[HTML]{" + str(param.color[i].HTML) + "}}"
 				print(str(output) + "& \\\\")
+
 				output = "\multicolumn{2}{|c|}{\multirow{-3}{*}{" + str(design.name) + "}}"
 				for param in self.param_list:
-					output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor[HTML]{" + str(param.color[i].HTML) + "}" + str(round(param.val_in[i], r)) + " / " + str(round(param.val_out[i], r)) + "}}"
-				print(str(output) + " & \multirow{-3}{*}{" + str(round(self.total[i], r)) + "} \\\\ \hline")
+					output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor[HTML]{" + str(param.color[i].HTML) + "}" + str(round(param.val_in[i], param.r)) + " / " + str(round(param.val_out[i], 3)) + "}}"
+				print(str(output) + " & \multirow{-3}{*}{" + str(round(self.total[i], 3)) + "} \\\\ \hline")
+
 			print("\end{tabular}")
 			print("\end{adjustbox}")
 			print("\end{table}")
