@@ -225,10 +225,11 @@ class sensitivity:
 		ret[np.where(tro_temp.total == np.amax(tro_temp.total))] = 1
 		return ret, weights
 
-	#def get_sens(self):
-	#	pool = mp.Pool(mp.cpu_count())
-	#	self.per = np.sum(pool.map(self.sens, range(self.n)), 0)
-	#	self.per /= self.n
+	def get_sens_linux(self):
+		pool = mp.Pool(mp.cpu_count())
+		self.per = pool.map(self.sens, range(self.n))
+
+		
 	
 	def get_RMS(self):
 		self.RMS = np.zeros(len(self.tro.design_list))

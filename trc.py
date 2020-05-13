@@ -40,10 +40,12 @@ tradeoff = tc.tradeoff(design_list = [d1, d2, d3, d4], param_list= [dmass, prmas
 tradeoff.get_tradeoff()
 colors = [tc.color("EF5350", "red"), tc.color("FB8C00", "orange"), tc.color("FFEB3B", "yellow"), tc.color("8BC34A", "green"), tc.color("00BCD4", "blue")]
 #tradeoff.get_output(language="latex", color_list=colors, width=15)
-sens = tc.sensitivity(tradeoff, samples=1000)
+sens = tc.sensitivity(tradeoff, samples=10)
 sens.addto_technical(0.25)
-sens.addto_weights(0.25)
+#sens.addto_weights(0.25)
 sens.get_RMS()
+sens.get_sens_linux()
+print(sens.per)
 
 do_analysis = True
 if __name__ == "__main__" and do_analysis:
@@ -64,4 +66,12 @@ if __name__ == "__main__" and do_analysis:
 		if len(deltas[i]) == 0:
 			print("Concept never winner")
 		else:
-			print(np.average(deltas[i], axis=0)/np.std(weight_list))
+			print(np.average(deltas[i], axis=0))
+		if len(deltas[i]) == 0:
+			print("Concept never winner")
+		else:
+			print(np.average(deltas[i], axis=0)+2*np.std(deltas[i], axis=0))
+		if len(deltas[i]) == 0:
+			print("Concept never winner")
+		else:
+			print(np.average(deltas[i], axis=0)-2*np.std(deltas[i], axis=0))
