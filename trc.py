@@ -47,20 +47,16 @@ sens.get_RMS()
 
 do_analysis = True
 if __name__ == "__main__" and do_analysis:
-	mp.freeze_support()
-	pool = mp.Pool(mp.cpu_count())
-	ori = np.array([w.weight for w in tradeoff.param_list])
-	ret, *wei = pool.map(sens.sens, (sens.n,))[0]
-	wei = np.array(wei)
-	print("Sensitivity Analisys result:")
-	print(wei)
-	print(ori)
+	deltas = [[], [], []]
+	n = int(1e3)
+	ori = np.array([w.weight for w in sens.tro.param_list])
+	for i in range(n):
+		print(round(i/n*100, 2), end="\r")
+		ret, wei = sens.sens(sens.n)
+		wei = np.array(wei)
+		delta = wei-ori
+		deltas[np.where(ret==1)[0][0]].append(delta)
 	print()
-	print(ori-wei)
-	print(ret)
-	input("Press ENTER")
-	sens.per /= sens.n
-	print(sens.per)
-	print(sens.weight)
-
-print(sens.RMS)
+	weight_list = np.array([param.weight for param in sens.tro.param_list])
+	for i in range(3):
+		print(np.average(deltas[i], axis=0)/np.std(weight_list))
