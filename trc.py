@@ -40,7 +40,7 @@ tradeoff = tc.tradeoff(design_list = [d1, d2, d3], param_list= [dmass, prmass, t
 tradeoff.get_tradeoff()
 colors = [tc.color("EF5350", "red"), tc.color("FB8C00", "orange"), tc.color("FFEB3B", "yellow"), tc.color("8BC34A", "green"), tc.color("00BCD4", "blue")]
 #tradeoff.get_output(language="latex", color_list=colors, width=15)
-sens = tc.sensitivity(tradeoff, samples=500000)
+sens = tc.sensitivity(tradeoff, samples=1000)
 sens.addto_technical(0.25)
 sens.addto_weights(0.25)
 sens.get_RMS()
@@ -49,9 +49,18 @@ do_analysis = True
 if __name__ == "__main__" and do_analysis:
 	mp.freeze_support()
 	pool = mp.Pool(mp.cpu_count())
-	sens.per = np.sum(pool.map(sens.sens, range(sens.n)), 0)
-	sens.per /= sens.n
+	ori = np.array([w.weight for w in tradeoff.param_list])
+	ret, *wei = pool.map(sens.sens, (sens.n,))[0]
+	wei = np.array(wei)
 	print("Sensitivity Analisys result:")
+	print(wei)
+	print(ori)
+	print()
+	print(ori-wei)
+	print(ret)
+	input("Press ENTER")
+	sens.per /= sens.n
 	print(sens.per)
+	print(sens.weight)
 
 print(sens.RMS)
