@@ -218,14 +218,21 @@ class sensitivity:
 					design.sourcelist[i] = np.random.normal(design.sourcelist[i], self.tro.param_list[i].sd*self.to_tech_var)
 			
 		tro_temp.get_tradeoff()
-		ret = np.zeros(len(tro_temp.design_list))
-		ret[np.where(tro_temp.total == np.amax(tro_temp.total))] = 1
-		return ret
+		weight = np.array([param.weight for param in tro_temp.param_list]) - np.array([param.weight for param in self.tro.param_list])
+		ret = np.where(tro_temp.total == np.amax(tro_temp.total))
+		return ret, weight
 
-	#def get_sens(self):
-	#	pool = mp.Pool(mp.cpu_count())
-	#	self.per = np.sum(pool.map(self.sens, range(self.n)), 0)
-	#	self.per /= self.n
+	def get_sens(self):
+		pool = mp.Pool(mp.cpu_count())
+		self.index_list, self.weight = pool.map(self.sens, range(self.n))
+		L = [[]*len(self.tro.design_list)]
+		self.per = np.zeros(len(self.tro.design_list)) 
+		for indx in self.index_list:
+			L[indx].append(self.weight)
+			self.per[indx] += 1
+		for l in L:
+			
+		self.per /= self.n
 	
 	def get_RMS(self):
 		self.RMS = np.zeros(len(self.tro.design_list))
