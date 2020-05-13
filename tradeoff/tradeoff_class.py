@@ -183,6 +183,7 @@ class sensitivity:
 		self.to_p = False
 		self.to_weights = False
 		self.per = None
+		self.weights = None
 
 	def addto_technical(self, variation):
 		self.to_tech = True
@@ -207,6 +208,7 @@ class sensitivity:
 			total = 0
 			for param in tro_temp.param_list:
 				param.weight = np.random.normal(param.weight, self.to_weights_var)
+				param.weight = max(0, min(param.weight, 1))
 				total += param.weight
 				
 			for param in tro_temp.param_list:
@@ -218,21 +220,15 @@ class sensitivity:
 					design.sourcelist[i] = np.random.normal(design.sourcelist[i], self.tro.param_list[i].sd*self.to_tech_var)
 			
 		tro_temp.get_tradeoff()
-		weight = np.array([param.weight for param in tro_temp.param_list]) - np.array([param.weight for param in self.tro.param_list])
-		ret = np.where(tro_temp.total == np.amax(tro_temp.total))
-		return ret, weight
+		weights = [w.weight for w in tro_temp.param_list]
+		ret = np.zeros(len(tro_temp.design_list))
+		ret[np.where(tro_temp.total == np.amax(tro_temp.total))] = 1
+		return ret, weights
 
-	def get_sens(self):
-		pool = mp.Pool(mp.cpu_count())
-		self.index_list, self.weight = pool.map(self.sens, range(self.n))
-		L = [[]*len(self.tro.design_list)]
-		self.per = np.zeros(len(self.tro.design_list)) 
-		for indx in self.index_list:
-			L[indx].append(self.weight)
-			self.per[indx] += 1
-		for l in L:
-			
-		self.per /= self.n
+	#def get_sens(self):
+	#	pool = mp.Pool(mp.cpu_count())
+	#	self.per = np.sum(pool.map(self.sens, range(self.n)), 0)
+	#	self.per /= self.n
 	
 	def get_RMS(self):
 		self.RMS = np.zeros(len(self.tro.design_list))

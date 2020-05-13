@@ -35,23 +35,33 @@ d4 = tc.design(name="Space Elevator", sourcelist=d4_in_list)
 #if not ([d1_in_list, d2_in_list, d3_in_list, d4_in_list] == [[32270.711046302436, 149863.43983858931, 5, 5.185715438377493, 0.026109660574412535, 0.0071369844242451935], [23921.177959026394, 65203.32465050992, 5, 5.330214381772641, 0.050453323108126516, 0.011525118996853644], [28908.466236841767, 106886.52727269869, 4, 5.524977891358354, 0.023748963951447617, 0.013431508707647094], [3853913.6882668925, 179427.97949182583, 4, 5.963027375592036, 0.012140489747356408, 0.0035707756295991593]]):
 #	raise Exception("Mass budget changed !")
 
-tradeoff = tc.tradeoff(design_list = [d1, d2, d3], param_list= [dmass, prmass, trl, comp, lov, lom])
+tradeoff = tc.tradeoff(design_list = [d1, d2, d3, d4], param_list= [dmass, prmass, trl, comp, lov, lom])
 
 tradeoff.get_tradeoff()
 colors = [tc.color("EF5350", "red"), tc.color("FB8C00", "orange"), tc.color("FFEB3B", "yellow"), tc.color("8BC34A", "green"), tc.color("00BCD4", "blue")]
 #tradeoff.get_output(language="latex", color_list=colors, width=15)
-sens = tc.sensitivity(tradeoff, samples=500000)
+sens = tc.sensitivity(tradeoff, samples=1000)
 sens.addto_technical(0.25)
 sens.addto_weights(0.25)
 sens.get_RMS()
 
 do_analysis = True
 if __name__ == "__main__" and do_analysis:
-	mp.freeze_support()
-	pool = mp.Pool(mp.cpu_count())
-	sens.per = np.sum(pool.map(sens.sens, range(sens.n)), 0)
-	sens.per /= sens.n
-	print("Sensitivity Analisys result:")
-	print(sens.per)
-
-print(sens.RMS)
+	n_d = len(sens.tro.design_list)
+	deltas = [[] for i in range(n_d)]
+	n = int(1e5)
+	ori = np.array([w.weight for w in sens.tro.param_list])
+	for i in range(n):
+		print(round(i/n*100, 2), end="\r")
+		ret, wei = sens.sens(sens.n)
+		wei = np.array(wei)
+		delta = wei-ori
+		deltas[np.where(ret==1)[0][0]].append(delta)
+	print()
+	weight_list = np.array([param.weight for param in sens.tro.param_list])
+	print([p.name for p in sens.tro.param_list])
+	for i in range(n_d):
+		if len(deltas[i]) == 0:
+			print("Concept never winner")
+		else:
+			print(np.average(deltas[i], axis=0)/np.std(weight_list))
