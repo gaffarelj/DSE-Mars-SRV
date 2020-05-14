@@ -17,7 +17,7 @@ lom = tc.param(name="LOM Risk", weight=0.015, direc="LB", func="IRTS", Limitype=
 Isp = 410
 d1_m = dmb.Mass_conc(5894.46, 0, Isp, "SSTO")
 d1_in_list = [d1_m["dry"], d1_m["prop"], 5, c1.comp(), 1/38.3, 1/140.1152]
-d1 = tc.design(name="SSTO", sourcelist=d1_in_list)
+d1 = tc.design(name="Single Stage", sourcelist=d1_in_list)
 
 d2_m = dmb.Mass_conc(1730.17, 3951.455, Isp, "2_stage")
 d2_in_list = [d2_m[0], d2_m[1], 5, c2.comp(), 1/19.8203, 1/86.7670]
@@ -31,13 +31,13 @@ d4_m = dmb.Mass_conc(0, 0, Isp, "SE")
 d4_in_list = [d4_m[0], d4_m[1], 4, c4.comp(), 1/82.3690, 1/280.0512]
 d4 = tc.design(name="Space Elevator", sourcelist=d4_in_list)
 
-tradeoff = tc.tradeoff(design_list = [d1, d2, d3], param_list= [dmass, prmass, trl, comp, lov, lom])
+tradeoff = tc.tradeoff(design_list = [d1, d2, d3, d4], param_list= [dmass, prmass, trl, comp, lov, lom])
 
 tradeoff.get_tradeoff()
 colors = [tc.color("EF5350", "red"), tc.color("FB8C00", "orange"), tc.color("FFEB3B", "yellow"), tc.color("8BC34A", "green"), tc.color("00BCD4", "blue")]
-#tradeoff.get_output(language="latex", color_list=colors, width=13)
-#input()
-sens = tc.sensitivity(tradeoff, samples=10)
+tradeoff.get_output(language="latex", color_list=colors, width=13)
+input()
+sens = tc.sensitivity(tradeoff, samples=1)
 #sens.addto_technical(0.25)
 sens.addto_weights(0.5)
 sens.get_RMS()
@@ -48,7 +48,7 @@ do_analysis = True
 if __name__ == "__main__" and do_analysis:
 	n_d = len(sens.tro.design_list)
 	deltas = [[] for i in range(n_d)]
-	n = int(1e4)
+	n = int(5e6)
 	ori = np.array([w.weight for w in sens.tro.param_list])
 	for i in range(n):
 		print(round(i/n*100, 2), end="\r")
@@ -64,11 +64,5 @@ if __name__ == "__main__" and do_analysis:
 			print("Concept never winner")
 		else:
 			print(np.average(deltas[i], axis=0))
-		if len(deltas[i]) == 0:
-			print("Concept never winner")
-		else:
-			print(np.average(deltas[i], axis=0)+2*np.std(deltas[i], axis=0))
-		if len(deltas[i]) == 0:
-			print("Concept never winner")
-		else:
-			print(np.average(deltas[i], axis=0)-2*np.std(deltas[i], axis=0))
+			#print(np.average(deltas[i], axis=0)+2*np.std(deltas[i], axis=0))
+			#print(np.average(deltas[i], axis=0)-2*np.std(deltas[i], axis=0))

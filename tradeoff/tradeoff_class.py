@@ -90,6 +90,7 @@ class tradeoff:
 	
 	def get_output(self, language = "python", color_list=[], width=10):
 		def val_s(number):
+			#print("i", number)
 			res = "" if number >= 0 else "-"
 			number = np.fabs(number)
 			if number < 10 ** (-20):
@@ -99,7 +100,9 @@ class tradeoff:
 			else:
 				res += "{:.2e}".format(number)
 			if res[-2:] == ".0":
-				return res[:-2]
+				res = res[:-2]
+			#print("o", res)
+			#input()
 			return res
 
 		if language == "python":
@@ -130,7 +133,7 @@ class tradeoff:
 			print("\centering")
 			print("\caption{}")
 			print("\label{tab:tradeoff-x}")
-			print("\\begin{adjustbox}{width=0.85\paperheight, angle=-90}")
+			print("\\begin{adjustbox}{width=0.825\paperheight, angle=-90}")
 
 			output = "\\begin{tabular}{|c|l|"
 			for param in self.param_list:
@@ -147,7 +150,7 @@ class tradeoff:
 
 			output = "\multicolumn{2}{|c|}{\multirow{-2}{*}{\\textbf{Criteria}}}"
 			for param in self.param_list:
-				output += "& \multicolumn{2}{c|}{\multirow{-2}{*}{\\textbf{"+ param.name +"}}}"
+				output += "& \multicolumn{2}{c|}{\multirow{-2}{*}{\\textbf{"+ param.name + ", " + str(round(param.weight*100, 2)) +"\%}}}"
 			print(str(output) + "& \multirow{-4}{*}{} \\\\ \cline{1-2}")
 
 			output = "\multicolumn{2}{|l|}{\multirow{-2}{*}{}}"
@@ -184,7 +187,7 @@ class tradeoff:
 
 				output = "\multicolumn{2}{|c|}{\multirow{-3}{*}{" + str(design.name) + "}}"
 				for param in self.param_list:
-					output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor{to-" + param.color[i].name + "} " + val_s(param.val_in[i]) + " $\\rightarrow$ " + str(round(param.val_out[i], 4)) + "}}"
+					output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor{to-" + param.color[i].name + "} " + val_s(param.val_in[i]) + " $\\rightarrow$ " + val_s(param.val_out[i]) + "}}"
 				print(str(output) + " & \multirow{-3}{*}{$" + str(round(self.total[i], 3)) + "$} \\\\ \hline")
 
 			print("\end{tabular}")
