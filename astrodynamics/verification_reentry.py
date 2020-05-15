@@ -4,7 +4,7 @@ import isa
 
 # Constants  
 mean_radius = 6731e3                #[m]
-reentry_altitude = 360000*0.3048    #[m]
+reentry_altitude = 400000*0.3048    #[m]
 v_reentry = 36309*0.3048            #[m/s]
 gamma = 1.4
 g0 = 9.81                           #[m/s^2]
@@ -83,7 +83,7 @@ while height[-1] > 11000:
     r = forward_euler(distance[-1], dr)
     distance.append(r) 
 
-
+plt.rcParams.update({'font.size': 14})
 plt.plot(np.array(time)/60, np.array(height)/1000/0.3048)
 plt.ylabel("Altitude [1000 ft]")
 plt.xlabel("Time [min]")
@@ -109,6 +109,7 @@ color = 'tab:red'
 ax1.set_xlabel('Time [s]')
 ax1.set_ylabel('Altitude [1000 ft]', color=color)
 ax1.plot(np.array(time)/60, np.array(height)/1000/0.3048, color=color)
+ax1.set_xticks(np.arange(0, 9, 1))
 ax1.tick_params(axis='y', labelcolor=color)
 
 ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
