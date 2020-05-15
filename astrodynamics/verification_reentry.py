@@ -106,7 +106,7 @@ plt.show()
 fig, ax1 = plt.subplots()
 
 color = 'tab:red'
-ax1.set_xlabel('Time [s]')
+ax1.set_xlabel('Time [min]')
 ax1.set_ylabel('Altitude [1000 ft]', color=color)
 ax1.plot(np.array(time)/60, np.array(height)/1000/0.3048, color=color)
 ax1.set_xticks(np.arange(0, 9, 1))
