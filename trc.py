@@ -31,12 +31,12 @@ d4_m = dmb.Mass_conc(0, 0, Isp, "SE")
 d4_in_list = [d4_m[0], d4_m[1], 4, c4.comp(), 1/82.3690, 1/280.0512]
 d4 = tc.design(name="Space Elevator", sourcelist=d4_in_list)
 
-tradeoff = tc.tradeoff(design_list = [d1, d2, d3, d4], param_list= [dmass, prmass, trl, comp, lov, lom])
+tradeoff = tc.tradeoff(design_list = [d1, d2, d3], param_list= [dmass, prmass, trl, comp, lov, lom])
 
 tradeoff.get_tradeoff()
 colors = [tc.color("EF5350", "red"), tc.color("FB8C00", "orange"), tc.color("FFEB3B", "yellow"), tc.color("8BC34A", "green"), tc.color("00BCD4", "blue")]
-tradeoff.get_output(language="latex", color_list=colors, width=13)
-input()
+#tradeoff.get_output(language="latex", color_list=colors, width=13)
+#input()
 sens = tc.sensitivity(tradeoff, samples=1)
 #sens.addto_technical(0.25)
 sens.addto_weights(0.5)
@@ -48,7 +48,7 @@ do_analysis = True
 if __name__ == "__main__" and do_analysis:
 	n_d = len(sens.tro.design_list)
 	deltas = [[] for i in range(n_d)]
-	n = int(5e6)
+	n = int(5e4)
 	ori = np.array([w.weight for w in sens.tro.param_list])
 	for i in range(n):
 		print(round(i/n*100, 2), end="\r")

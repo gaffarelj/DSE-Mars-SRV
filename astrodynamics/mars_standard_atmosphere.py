@@ -64,12 +64,10 @@ def get_speed_of_sound(T, gamma=gamma, R=R):
 
 if __name__=="__main__":
     alt = np.arange(0,100000,1)
-    pressure = []
-    temp = []
-    
-    for i in alt:
-        pressure.append(get_pressure(i))
-        temp.append(get_temperature(i))
+    pressure = [get_pressure(h) for h in alt]
+    temp = [get_temperature(h) for h in alt]
+        
+    plt.rcParams.update({'font.size': 14})
 
     fig, ax1 = plt.subplots()
 
@@ -78,7 +76,8 @@ if __name__=="__main__":
     ax1.set_ylabel('Temperature [K]', color=color)
     ax1.plot(np.array(alt)/1000, temp, color=color)
     ax1.tick_params(axis='y', labelcolor=color)
-
+    
+    plt.grid()
     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
     color = 'tab:blue'
@@ -87,5 +86,4 @@ if __name__=="__main__":
     ax2.tick_params(axis='y', labelcolor=color)
 
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
-    plt.grid()
     plt.show()
