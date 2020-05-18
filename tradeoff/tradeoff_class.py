@@ -223,11 +223,12 @@ class sensitivity:
 		weights = [w.weight for w in tro_temp.param_list]
 		ret = np.zeros(len(tro_temp.design_list))
 		ret[np.where(tro_temp.total == np.amax(tro_temp.total))] = 1
-		return ret, weights
+		return ret
 
 	def get_sens_linux(self):
 		pool = mp.Pool(mp.cpu_count())
 		self.per = pool.map(self.sens, range(self.n))
+		self.per = np.sum(self.per,axis=0)/self.n
 
 		
 	
