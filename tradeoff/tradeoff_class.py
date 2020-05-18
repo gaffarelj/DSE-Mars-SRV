@@ -89,6 +89,22 @@ class tradeoff:
 		
 	
 	def get_output(self, language = "python", color_list=[], width=10):
+		def val_s(number):
+			#print("i", number)
+			res = "" if number >= 0 else "-"
+			number = np.fabs(number)
+			if number < 10 ** (-20):
+				res += str(0)
+			elif number < 999 and number > 0.01:
+				res+= str(round(number, 3))
+			else:
+				res += "{:.2e}".format(number)
+			if res[-2:] == ".0":
+				res = res[:-2]
+			#print("o", res)
+			#input()
+			return res
+
 		if language == "python":
 			for param in self.param_list:
 				print(param.name, ", \t actual value:", end="\t", sep="")
@@ -107,14 +123,17 @@ class tradeoff:
 		if language == "latex":
 			if len(color_list)==0:
 				raise Exception("color_list is mandatory for Latex output")
+			for c in color_list:
+				print("\\definecolor{to-" + c.name + "}{HTML}{" + c.HTML + "}")
 			for param in self.param_list:
 				param.set_colors(color_list)
 			
+			print()
 			print("\\begin{table}[H]")
 			print("\centering")
 			print("\caption{}")
 			print("\label{tab:tradeoff-x}")
-			print("\\begin{adjustbox}{width=0.85\paperheight, angle=-90}")
+			print("\\begin{adjustbox}{width=0.825\paperheight, angle=-90}")
 
 			output = "\\begin{tabular}{|c|l|"
 			for param in self.param_list:
@@ -131,22 +150,22 @@ class tradeoff:
 
 			output = "\multicolumn{2}{|c|}{\multirow{-2}{*}{\\textbf{Criteria}}}"
 			for param in self.param_list:
-				output += "& \multicolumn{2}{c|}{\multirow{-2}{*}{\\textbf{"+ param.name +"}}}"
+				output += "& \multicolumn{2}{c|}{\multirow{-2}{*}{\\textbf{"+ param.name + ", " + str(round(param.weight*100, 2)) +"\%}}}"
 			print(str(output) + "& \multirow{-4}{*}{} \\\\ \cline{1-2}")
 
 			output = "\multicolumn{2}{|l|}{\multirow{-2}{*}{}}"
 			for param in self.param_list:
-				output += "& \multicolumn{2}{c|}{\\textit{$("+ str(round(param.Lv, param.r)) + " / " + str(round(param.Hv, param.r)) + ")$}}"
+				output += "& \multicolumn{2}{c|}{("+ val_s(param.Lv) + ", " + val_s(param.Hv) + ")}"
 			print(str(output) + "& \multirow{-4}{*}{} \\\\")
 				
-			output = "\multicolumn{2}{|l|}{\multirow{-2}{*}{\\textbf{Design Option}}}"
+			output = "\multicolumn{2}{|l|}{\multirow{-2}{*}{\\textbf{Design Concept}}}"
 			for param in self.param_list:
-				output += "& \multicolumn{2}{c|}{\\textit{"
+				output += "& \multicolumn{2}{c|}{"
 				if param.dir == "HB":
 					output += " High Best"
 				else:
 					output += " Low Best"
-				output += ", $\sigma="+str(round(param.sd, param.r)) + "$}}"
+				output += ", $\sigma="+ val_s(param.sd) + "$}"
 
 			print(str(output) + "& \multirow{-4}{*}{\\textbf{Total}} \\\\ \hline")
 			for i in range(len(self.design_list)):
@@ -156,19 +175,19 @@ class tradeoff:
 				k = 4
 
 				for param in self.param_list:
-					output += "   & \cellcolor[HTML]{" + str(param.color[i].HTML) + "} & \cellcolor[HTML]{" + str(param.color[i].HTML) + "}" + str(param.color[i].name) + ""
+					output += "   & \cellcolor{to-" + param.color[i].name + "} & \cellcolor{to-" + param.color[i].name + "} " + str(param.color[i].name) + ""
 					end_output += " \cline{" + str(k) + "-" + str(k) + "} "
 					k += 2
 				print(str(output) + " & \\\\" + str(end_output))
 
 				output = "\multicolumn{2}{|c|}{}"
 				for param in self.param_list:
-					output += "   & \multicolumn{2}{c|}{\cellcolor[HTML]{" + str(param.color[i].HTML) + "}}"
+					output += "   & \multicolumn{2}{c|}{\cellcolor{to-" + param.color[i].name + "}}"
 				print(str(output) + "& \\\\")
 
 				output = "\multicolumn{2}{|c|}{\multirow{-3}{*}{" + str(design.name) + "}}"
 				for param in self.param_list:
-					output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor[HTML]{" + str(param.color[i].HTML) + "}$" + str(round(param.val_in[i], param.r)) + " / " + str(round(param.val_out[i], 3)) + "$}}"
+					output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor{to-" + param.color[i].name + "} " + val_s(param.val_in[i]) + " $\\rightarrow$ " + val_s(param.val_out[i]) + "}}"
 				print(str(output) + " & \multirow{-3}{*}{$" + str(round(self.total[i], 3)) + "$} \\\\ \hline")
 
 			print("\end{tabular}")

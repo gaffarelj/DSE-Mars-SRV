@@ -12,8 +12,8 @@ insertion_orbit_p = mean_radius - 300000        #[m]
 gamma = atm.gamma
 R = atm.R
 g0 = 3.71                                       #[m/s^2]
-ct = 2.75                                       #tangential force coefficient based on diameter
-cn = 1.5                                        #normal force coefficicent based on diameter
+ct = 1.28                                       #tangential force coefficient based on diameter
+cn = 0.22                                        #normal force coefficicent based on diameter
 vehicle_mass = 20000                            #[kg]
 S = 65                                          #[m^2] 
 
@@ -112,7 +112,8 @@ while height[-1] > 1000:
     r = forward_euler(distance[-1], dr)
     distance.append(r) 
 
-
+    
+plt.rcParams.update({'font.size': 14})
 fig, ax1 = plt.subplots()
 
 color = 'tab:red'
@@ -120,6 +121,7 @@ ax1.set_xlabel('Time [s]')
 ax1.set_ylabel('Altitude [km]', color=color)
 ax1.plot(time, np.array(height)/1000, color=color)
 ax1.tick_params(axis='y', labelcolor=color)
+ax1.set_xticks(np.arange(0, 1750, 250))
 
 ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 

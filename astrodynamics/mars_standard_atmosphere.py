@@ -61,3 +61,29 @@ def get_density(p, T, R=R):
 
 def get_speed_of_sound(T, gamma=gamma, R=R):
     return np.sqrt(gamma*R*T)
+
+if __name__=="__main__":
+    alt = np.arange(0,100000,1)
+    pressure = [get_pressure(h) for h in alt]
+    temp = [get_temperature(h) for h in alt]
+        
+    plt.rcParams.update({'font.size': 14})
+
+    fig, ax1 = plt.subplots()
+
+    color = 'tab:red'
+    ax1.set_xlabel('Altitude [km]')
+    ax1.set_ylabel('Temperature [K]', color=color)
+    ax1.plot(np.array(alt)/1000, temp, color=color)
+    ax1.tick_params(axis='y', labelcolor=color)
+    
+    plt.grid()
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+    color = 'tab:blue'
+    ax2.set_ylabel('Pressure [Pa]', color=color)  # we already handled the x-label with ax1
+    ax2.plot(np.array(alt)/1000, pressure, color=color)
+    ax2.tick_params(axis='y', labelcolor=color)
+
+    fig.tight_layout()  # otherwise the right y-label is slightly clipped
+    plt.show()
