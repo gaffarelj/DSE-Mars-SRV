@@ -47,8 +47,10 @@ for i in range(len(test.param_list)):
 print(o_list.transpose())
 w1 = np.array([0,0,0,0,0.95,0.05])
 #w2 = np.array([0,0,0,0,0,0])
-w2 = np.array([0.1275,0.125,0.5975,0.15,0,0])
-w3 = np.array([0.1,0.50,0.4,0,0,0])
+w2 = np.array([0.1275,0.125,0.15,0.5975,0,0])
+print(np.sum(w2))
+w3 = np.array([0.1,0.50,0,0.4,0,0])
+print(np.sum(w2))
 #w3 = np.array([0,0,0,0,0,0])
 w4 = np.array([0.3,0.7,0,0,0,0])
 #w4 = np.array([0,0,0,0,0,0])
@@ -74,5 +76,5 @@ tnew = tc.tradeoff(design_list = [d1, d2, d3], param_list= [Rel, cost, ruse, sus
 
 tnew.get_tradeoff()
 colors = [tc.color("EF5350", "red"), tc.color("FB8C00", "orange"), tc.color("FFEB3B", "yellow"), tc.color("8BC34A", "green"), tc.color("00BCD4", "blue")]
-tnew.get_output()
-#tnew.get_output(language="latex", color_list=colors, width=15)
+#tnew.get_output()
+tnew.get_output(language="latex", color_list=colors, width=15)
