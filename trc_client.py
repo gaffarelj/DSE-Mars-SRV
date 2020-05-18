@@ -63,10 +63,10 @@ p4 = np.dot(o_list.transpose(),w4)
 
 
 
-d1 = tc.design(name="Singe stage", sourcelist=[p1[0],p2[0],p3[0],p4[0]])
+d1 = tc.design(name="Singe Stage", sourcelist=[p1[0],p2[0],p3[0],p4[0]])
 
 
-d2 = tc.design(name="Multi stage", sourcelist=[p1[1],p2[1],p3[1],p4[1]])
+d2 = tc.design(name="Multi Stage", sourcelist=[p1[1],p2[1],p3[1],p4[1]])
 
 
 d3 = tc.design(name="Spaceplane", sourcelist=[p1[2],p2[2],p3[2],p4[2]])
@@ -77,4 +77,4 @@ tnew = tc.tradeoff(design_list = [d1, d2, d3], param_list= [Rel, cost, ruse, sus
 tnew.get_tradeoff()
 colors = [tc.color("EF5350", "red"), tc.color("FB8C00", "orange"), tc.color("FFEB3B", "yellow"), tc.color("8BC34A", "green"), tc.color("00BCD4", "blue")]
 #tnew.get_output()
-tnew.get_output(language="latex", color_list=colors, width=15)
+tnew.get_output(language="latex", color_list=colors, width=13)
