@@ -14,7 +14,7 @@ comp = tc.param(name="Complexity", weight=0.28913, direc="LB", func="IRTS", Limi
 lov = tc.param(name="LOV Risk", weight=0.285, direc="LB", func="IRTS", Limitype="SD",Limit_val=1.2)
 lom = tc.param(name="LOM Risk", weight=0.015, direc="LB", func="IRTS", Limitype="SD",Limit_val=1.2)
 
-Isp = 410
+Isp = 400
 d1_m = dmb.Mass_conc(5894.46, 0, Isp, "SSTO")
 d1_in_list = [d1_m["dry"], d1_m["prop"], 5, c1.comp(), 1/38.3, 1/140.1152]
 d1 = tc.design(name="Single Stage", sourcelist=d1_in_list)
@@ -31,12 +31,12 @@ d4_m = dmb.Mass_conc(0, 0, Isp, "SE")
 d4_in_list = [d4_m[0], d4_m[1], 4, c4.comp(), 1/82.3690, 1/280.0512]
 d4 = tc.design(name="Space Elevator", sourcelist=d4_in_list)
 
-tradeoff = tc.tradeoff(design_list = [d1, d2, d3], param_list= [dmass, prmass, trl, comp, lov, lom])
+tradeoff = tc.tradeoff(design_list = [d1, d2, d3, d4], param_list= [dmass, prmass, trl, comp, lov, lom])
 
 tradeoff.get_tradeoff()
 colors = [tc.color("EF5350", "red"), tc.color("FB8C00", "orange"), tc.color("FFEB3B", "yellow"), tc.color("8BC34A", "green"), tc.color("00BCD4", "blue")]
-#tradeoff.get_output(language="latex", color_list=colors, width=13)
-#input()
+tradeoff.get_output(language="latex", color_list=colors, width=13)
+input()
 sens = tc.sensitivity(tradeoff, samples=1)
 #sens.addto_technical(0.25)
 sens.addto_weights(0.5)
