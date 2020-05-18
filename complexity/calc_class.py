@@ -2,6 +2,9 @@
 import numpy as np
 
 l = []
+def reset():
+	global l
+	l = []
 
 class line:
 	def __init__(self,complexity,direction="uni"):
