@@ -4,7 +4,7 @@ import isa
 
 # Constants  
 mean_radius = 6731e3                #[m]
-reentry_altitude = 400000*0.3048    #[m]
+reentry_altitude = 405000*0.3048    #[m]
 v_reentry = 36309*0.3048            #[m/s]
 gamma = 1.4
 g0 = 9.81                           #[m/s^2]
@@ -14,6 +14,10 @@ cn = 0.22                           # normal force coefficicent
 vehicle_mass = 13000*0.453592                 #[kg]
 S = 3.9**2*np.pi/4             #[m^2] 
 
+def cnct(mach):
+    cn,ct = 0.236, 1.2891
+    return cn, ct
+
 
 def dynamic_pressure_earth(V, altitude, gamma=gamma, R=R):
     temperature_1, pressure_1, density_1 = isa.ISA(altitude)
@@ -22,7 +26,7 @@ def dynamic_pressure_earth(V, altitude, gamma=gamma, R=R):
 
     q = mach_1**2 * 0.5*gamma*pressure_1
 
-    return q
+    return q, mach_1
 
 # Ballistic equations
 def ballistic_coefficient(g, S=S, ct=ct, m=vehicle_mass):
@@ -63,8 +67,9 @@ while height[-1] > 11000:
     
     g = gravitational_acceleration(height[-1])
     beta = ballistic_coefficient(g)
-    q = dynamic_pressure_earth(velocity[-1], height[-1])
+    q, mach = dynamic_pressure_earth(velocity[-1], height[-1])
     dyn_pressure.append(q)
+    cn ,ct = cnct(mach)
 
     dV = dVdt(g, q, beta, flight_path[-1]) * dt
     deceleration.append(dV/dt)
@@ -75,34 +80,38 @@ while height[-1] > 11000:
     h = forward_euler(height[-1], dh)
     height.append(h)
 
-    dalpha = dalphadt(g, q, beta, flight_path[-1], velocity[-1], height[-1]) * dt
+    dalpha = dalphadt(g, q, beta, flight_path[-1], velocity[-1], height[-1], cn, ct) * dt
     alpha = forward_euler(flight_path[-1], dalpha)
     flight_path.append(alpha)
 
     dr = drdt(flight_path[-1], velocity[-1], height[-1]) * dt
     r = forward_euler(distance[-1], dr)
     distance.append(r) 
+    if round(time[-1],2) == 438.64:
+        print(h/0.3048)
+        print(V/0.3048)
 
+"""
 plt.rcParams.update({'font.size': 14})
-plt.plot(np.array(time)/60, np.array(height)/1000/0.3048)
+plt.plot(np.array(time), np.array(height)/1000/0.3048)
 plt.ylabel("Altitude [1000 ft]")
 plt.xlabel("Time [min]")
 plt.grid()
 plt.show()
 
-plt.plot(np.array(time)/60, np.array(velocity)/1000/0.3048)
+plt.plot(np.array(time), np.array(velocity)/1000/0.3048)
 plt.ylabel("Velocity [1000 ft/s]")
 plt.xlabel("Time [min]")
 plt.grid()
 plt.show()
 
 
-plt.plot(np.array(time)/60, np.array(flight_path)/1000/0.3048)
+plt.plot(np.array(time), np.array(flight_path)/1000/0.3048)
 plt.ylabel("Velocity [1000 ft/s]")
 plt.xlabel("Time [min]")
 plt.grid()
 plt.show()
-
+"""
 fig, ax1 = plt.subplots()
 
 color = 'tab:red'
