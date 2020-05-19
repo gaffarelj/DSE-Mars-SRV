@@ -1,0 +1,14 @@
+\definecolor{rm-3}{HTML}{FE0000}\definecolor{rm-2}{HTML}{FF9900}\definecolor{rm-1}{HTML}{FCFF2F}\definecolor{rm-0}{HTML}{00FF00}
+\begin{table}[H]
+\centering
+\caption{Risk map of the SAFE subsystem}
+\label{tab:risk-map-safe}\begin{tabular}{l|c|c|c|c|c|}
+\cline{2-6}
+& \multicolumn{1}{l|}{Very unlikely (1)} & \multicolumn{1}{l|}{Unlikely (2)} & \multicolumn{1}{l|}{Possible (3)} & \multicolumn{1}{l|}{Likely (4)} & \multicolumn{1}{l|}{Very likely (5)} \\ \hline
+\multicolumn{1}{|l|}{Very high impact (5)} & \cellcolor{rm-3}2 & \cellcolor{rm-3}1 & \cellcolor{rm-3} & \cellcolor{rm-3} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{High impact (4)} & \cellcolor{rm-2} & \cellcolor{rm-2} & \cellcolor{rm-2}3 & \cellcolor{rm-3} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Medium impact (3)} & \cellcolor{rm-0} & \cellcolor{rm-1} & \cellcolor{rm-1} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Low impact (2)} & \cellcolor{rm-0} & \cellcolor{rm-0} & \cellcolor{rm-1} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Very Low impact (1)} & \cellcolor{rm-0} & \cellcolor{rm-0} & \cellcolor{rm-0} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\end{tabular} 
+\end{table}
