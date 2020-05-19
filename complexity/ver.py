@@ -1,5 +1,6 @@
 import calc_class as cs
 
+cs.reset()
 mech = cs.line(0.5,"bi")
 fluid =  cs.line(1,"uni")
 elec = cs. line(1,"uni")
