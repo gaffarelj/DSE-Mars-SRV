@@ -30,10 +30,11 @@ class risk():
 		return f"risk {self.id} ({self.prob}->{self.prob_mit}/{self.impact}->{self.impact_mit})"
 
 class risks_list():
-	def __init__(self, risk_list=[], ss_name="xxx", use_mitig=False, latex_file=True):
+	def __init__(self, risk_list=[], ss_codename="xxx", ss_name="xxx", use_mitig=False, latex_file=True):
 		self.risk_list = risk_list
 		self.path = os.path.dirname(os.path.realpath(__file__))
-		self.ss_name = ss_name.upper()
+		self.ss_codename = ss_codename.upper()
+		self.ss_name = ss_name.title()
 		self.use_mitig = use_mitig
 		self.latex_file = latex_file
 		self.latex = []
@@ -56,11 +57,16 @@ class risks_list():
 				prob_mitig, impact_mitig = clean_tuple(row[4], row[6]), clean_tuple(row[5], row[7])
 				r = risk(i, row[0], row[1], row[2], row[3], prob_mitig, impact_mitig)
 				self.risk_list.append(r)
+		self.risks_def()
+		self.map()
+		self.mitig(True)
+		self.map()	
+		self.combine_latex()
 
 	def risks_def(self):
 		ret = "\\begin{itemize}\n"
 		for r in self.risk_list:
-			ret += f"\t \\item \\textbf{{SRV-RISK-{self.ss_name}-{r.id}}} {r.event.capitalize()}, results in {r.conseq.lower()}.\n"
+			ret += f"\t \\item \\textbf{{SRV-RISK-{self.ss_codename}-{r.id}}} {r.event.capitalize()}, results in {r.conseq.lower()}.\n"
 			if r.impact_mit != r.impact or r.prob_mit != r.prob:
 				ret += "\t\\begin{itemize}\n"
 				if r.prob_mit != r.prob:
@@ -86,7 +92,7 @@ class risks_list():
 		op += "\n\\begin{table}[H]\n"
 		op += "\\centering\n"
 		op += f"\\caption{{Risk map of the {self.ss_name} subsystem{tab_mitig[0]}}}\n"
-		op += f"\\label{{tab:risk-map-{self.ss_name.lower()}{tab_mitig[1]}}}"
+		op += f"\\label{{tab:risk-map-{self.ss_codename.lower()}{tab_mitig[1]}}}"
 		op += "\\begin{tabular}{l|c|c|c|c|c|}\n"
 		op += "\\cline{2-6}\n"
 		op += "& \multicolumn{1}{l|}{Very unlikely (1)} & \multicolumn{1}{l|}{Unlikely (2)} & \multicolumn{1}{l|}{Possible (3)} & \multicolumn{1}{l|}{Likely (4)} & \multicolumn{1}{l|}{Very likely (5)} \\\\ \hline" + "\n"
@@ -113,8 +119,6 @@ class risks_list():
 		if self.use_mitig and to_mitigate > 0:
 			conjug = ("s are", "them") if to_mitigate > 1 else (" is", "it")
 			print(f"/!\ {to_mitigate} risk{conjug[0]} still out of the green zone. Do your best to mitigate {conjug[1]} if possible /!\\")
-		if self.use_mitig and self.latex_file:
-			self.combine_latex()
 
 	def save_res(self, res, fname, extension="txt"):
 		f = open(self.path + f"\output\\{fname}.{extension}", "w")
@@ -129,13 +133,13 @@ class risks_list():
 		self.use_mitig = status
 
 	def combine_latex(self):
-		out = f"The following events have been assessed and mitigated as part of the {self.ss_name} subsystem:\n\n"
+		out = f"\\noindent The following events have been assessed and mitigated as part of the {self.ss_name} subsystem:\n\n"
 		out += self.latex[0]
-		out += f"\n\nFrom this list, the risk map of \\autoref{{tab:risk-map-{self.ss_name.lower()}}} has been created.\n\n"
+		out += f"\n\n\\noindent From this list, the risk map of \\autoref{{tab:risk-map-{self.ss_codename.lower()}}} has been created.\n\n"
 		out += self.latex[1]
-		out += f"\n\nAs seen in the risk map of \\autoref{{tab:risk-map-{self.ss_name.lower()}}}, some risks have to be mitigated. \
-		An updated risk map, following mitigation, can be seen in \\autoref{{tab:risk-map-{self.ss_name.lower()}-mitig}}.\n\n"
+		out += f"\n\n\\noindent As seen in the risk map of \\autoref{{tab:risk-map-{self.ss_codename.lower()}}}, some risks have to be mitigated. \
+		An updated risk map, following mitigation, can be seen in \\autoref{{tab:risk-map-{self.ss_codename.lower()}-mitig}}.\n\n"
 		out += self.latex[2]
 		out += "\n\n \\todo[inline]{Discuss the mitigated map, and alter the text if needed.}"
-		self.save_res(out, f"risk-{self.ss_name.lower()}", "tex")
-		print(f"Please import the file output/risk-{self.ss_name.lower()}.tex on Overleaf in the Chapters/Risks folder, and input it where needed.")
+		self.save_res(out, f"risk-{self.ss_codename.lower()}", "tex")
+		print(f"Please import the file output/risk-{self.ss_codename.lower()}.tex on Overleaf in the Chapters/Risks folder, and input it where needed.")
