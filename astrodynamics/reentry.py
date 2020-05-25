@@ -12,8 +12,8 @@ insertion_orbit_p = mean_radius - 300000        #[m]
 gamma = atm.gamma
 R = atm.R
 g0 = 3.71                                       #[m/s^2]
-ct = 1.28                                       #tangential force coefficient based on diameter
-cn = 0.22                                        #normal force coefficicent based on diameter
+ct = 2.75                                       #tangential force coefficient based on diameter
+cn = 1.5                                        #normal force coefficicent based on diameter
 vehicle_mass = 20000                            #[kg]
 S = 65                                          #[m^2] 
 
@@ -38,7 +38,7 @@ def dynamic_pressure(V, altitude, gamma=gamma):
     else:
         q = mach**2 * 0.5*gamma*pressure
 
-    return q
+    return q, mach
 
 def normal_shock(V, pressure_1, density_1, temperature_1):
     a_1 = atm.get_speed_of_sound(temperature_1)
@@ -84,7 +84,8 @@ time = [0]
 distance = [0]
 deceleration = [0]
 dyn_pressure = [0]
-dt = 0.01
+mach = [18.6]
+dt = 0.1
 
 # Reentry trajectory
 while height[-1] > 1000:
@@ -92,8 +93,9 @@ while height[-1] > 1000:
     
     g = gravitational_acceleration(height[-1])
     beta = ballistic_coefficient(g)
-    q = dynamic_pressure(velocity[-1], height[-1])
+    q,m = dynamic_pressure(velocity[-1], height[-1])
     dyn_pressure.append(q)
+    mach.append(m)
 
     dV = dVdt(g, q, beta, flight_path[-1]) * dt
     deceleration.append(dV/dt)
@@ -118,18 +120,19 @@ fig, ax1 = plt.subplots()
 
 color = 'tab:red'
 ax1.set_xlabel('Time [s]')
-ax1.set_ylabel('Altitude [km]', color=color)
-ax1.plot(time, np.array(height)/1000, color=color)
+ax1.set_ylabel('Mach Number', color=color)
+ax1.plot(time, mach, color=color)
 ax1.tick_params(axis='y', labelcolor=color)
 ax1.set_xticks(np.arange(0, 1750, 250))
 
 ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
 color = 'tab:blue'
-ax2.set_ylabel('Velocity [m/s]', color=color)  # we already handled the x-label with ax1
-ax2.plot(time, velocity, color=color)
+ax2.set_ylabel('Dynamic Pressure [Pa]', color=color)  # we already handled the x-label with ax1
+ax2.plot(time, dyn_pressure, color=color)
 ax2.tick_params(axis='y', labelcolor=color)
 
 fig.tight_layout()  # otherwise the right y-label is slightly clipped
 plt.grid()
 plt.show()
+
