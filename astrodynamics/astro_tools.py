@@ -34,19 +34,17 @@ class Planet:
     def density(self, altitude):
         return self.rho_0 * np.exp(-altitude / self.hs)
 
-    def entry_orbit(self):
-        return 3
+    def reentry_velocity(self, reentry_altitude, insertion_orbit_a, insertion_orbit_p):
+        a_reentry = (insertion_orbit_a + insertion_orbit_p) / 2
+        r_reentry = (self.r + reentry_altitude) 
+        v_reentry = np.sqrt(self.mu*(2/r_reentry - 1/a_reentry))
+
+        return v_reentry
 
 
 class Motion:
     def __init__(self, inital_conditions, roll_angle, S, mass, cl, cd, Planet): 
         self.initial = inital_conditions
-        self.V = inital_conditions[0]
-        self.gamma = inital_conditions[1]
-        self.xi = inital_conditions[2]
-        self.r = inital_conditions[3]
-        self.tau = inital_conditions[4]
-        self.delta = inital_conditions[5]
         self.mu = roll_angle
         self.Planet = Planet
         self.S = S
@@ -96,42 +94,68 @@ class Motion:
         return self.V / self.r * np.cos(self.gamma) * np.cos(self.xi)
 
     def forward_euler(self, timestep):
-        altitude = self.r - self.Planet.r
-        D = self.dynamicpressure() * self.cd * self.S
-        L = self.dynamicpressure() * self.cl * self.S
-        g = self.gravitational_acceleeration()
-
+        flight = [self.initial]
+        time = [0]
         new_state = np.zeros(6)
-        new_state[0] = self.V + timestep * self.dVdt(g,D)
-        new_state[1] = self.gamma + timestep * self.dgammadt(g, D, L)
-        new_state[2] = self.xi + timestep * self.dxidt(g, L)
-        new_state[3] = self.r + timestep * self.drdt()
-        new_state[4] = self.tau + timestep * self.dtaudt()
-        new_state[5] = self.delta + timestep * self.ddeltadt()
-        return new_state
 
+        while flight[-1][3] > self.Planet.r:
+
+            self.V = flight[-1][0]
+            self.gamma = flight[-1][1]
+            self.xi = flight[-1][2]
+            self.r = flight[-1][3]
+            self.tau = flight[-1][4]
+            self.delta = flight[-1][5]
+
+            altitude = self.r - self.Planet.r
+            D = self.dynamicpressure() * self.cd * self.S
+            L = self.dynamicpressure() * self.cl * self.S
+            g = self.gravitational_acceleeration()
+
+            new_state[0] = self.V + timestep * self.dVdt(g,D)
+            new_state[1] = self.gamma + timestep * self.dgammadt(g, D, L)
+            new_state[2] = self.xi + timestep * self.dxidt(g, L)
+            new_state[3] = self.r + timestep * self.drdt()
+            new_state[4] = self.tau + timestep * self.dtaudt()
+            new_state[5] = self.delta + timestep * self.ddeltadt()
+
+            flight.append(new_state)
+            time.append(time[-1] + timestep)
+            state = new_state
+        return np.array(flight), time
+        
 
 class Montecarlo():
-    def __init__(self, Iterator, initial_state, parameter, mean, standard_deviation, cutoff_radius, samples = 100):
-        self.Iterator = Iterator
-        self.initial_state = initial_state
-        self.parameter = parameter
-        self.mean = mean
-        self.sigma = standard_deviation
-        self.stop = cutoff_radius
+    def __init__(self, Motion, dt, samples = 1000):
+        self.Motion = Motion
         self.n = samples
         self.per = None
+        self.dt = dt
 
-    #def trajectories(self):
+    def trajectories(self):
+        self.Motion.initial[0] = np.random.normal(self.Motion.initial[0], 100)                              # 100 m/s
+        self.Motion.initial[1] = np.random.normal(self.Motion.initial[1], np.radians(1.5/60))               # 1.5 arcsecs
+        self.Motion.initial[2] = np.random.normal(self.Motion.initial[2], np.radians(1.5/60))               # 1.5 arcsecs
+        self.Motion.initial[3] = np.random.normal(self.Motion.initial[3], np.radians(1.5/60))               # 1.5 arcsecs
+        self.Motion.initial[4] = np.random.normal(self.Motion.initial[4], np.radians(1.5/60))               # 1.5 arcsecs
+        self.Motion.initial[5] = np.random.normal(self.Motion.initial[5], np.radians(1.5/60))               # 1.5 arcsecs
+
+        flight, time = self.Motion.forward_euler(self.dt)
+
+        return flight, time 
+
+    def impact_point(self, n):
+        flight, time = self.trajectories()
+        impact = flight[-1]
+        return impact 
 
     def get_trajectories_linux(self):
         pool = mp.Pool(mp.cpu_count())
-        self.per = pool.map(self.trajectories, range(self.n))
-        self.per = np.sum(self.per,axis=0)/self.n
+        self.per = pool.map(self.impact_point, range(self.n))
+
 
 
 def plot_single(x_data, y_data, x_label, y_label):
-
     plt.rcParams.update({'font.size': 12})
     fig, ax1 = plt.subplots()
 
