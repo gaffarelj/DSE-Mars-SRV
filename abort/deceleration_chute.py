@@ -1,7 +1,7 @@
 import sys
 sys.path.append(".")
 from astrodynamics import mars_standard_atmosphere as MSA
-import numpy as np
+from matplotlib import pyplot as plt
 
 class pc():
 	def __init__(self, c_d, A, m):
@@ -10,41 +10,63 @@ class pc():
 		self.m = m
 
 class deceleration():
-	def __init__(self, V0, h0, chutes, g=3.711):
+	def __init__(self, V0, h0, chutes, dt=0.1):
 		capsule = chutes[0]
 		self.m = sum([c.m for c in chutes])
 		self.V, self.h, self.t = [V0], [h0], [0]
-		self.g = g
-		self.get_rho()
-		self.drag_area = sum([c.c_d*c.A for c in chutes])
+		self.r = [self.get_rho()]
+		self.drag_area = sum([c.c_d * c.A for c in chutes])
+		quit = False
+		while not quit:# 1: check signs ! velocity starts up (+) and h increases, then V goes down, and so does h
+			D = self.comp_drag() - self.m * self.g()
+			a_d = D / self.m
+			dV = a_d * dt
+			dh = (self.V[-1] - dV / 2) * dt
+			if self.h[-1] > dh:
+				self.V.append(self.V[-1] - dV)
+				self.h.append(self.h[-1] - dh)
+				self.t.append(self.t[-1] + dt)
+				self.r.append(self.rho)
+			else:
+				quit = True
 
-	def get_rho(self):	# in meters
+	def get_rho(self):
 		p = MSA.get_pressure(self.h[-1])
 		T = MSA.get_temperature(self.h[-1])
 		self.rho = MSA.get_density(p, T)
+		return self.rho
 
-	def terminal_velocity(self):
-		V_ter = np.sqrt(2*self.m*self.g / (self.rho * self.drag_area))
-		self.V.append(V_ter)
-		self.dV = self.V[-2] - self.V[-1]
+	def g(self):
+		M = 0.64171*10**24
+		G = 6.67408*10**(-11)
+		R = 3389.5*1000 + self.h[-1]
+		return M*G/R**2
 
-	def dec_time(self):
-		t = (1/self.V[-1] - 1/self.V[-2])*2*self.m/(self.rho*self.drag_area)
-		self.t.append(t)
+	def comp_drag(self):
+		return 0.5 * self.get_rho() * self.V[-1] ** 2 * self.drag_area
 
-	def new_h(self):
-		print(self.t[-1])
-		h = self.h[-1] - 0.5*self.dV*self.t[-1]
-		self.h.append(h)
 
-capsule = pc(0.22, 11.9, 11500)
-ballute = pc(0.4, 15, 25)
+capsule = pc(0.22, 11.9, 11500)#wrong mass
+ballute = pc(0.4, 40, 25)
 chutes = [capsule, ballute]
-V_0 = 4188.75
-h_0 = 20 * 1e3
+V_0 = 1000
+h_0 = 30 * 1e3
+# mass, velocity, altitude as function of time
+# not only h (x) but also x/y -> longer into atmosphere
+decel = deceleration(V_0, h_0, chutes)
 
-D = deceleration(V_0, h_0, chutes)
-V_1 = D.terminal_velocity()
-D.dec_time()
-D.new_h()
-print([t/60 for t in D.t], D.dV, D.V, D.h)
+plt.rcParams.update({'font.size': 13})
+fig, ax1 = plt.subplots()
+color = 'tab:red'
+ax1.set_xlabel('Time [sec]')
+ax1.set_ylabel('Altitude [km]', color=color)
+ax1.plot(decel.t, [h/1000 for h in decel.h], color=color)
+ax1.tick_params(axis='y', labelcolor=color)
+ax2 = ax1.twinx()
+color = 'tab:blue'
+ax2.set_ylabel('Velocity [m/s]', color=color)
+ax2.plot(decel.t, decel.V, color=color)
+ax2.tick_params(axis='y', labelcolor=color)
+fig.tight_layout()
+plt.grid()
+plt.show()
