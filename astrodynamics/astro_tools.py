@@ -39,7 +39,8 @@ class Planet:
 
 
 class Motion:
-    def __init__(self, inital_conditions, roll_angle, S, mass, cl, cd, Planet):
+    def __init__(self, inital_conditions, roll_angle, S, mass, cl, cd, Planet): 
+        self.initial = inital_conditions
         self.V = inital_conditions[0]
         self.gamma = inital_conditions[1]
         self.xi = inital_conditions[2]
@@ -111,18 +112,22 @@ class Motion:
 
 
 class Montecarlo():
-    def __init__(self, Iterator, initial_state, parameter, mean, standard_deviation, cutoff_radius):
+    def __init__(self, Iterator, initial_state, parameter, mean, standard_deviation, cutoff_radius, samples = 100):
         self.Iterator = Iterator
         self.initial_state = initial_state
         self.parameter = parameter
         self.mean = mean
         self.sigma = standard_deviation
         self.stop = cutoff_radius
+        self.n = samples
+        self.per = None
 
-    def get_sens_linux(self):
-		pool = mp.Pool(mp.cpu_count())
-		self.per = pool.map(self.sens, range(self.n))
-		self.per = np.sum(self.per,axis=0)/self.n
+    #def trajectories(self):
+
+    def get_trajectories_linux(self):
+        pool = mp.Pool(mp.cpu_count())
+        self.per = pool.map(self.trajectories, range(self.n))
+        self.per = np.sum(self.per,axis=0)/self.n
 
 
 def plot_single(x_data, y_data, x_label, y_label):
@@ -130,7 +135,7 @@ def plot_single(x_data, y_data, x_label, y_label):
     plt.rcParams.update({'font.size': 12})
     fig, ax1 = plt.subplots()
 
-    color = 'tab:red'
+    color = 'tab:blue'
     ax1.set_xlabel(x_label)
     ax1.set_ylabel(y_label, color=color)
     ax1.plot(x_data, y_data, color=color)
