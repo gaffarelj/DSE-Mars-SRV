@@ -81,6 +81,8 @@ V_400=[1113.88,3462.96,369.53]
 #periapsis=300km
 h_300=[36100,7000,10000]
 V_300=[1430.04,3480.15,369.85]
+
+plt.rcParams.update({'font.size': 12})
 #plot
 plt.plot(V,h_eq_glide,color="navy",label="skipping flight constraint")
 plt.plot(V,h_g,color="firebrick",label="g-load constraint")

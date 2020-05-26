@@ -127,7 +127,6 @@ class tradeoff:
 				print("\\definecolor{to-" + c.name + "}{HTML}{" + c.HTML + "}")
 			for param in self.param_list:
 				param.set_colors(color_list)
-			
 			print()
 			print("\\begin{table}[H]")
 			print("\centering")
@@ -187,7 +186,10 @@ class tradeoff:
 
 				output = "\multicolumn{2}{|c|}{\multirow{-3}{*}{" + str(design.name) + "}}"
 				for param in self.param_list:
-					output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor{to-" + param.color[i].name + "} " + val_s(param.val_in[i]) + " $\\rightarrow$ " + val_s(param.val_out[i]) + "}}"
+					if param.Lv == 0 and param.Hv == 1:
+						output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor{to-" + param.color[i].name + "} " + val_s(param.val_in[i]) + "}}"
+					else:
+						output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor{to-" + param.color[i].name + "} " + val_s(param.val_in[i]) + " $\\rightarrow$ " + val_s(param.val_out[i]) + "}}"
 				print(str(output) + " & \multirow{-3}{*}{$" + str(round(self.total[i], 3)) + "$} \\\\ \hline")
 
 			print("\end{tabular}")
@@ -242,11 +244,12 @@ class sensitivity:
 		weights = [w.weight for w in tro_temp.param_list]
 		ret = np.zeros(len(tro_temp.design_list))
 		ret[np.where(tro_temp.total == np.amax(tro_temp.total))] = 1
-		return ret, weights
+		return ret
 
 	def get_sens_linux(self):
 		pool = mp.Pool(mp.cpu_count())
 		self.per = pool.map(self.sens, range(self.n))
+		self.per = np.sum(self.per,axis=0)/self.n
 
 		
 	

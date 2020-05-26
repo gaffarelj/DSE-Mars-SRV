@@ -1,5 +1,6 @@
 from complexity import calc_class as cs
 def comp():
+    cs.reset()
     power = cs.line(0.25,"uni")
     data = cs.line(1,"bi")
     structural = cs.line(0.1,"bi")
