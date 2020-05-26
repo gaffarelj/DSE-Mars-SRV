@@ -52,72 +52,70 @@ class Motion:
         self.cl = cl
         self.cd = cd
 
-    def dynamicpressure(self):
-        altitude = self.r - self.Planet.r
+    def dynamicpressure(self, V, r):
+        altitude = r - self.Planet.r
         rho = self.Planet.density(altitude)
-        return 0.5 * rho * self.V * self.V
+        return 0.5 * rho * V * V
 
-    def gravitational_acceleeration(self):
-        altitude = self.r - self.Planet.r
-        return self.Planet.g(altitude, self.delta)
+    def gravitational_acceleeration(self, r, delta):
+        altitude = r - self.Planet.r
+        return self.Planet.g(altitude, delta)
 
-    def dVdt(self, g, D):
-        dVdt = -D / self.mass - g * np.sin(self.gamma)
+    def dVdt(self, g, D, gamma):
+        dVdt = -D / self.mass - g * np.sin(gamma)
         return dVdt
 
-    def dgammadt(self, g, D, L):
-        dgammadt = (self.V / self.r - g / self.V) * np.cos(self.gamma) + (
+    def dgammadt(self, g, D, L, V, r, gamma):
+        dgammadt = (V / r - g / V) * np.cos(gamma) + (
             L * np.cos(self.mu) - self.S * np.sin(self.mu)
-        ) / self.mass / self.V
+        ) / self.mass / V
         return dgammadt
 
-    def dxidt(self, g, L):
-        dxidt = self.V / self.r * np.cos(self.gamma) * np.tan(self.delta) * np.sin(
-            self.xi
-        ) - (L * np.sin(self.mu) - self.S * np.cos(self.mu)) / self.mass / self.V / np.cos(
-            self.gamma
+    def dxidt(self, g, L, V, r, gamma, delta, xi):
+        dxidt = V / r * np.cos(gamma) * np.tan(delta) * np.sin(
+            xi
+        ) - (L * np.sin(self.mu) - self.S * np.cos(self.mu)) / self.mass / V / np.cos(
+            gamma
         )
         return dxidt
 
-    def drdt(self):
-        return self.V * np.sin(self.gamma)
+    def drdt(self, V, gamma):
+        return V * np.sin(gamma)
 
-    def dtaudt(self):
+    def dtaudt(self, V, r, gamma, delta, xi):
         return (
-            self.V
-            * np.cos(self.gamma)
-            * np.sin(self.xi)
-            / (self.r * np.cos(self.delta))
+            V
+            * np.cos(gamma)
+            * np.sin(xi)
+            / (r * np.cos(delta))
         )
 
-    def ddeltadt(self):
-        return self.V / self.r * np.cos(self.gamma) * np.cos(self.xi)
+    def ddeltadt(self, V, r, gamma, xi):
+        return V / r * np.cos(gamma) * np.cos(xi)
 
     def forward_euler(self, timestep):
         flight = [self.initial]
         time = [0]
-        new_state = np.zeros(6)
-
         while flight[-1][3] > self.Planet.r:
 
-            self.V = flight[-1][0]
-            self.gamma = flight[-1][1]
-            self.xi = flight[-1][2]
-            self.r = flight[-1][3]
-            self.tau = flight[-1][4]
-            self.delta = flight[-1][5]
+            V = flight[-1][0]
+            gamma = flight[-1][1]
+            xi = flight[-1][2]
+            r = flight[-1][3]
+            tau = flight[-1][4]
+            delta = flight[-1][5]
 
-            altitude = self.r - self.Planet.r
-            D = self.dynamicpressure() * self.cd * self.S
-            L = self.dynamicpressure() * self.cl * self.S
-            g = self.gravitational_acceleeration()
+            D = self.dynamicpressure(V, r) * self.cd * self.S
+            L = self.dynamicpressure(V, r) * self.cl * self.S
+            g = self.gravitational_acceleeration(r, delta)
 
-            new_state[0] = self.V + timestep * self.dVdt(g,D)
-            new_state[1] = self.gamma + timestep * self.dgammadt(g, D, L)
-            new_state[2] = self.xi + timestep * self.dxidt(g, L)
-            new_state[3] = self.r + timestep * self.drdt()
-            new_state[4] = self.tau + timestep * self.dtaudt()
-            new_state[5] = self.delta + timestep * self.ddeltadt()
+            new_state = np.zeros(6)
+            new_state[0] = V + timestep * self.dVdt(g,D,gamma)
+            new_state[1] = gamma + timestep * self.dgammadt(g, D, L, V, r, gamma)
+            new_state[2] = xi + timestep * self.dxidt(g, L, V, r, gamma, delta, xi)
+            new_state[3] = r + timestep * self.drdt(V, gamma)
+            new_state[4] = tau + timestep * self.dtaudt(V,r,gamma,delta,xi)
+            new_state[5] = delta + timestep * self.ddeltadt(V,r,gamma,xi)
 
             flight.append(new_state)
             time.append(time[-1] + timestep)
@@ -126,19 +124,23 @@ class Motion:
         
 
 class Montecarlo():
-    def __init__(self, Motion, dt, samples = 1000):
+    def __init__(self, Motion, inital_conditions, dt, samples = 100):
         self.Motion = Motion
+        self.initial = inital_conditions
+        self.scale_height = self.Motion.Planet.hs
         self.n = samples
         self.per = None
         self.dt = dt
 
     def trajectories(self):
-        self.Motion.initial[0] = np.random.normal(self.Motion.initial[0], 100)                              # 100 m/s
-        self.Motion.initial[1] = np.random.normal(self.Motion.initial[1], np.radians(1.5/60))               # 1.5 arcsecs
-        self.Motion.initial[2] = np.random.normal(self.Motion.initial[2], np.radians(1.5/60))               # 1.5 arcsecs
-        self.Motion.initial[3] = np.random.normal(self.Motion.initial[3], np.radians(1.5/60))               # 1.5 arcsecs
-        self.Motion.initial[4] = np.random.normal(self.Motion.initial[4], np.radians(1.5/60))               # 1.5 arcsecs
-        self.Motion.initial[5] = np.random.normal(self.Motion.initial[5], np.radians(1.5/60))               # 1.5 arcsecs
+        self.Motion.initial[0] = np.random.normal(self.initial[0], 4)                                # 100 m/s
+        self.Motion.initial[1] = np.random.normal(self.initial[1], np.radians(1.5/60))               # 1.5 arcsecs
+        self.Motion.initial[2] = np.random.normal(self.initial[2], np.radians(1.5/60))               # 1.5 arcsecs
+        self.Motion.initial[3] = np.random.normal(self.initial[3], np.radians(1.5/60))               # 1.5 arcsecs
+        self.Motion.initial[4] = np.random.normal(self.initial[4], np.radians(1.5/60))               # 1.5 arcsecs
+        self.Motion.initial[5] = np.random.normal(self.initial[5], np.radians(1.5/60))               # 1.5 arcsecs
+
+        self.Motion.Planet.hs = np.random.normal(self.scale_height, 100)                             # scale height of atmosphere 
 
         flight, time = self.Motion.forward_euler(self.dt)
 
@@ -193,3 +195,18 @@ def plot_dual(x_data, y_data_1, y_data_2, x_label, y_label_1, y_label_2):
     plt.grid()
     plt.show()
 
+def scatter(initial_data, stochastic_data):
+    lat = []
+    lon = []
+    velocity = []
+    
+    for i in range(len(stochastic_data)):
+        lat.append(stochastic_data[i][5])
+        lon.append(stochastic_data[i][4])
+        velocity.append(stochastic_data[i][0])
+        
+    plt.scatter(np.degrees(np.array(lon)), np.degrees(np.array(lat)))
+    plt.ylabel('latitude [deg]')
+    plt.xlabel('longitude [deg]')
+    plt.grid()
+    plt.show()
