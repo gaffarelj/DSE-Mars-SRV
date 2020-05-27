@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 from scipy.optimize import fsolve
 
 class Planet:
-    def __init__(self, mean_radius=3389500, scale_height=8.8e3, rho_0=0.01417111, gravitational_parameter=42828e9, equatorial_radius=3396200, J2=0.001960454, rotational_rate=2*np.pi/(24.6229*3600)):
+    def __init__(self, mean_radius=3389500, scale_height=11.1e3, rho_0=0.01417111, gravitational_parameter=42828e9, equatorial_radius=3396200, J2=0.001960454, rotational_rate=2*np.pi/(24.6229*3600)):
         self.r = mean_radius
         self.req = equatorial_radius
         self.mu = gravitational_parameter
