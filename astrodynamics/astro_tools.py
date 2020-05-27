@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 from scipy.optimize import fsolve
 
 class Planet:
-    def __init__(self, mean_radius=3389500, scale_height=11.1e3, rho_0=0.01417111, gravitational_parameter=42828e9, equatorial_radius=3396200, J2=0.001960454, rotational_rate=2*np.pi/(24.6229*3600)):
+    def __init__(self, mean_radius=3389500, scale_height=11.1e3, rho_0=0.01417111, gravitational_parameter=42828e9, equatorial_radius=3396200, J2=0.001960454, rotational_rate=7.08824e-5):
         self.r = mean_radius
         self.req = equatorial_radius
         self.mu = gravitational_parameter
@@ -134,6 +134,7 @@ class Motion:
         return V / r * np.cos(gamma) * np.cos(xi)
 
     def forward_euler(self, timestep):
+        
         flight = [self.initial]
         time = [0]
         self.a_s = []
@@ -187,22 +188,23 @@ class Montecarlo:
         self.per = None
         self.dt = dt
 
-    def trajectories(self):
-        self.Motion.initial[0] = np.random.normal(self.initial[0], 4)                       # 100 m/s
+    def trajectories(self, n):
+        np.random.seed(n)
+        self.Motion.initial[0] = np.random.normal(self.initial[0], 2)                       # 2 m/s
         self.Motion.initial[1] = np.random.normal(self.initial[1], np.radians(1.5 / 60))    # 1.5 arcsecs
         self.Motion.initial[2] = np.random.normal(self.initial[2], np.radians(1.5 / 60))    # 1.5 arcsecs
-        self.Motion.initial[3] = np.random.normal(self.initial[3], np.radians(1.5 / 60))    # 1.5 arcsecs
-        self.Motion.initial[4] = np.random.normal(self.initial[4], np.radians(1.5 / 60))    # 1.5 arcsecs
-        self.Motion.initial[5] = np.random.normal(self.initial[5], np.radians(1.5 / 60))    # 1.5 arcsecs
+        self.Motion.initial[3] = np.random.normal(self.initial[3], 50)                      # 50 m
+        self.Motion.initial[4] = np.random.normal(self.initial[4], np.radians(0.1 / 60))    # 1.5 arcsecs
+        self.Motion.initial[5] = np.random.normal(self.initial[5], np.radians(0.1 / 60))    # 1.5 arcsecs
         
-        self.Motion.Planet.hs = np.random.normal(self.scale_height, 100)                    # scale height of atmosphere
+        self.Motion.Planet.hs = np.random.normal(self.scale_height, 50)                    # scale height of atmosphere
 
         flight, time = self.Motion.forward_euler(self.dt)
 
         return flight, time
 
     def impact_point(self, n):
-        flight, time = self.trajectories()
+        flight, time = self.trajectories(n)
         impact = flight[-1]
         return impact
 
@@ -265,6 +267,6 @@ def scatter(initial_data, stochastic_data):
     plt.xlabel("longitude [deg]")
     plt.grid()
     plt.show()
-
+    print(lat)
 def angleofattack(V):
     return np.radians(50)
