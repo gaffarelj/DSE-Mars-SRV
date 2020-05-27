@@ -1,8 +1,11 @@
 #Made by the aerodynamicist
 
 import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline
+
 import matplotlib.pyplot as plt
 
+#I'm genuinely sorry for how awful this looks. I thought this way would be the neatest, I was wrong.
 SS_alpha_spacing = np.linspace(-10,25,8) #measurement every 5 deg
 SS_Cl_M_0025 = np.array([-0.50,-0.30,-0.05,0.18,0.40,0.63,0.93,1.10])
 SS_Cl_M_0060 = np.array([-0.52,-0.30,-0.05,0.18,0.42,0.67,0.92,1.05])
@@ -36,45 +39,62 @@ SS_Cd_M_1000 = np.array([0.14,0.11,0.08,0.07,0.08,0.13,0.19,0.31])
 SS_Cd_M_1500 = np.array([0.14,0.11,0.08,0.07,0.08,0.13,0.19,0.31])
 SS_Cd_M_2000 = np.array([0.14,0.11,0.08,0.07,0.08,0.13,0.19,0.31])
 
-plt.plot(SS_alpha_spacing,SS_Cl_M_0025,label = "0025")
-plt.plot(SS_alpha_spacing,SS_Cl_M_0060,label = "0060")
-plt.plot(SS_alpha_spacing,SS_Cl_M_0080,label = "0080")
-plt.plot(SS_alpha_spacing,SS_Cl_M_0092,label = "0092")
-plt.plot(SS_alpha_spacing,SS_Cl_M_0098,label = "0098")
-plt.plot(SS_alpha_spacing,SS_Cl_M_0110,label = "0110")
-plt.plot(SS_alpha_spacing,SS_Cl_M_0150,label = "0150")
-plt.plot(SS_alpha_spacing,SS_Cl_M_0200,label = "0200")
-plt.plot(SS_alpha_spacing,SS_Cl_M_0300,label = "0300")
-plt.plot(SS_alpha_spacing,SS_Cl_M_0400,label = "0400")
-plt.plot(SS_alpha_spacing,SS_Cl_M_0500,label = "0500")
-plt.plot(SS_alpha_spacing,SS_Cl_M_0800,label = "0800")
-plt.plot(SS_alpha_spacing,SS_Cl_M_1000,label = "1000")
-plt.plot(SS_alpha_spacing,SS_Cl_M_1500,label = "1500")
-plt.plot(SS_alpha_spacing,SS_Cl_M_2000,label = "2000")
+def aerodynamics_coefficients(Mach,alpha):
+    ''''
+    The input Mach number is changed to the nearest Mach number for which aero data is available.
+    Alpha is linearly interpolated between the datapoints, and linearly extrapolated afterwards.
+    Function testing has been performed, for various Mach and alpha values.
+    '''
+    if Mach < 0.425:
+        clvals = SS_Cl_M_0025
+        cdvals = SS_Cd_M_0025
+    if 0.425 <= Mach < 0.7:
+        clvals = SS_Cl_M_0060
+        cdvals = SS_Cd_M_0060
+    if 0.7 <= Mach < 0.86:
+        clvals = SS_Cl_M_0080
+        cdvals = SS_Cd_M_0080
+    if 0.86 <= Mach < 0.95:
+        clvals = SS_Cl_M_0092
+        cdvals = SS_Cd_M_0092
+    if 0.95 <= Mach < 1.04:
+        clvals = SS_Cl_M_0098
+        cdvals = SS_Cd_M_0098
+    if 1.04 <= Mach < 1.3:
+        clvals = SS_Cl_M_0110
+        cdvals = SS_Cd_M_0110
+    if 1.3 <= Mach < 1.75:
+        clvals = SS_Cl_M_0150
+        cdvals = SS_Cd_M_0150
+    if 1.75 <= Mach < 2.5:
+        clvals = SS_Cl_M_0200
+        cdvals = SS_Cd_M_0200
+    if 2.5 <= Mach < 2.5:
+        clvals = SS_Cl_M_0300
+        cdvals = SS_Cd_M_0300
+    if 3.5 <= Mach < 4.5:
+        clvals = SS_Cl_M_0400
+        cdvals = SS_Cd_M_0400
+    if 4.5 <= Mach < 6.5:
+        clvals = SS_Cl_M_0500
+        cdvals = SS_Cd_M_0500
+    if 6.5 <= Mach < 9:
+        clvals = SS_Cl_M_0800
+        cdvals = SS_Cd_M_0800
+    if 9 <= Mach < 12.5:
+        clvals = SS_Cl_M_1000
+        cdvals = SS_Cd_M_1000
+    if 12.5 <= Mach < 17.5:
+        clvals = SS_Cl_M_1500
+        cdvals = SS_Cd_M_1500
+    if 17.5 <= Mach:
+        clvals = SS_Cl_M_2000
+        cdvals = SS_Cd_M_2000
 
-plt.legend()
-plt.xlabel("Alpha")
-plt.ylabel("Cl")
-plt.show()
 
-plt.plot(SS_alpha_spacing,SS_Cd_M_0025,label = "0025")
-plt.plot(SS_alpha_spacing,SS_Cd_M_0060,label = "0060")
-plt.plot(SS_alpha_spacing,SS_Cd_M_0080,label = "0080")
-plt.plot(SS_alpha_spacing,SS_Cd_M_0092,label = "0092")
-plt.plot(SS_alpha_spacing,SS_Cd_M_0098,label = "0098")
-plt.plot(SS_alpha_spacing,SS_Cd_M_0110,label = "0110")
-plt.plot(SS_alpha_spacing,SS_Cd_M_0150,label = "0150")
-plt.plot(SS_alpha_spacing,SS_Cd_M_0200,label = "0200")
-plt.plot(SS_alpha_spacing,SS_Cd_M_0300,label = "0300")
-plt.plot(SS_alpha_spacing,SS_Cd_M_0400,label = "0400")
-plt.plot(SS_alpha_spacing,SS_Cd_M_0500,label = "0500")
-plt.plot(SS_alpha_spacing,SS_Cd_M_0800,label = "0800")
-plt.plot(SS_alpha_spacing,SS_Cd_M_1000,label = "1000")
-plt.plot(SS_alpha_spacing,SS_Cd_M_1500,label = "1500")
-plt.plot(SS_alpha_spacing,SS_Cd_M_2000,label = "2000")
-
-plt.legend()
-plt.xlabel("Alpha")
-plt.ylabel("Cd")
-plt.show()
+    cd_function  = InterpolatedUnivariateSpline(SS_alpha_spacing,cdvals,k=1)
+    cl_function = InterpolatedUnivariateSpline(SS_alpha_spacing,clvals,k=1)
+    cl = cl_function(alpha)
+    cd = cd_function(alpha)
+    return cl,cd
 
