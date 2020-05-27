@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 from scipy.optimize import fsolve
 
 class Planet:
-    def __init__(self, mean_radius, scale_height, rho_0, gravitational_parameter, equatorial_radius, J2, rotational_rate,):
+    def __init__(self, mean_radius=3389500, scale_height=8.8e3, rho_0=0.01417111, gravitational_parameter=42828e9, equatorial_radius=3396200, J2=0.001960454, rotational_rate=2*np.pi/(24.6229*3600)):
         self.r = mean_radius
         self.req = equatorial_radius
         self.mu = gravitational_parameter
@@ -47,7 +47,7 @@ class Planet:
         return - np.arctan(dydx)
 
 class Motion:
-    def __init__(self, inital_conditions, roll_angle, alpha, S, mass, cl, cd, Planet):
+    def __init__(self, inital_conditions, roll_angle, alpha, S, mass, cl, cd, Planet, parachutes=[]):
         self.initial = inital_conditions
         self.mu = roll_angle
         self.alpha = alpha
@@ -57,6 +57,7 @@ class Motion:
         self.mass = mass
         self.cl = cl
         self.cd = cd
+        self.chutes = parachutes
 
     def dynamicpressure(self, V, r):
         altitude = r - self.Planet.r
@@ -135,6 +136,7 @@ class Motion:
     def forward_euler(self, timestep):
         flight = [self.initial]
         time = [0]
+        self.a_s = []
         while flight[-1][3] > self.Planet.r:
 
             V = flight[-1][0]
@@ -144,12 +146,15 @@ class Motion:
             tau = flight[-1][4]
             delta = flight[-1][5]
 
-            D = self.dynamicpressure(V, r) * self.cd * self.S
+            chute_drag_area = sum([c.cd * c.A * c.n for c in self.chutes if time[-1] > c.deploy_time])
+
+            D = self.dynamicpressure(V, r) * (self.cd * self.S + chute_drag_area)
             L = self.dynamicpressure(V, r) * self.cl * self.S
             g = self.gravitational_acceleeration(r, delta)
 
             new_state = np.zeros(6)
-            new_state[0] = V + timestep * self.dVdt(g, D, r, gamma, delta, xi)
+            a = self.dVdt(g, D, r, gamma, delta, xi)
+            new_state[0] = V + timestep * a
             new_state[1] = gamma + timestep * self.dgammadt(
                 g, D, L, V, r, gamma, delta, xi
             )
@@ -158,11 +163,20 @@ class Motion:
             new_state[4] = tau + timestep * self.dtaudt(V, r, gamma, delta, xi)
             new_state[5] = delta + timestep * self.ddeltadt(V, r, gamma, xi)
 
+            self.a_s.append(a)
             flight.append(new_state)
             time.append(time[-1] + timestep)
             state = new_state
+        self.a_s.append(a)
         return np.array(flight), time
 
+class pc():
+    def __init__(self, cd, A, m, deploy_time=0, n=1):
+        self.cd = cd
+        self.A = A
+        self.m = m
+        self.n = n
+        self.deploy_time = deploy_time
 
 class Montecarlo:
     def __init__(self, Motion, inital_conditions, dt, samples=100):
@@ -206,7 +220,7 @@ def plot_single(x_data, y_data, x_label, y_label):
     ax1.set_ylabel(y_label, color=color)
     ax1.plot(x_data, y_data, color=color)
     ax1.tick_params(axis="y", labelcolor=color)
-    ax1.set_xticks(np.arange(0, 1750, 250))
+    #ax1.set_xticks(np.arange(0, 1750, 250))
 
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
     plt.grid()
@@ -222,7 +236,7 @@ def plot_dual(x_data, y_data_1, y_data_2, x_label, y_label_1, y_label_2):
     ax1.set_ylabel(y_label_1, color=color)
     ax1.plot(x_data, y_data_1, color=color)
     ax1.tick_params(axis="y", labelcolor=color)
-    ax1.set_xticks(np.arange(0, 1750, 250))
+    #ax1.set_xticks(np.arange(0, 1750, 250))
 
     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
