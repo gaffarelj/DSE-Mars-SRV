@@ -136,7 +136,7 @@ class Motion:
     def forward_euler(self, timestep):
         flight = [self.initial]
         time = [0]
-        self.a_s = []
+        self.a_s, self.q_s = [], []
         while flight[-1][3] > self.Planet.r:
 
             V = flight[-1][0]
@@ -147,9 +147,10 @@ class Motion:
             delta = flight[-1][5]
 
             chute_drag_area = sum([c.cd * c.A * c.n for c in self.chutes if time[-1] > c.deploy_time])
+            q = self.dynamicpressure(V, r)
 
-            D = self.dynamicpressure(V, r) * (self.cd * self.S + chute_drag_area)
-            L = self.dynamicpressure(V, r) * self.cl * self.S
+            D = q * (self.cd * self.S + chute_drag_area)
+            L = q * self.cl * self.S
             g = self.gravitational_acceleeration(r, delta)
 
             new_state = np.zeros(6)
@@ -164,10 +165,11 @@ class Motion:
             new_state[5] = delta + timestep * self.ddeltadt(V, r, gamma, xi)
 
             self.a_s.append(a)
+            self.q_s.append(q)
             flight.append(new_state)
             time.append(time[-1] + timestep)
             state = new_state
-        self.a_s.append(a)
+        self.a_s.append(a), self.q_s.append(q)
         return np.array(flight), time
 
 class pc():

@@ -9,7 +9,7 @@ from astrodynamics import astro_tools as AT
 mars = AT.Planet()
 
 state = np.zeros(6)
-state[0] = 400						# velocity
+state[0] = 800						# velocity
 state[1] = np.radians(85)			# flight path angle
 state[2] = np.radians(85)			# heading angle
 state[3] = mars.r + 10000			# radius 
@@ -31,7 +31,6 @@ vehicle_mass = 11500
 motion = AT.Motion(state, roll_angle, aoa, S, vehicle_mass, cl, cd, mars, parachutes=chutes)
 flight, time = motion.forward_euler(0.1)
 
+AT.plot_dual(time, (flight[:,3] - mars.r)/1000, motion.q_s, 'Time [s]', 'Altitude [km]', 'Dyn. pressure [Pa]')
 AT.plot_dual(time, (flight[:,3] - mars.r)/1000, flight[:,0], 'Time [s]', 'Altitude [km]', 'Velocity [m/s]')
 AT.plot_dual(time, motion.a_s, flight[:,0], 'Time [s]', 'Acceleration [m/s$^2$]', 'Velocity [m/s]')
-AT.plot_single(time, np.degrees(flight[:,2]), 'Time [s]', 'heading angle [deg]')
-AT.plot_single(time, np.degrees(flight[:,1]), 'Time [s]', 'flight path angle [deg]')
