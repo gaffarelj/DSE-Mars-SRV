@@ -149,8 +149,8 @@ def H_aerodynamics_coefficients(Mach,alpha):
         clvals = H_Cl_M_2000
         cdvals = H_Cd_M_2000
 
-    cd_function  = InterpolatedUnivariateSpline(SS_alpha_spacing,cdvals,k=1)
-    cl_function = InterpolatedUnivariateSpline(SS_alpha_spacing,clvals,k=1)
+    cd_function  = InterpolatedUnivariateSpline(H_alpha_spacing,cdvals,k=1)
+    cl_function = InterpolatedUnivariateSpline(H_alpha_spacing,clvals,k=1)
     cl = cl_function(alpha)
     cd = cd_function(alpha)
     return cl,cd
