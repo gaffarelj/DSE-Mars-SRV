@@ -1,7 +1,7 @@
 import numpy as np
 import multiprocessing as mp
 from matplotlib import pyplot as plt
-
+from Aero.aero_calcs import aerodynamics_coefficients
 
 class Planet:
     def __init__(
