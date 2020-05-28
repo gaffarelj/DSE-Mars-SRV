@@ -74,7 +74,7 @@ def SS_aerodynamics_coefficients(Mach,alpha):
     if 1.75 <= Mach < 2.5:
         clvals = SS_Cl_M_0200
         cdvals = SS_Cd_M_0200
-    if 2.5 <= Mach < 2.5:
+    if 2.5 <= Mach < 3.5:
         clvals = SS_Cl_M_0300
         cdvals = SS_Cd_M_0300
     if 3.5 <= Mach < 4.5:

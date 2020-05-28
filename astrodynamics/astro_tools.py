@@ -1,19 +1,10 @@
 import numpy as np
 import multiprocessing as mp
 from matplotlib import pyplot as plt
-from Aero.aero_calcs import aerodynamics_coefficients
+from scipy.optimize import fsolve
 
 class Planet:
-    def __init__(
-        self,
-        mean_radius,
-        scale_height,
-        rho_0,
-        gravitational_parameter,
-        equatorial_radius,
-        J2,
-        rotational_rate,
-    ):
+    def __init__(self, mean_radius=3389500, scale_height=11.1e3, rho_0=0.01417111, gravitational_parameter=42828e9, equatorial_radius=3396200, J2=0.001960454, rotational_rate=2*np.pi/(24.6229*3600)):
         self.r = mean_radius
         self.req = equatorial_radius
         self.mu = gravitational_parameter
@@ -41,17 +32,33 @@ class Planet:
 
         return v_reentry
 
+    def reentry_angle(self, reentry_altitude, insertion_orbit_a, insertion_orbit_p):
+        a = (insertion_orbit_a + insertion_orbit_p) / 2
+        c = a - insertion_orbit_p
+        r_reentry = self.r + reentry_altitude
+        
+        def r(theta):
+            return a*(1-(c/a)**2)/(1-(c/a)*np.cos(theta)) - r_reentry
+
+        t = fsolve(r, 0.001)[0]
+        x = r_reentry*np.cos(t)
+        dydx = - x/(r_reentry*np.sqrt(1 - x**2/r_reentry**2))
+        
+        return - np.arctan(dydx)
 
 class Motion:
-    def __init__(self, inital_conditions, roll_angle, S, mass, cl, cd, Planet):
+    def __init__(self, inital_conditions, roll_angle, alpha, S, mass, cl, cd, Planet, parachutes=[]):
         self.initial = inital_conditions
         self.mu = roll_angle
+        self.alpha = alpha
         self.Planet = Planet
         self.omega = self.Planet.omega
         self.S = S
         self.mass = mass
         self.cl = cl
         self.cd = cd
+        self.chutes = parachutes
+        self.i_chute = -1
 
     def dynamicpressure(self, V, r):
         altitude = r - self.Planet.r
@@ -130,6 +137,7 @@ class Motion:
     def forward_euler(self, timestep):
         flight = [self.initial]
         time = [0]
+        self.a_s, self.q_s = [], []
         while flight[-1][3] > self.Planet.r:
 
             V = flight[-1][0]
@@ -139,12 +147,31 @@ class Motion:
             tau = flight[-1][4]
             delta = flight[-1][5]
 
-            D = self.dynamicpressure(V, r) * self.cd * self.S
-            L = self.dynamicpressure(V, r) * self.cl * self.S
+            # Parachute deployment
+            chute_drag_area = 0
+            if len(self.chutes) > 0:
+                # If there's still parachutes after the current one, check if deployment time reached
+                if self.i_chute + 1 < len(self.chutes) and time[-1] > self.chutes[self.i_chute+1].deploy_time:
+                    # Increment parachute id -> deploy the parachute
+                    self.i_chute += 1
+                    print(f"Deployed chute {self.i_chute} at {round(time[-1], 2)}")
+                    # Remove the mass of the previous parachute from the capsule
+                    if self.i_chute >= 1:
+                        print(f"Got rid of chute {self.i_chute - 1} at {round(time[-1], 2)}")
+                        self.mass -= self.chutes[self.i_chute - 1].m
+                # Compute the drag * area of the current parachute
+                if self.i_chute >= 0:
+                    chute_drag_area = self.chutes[self.i_chute].drag_area
+
+            q = self.dynamicpressure(V, r)
+
+            D = q * (self.cd * self.S + chute_drag_area)
+            L = q * self.cl * self.S
             g = self.gravitational_acceleeration(r, delta)
 
             new_state = np.zeros(6)
-            new_state[0] = V + timestep * self.dVdt(g, D, r, gamma, delta, xi)
+            a = self.dVdt(g, D, r, gamma, delta, xi)
+            new_state[0] = V + timestep * a
             new_state[1] = gamma + timestep * self.dgammadt(
                 g, D, L, V, r, gamma, delta, xi
             )
@@ -153,11 +180,22 @@ class Motion:
             new_state[4] = tau + timestep * self.dtaudt(V, r, gamma, delta, xi)
             new_state[5] = delta + timestep * self.ddeltadt(V, r, gamma, xi)
 
+            self.a_s.append(a)
+            self.q_s.append(q)
             flight.append(new_state)
             time.append(time[-1] + timestep)
             state = new_state
+        self.a_s.append(a), self.q_s.append(q)
         return np.array(flight), time
 
+class pc():
+    def __init__(self, cd, A, m, deploy_time=0, n=1):
+        self.cd = cd
+        self.A = A
+        self.m = m
+        self.n = n
+        self.drag_area = A * n * cd
+        self.deploy_time = deploy_time
 
 class Montecarlo:
     def __init__(self, Motion, inital_conditions, dt, samples=100):
@@ -169,14 +207,14 @@ class Montecarlo:
         self.dt = dt
 
     def trajectories(self):
-        self.Motion.initial[0] = np.random.normal(self.initial[0], 4)  # 100 m/s
-        self.Motion.initial[1] = np.random.normal(self.initial[1], np.radians(1.5 / 60))  # 1.5 arcsecs
-        self.Motion.initial[2] = np.random.normal(self.initial[2], np.radians(1.5 / 60))  # 1.5 arcsecs
-        self.Motion.initial[3] = np.random.normal(self.initial[3], np.radians(1.5 / 60))  # 1.5 arcsecs
-        self.Motion.initial[4] = np.random.normal(self.initial[4], np.radians(1.5 / 60))  # 1.5 arcsecs
-        self.Motion.initial[5] = np.random.normal(self.initial[5], np.radians(1.5 / 60))  # 1.5 arcsecs
+        self.Motion.initial[0] = np.random.normal(self.initial[0], 4)                       # 100 m/s
+        self.Motion.initial[1] = np.random.normal(self.initial[1], np.radians(1.5 / 60))    # 1.5 arcsecs
+        self.Motion.initial[2] = np.random.normal(self.initial[2], np.radians(1.5 / 60))    # 1.5 arcsecs
+        self.Motion.initial[3] = np.random.normal(self.initial[3], np.radians(1.5 / 60))    # 1.5 arcsecs
+        self.Motion.initial[4] = np.random.normal(self.initial[4], np.radians(1.5 / 60))    # 1.5 arcsecs
+        self.Motion.initial[5] = np.random.normal(self.initial[5], np.radians(1.5 / 60))    # 1.5 arcsecs
         
-        self.Motion.Planet.hs = np.random.normal(self.scale_height, 100)  # scale height of atmosphere
+        self.Motion.Planet.hs = np.random.normal(self.scale_height, 100)                    # scale height of atmosphere
 
         flight, time = self.Motion.forward_euler(self.dt)
 
@@ -201,7 +239,7 @@ def plot_single(x_data, y_data, x_label, y_label):
     ax1.set_ylabel(y_label, color=color)
     ax1.plot(x_data, y_data, color=color)
     ax1.tick_params(axis="y", labelcolor=color)
-    ax1.set_xticks(np.arange(0, 1750, 250))
+    #ax1.set_xticks(np.arange(0, 1750, 250))
 
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
     plt.grid()
@@ -217,7 +255,7 @@ def plot_dual(x_data, y_data_1, y_data_2, x_label, y_label_1, y_label_2):
     ax1.set_ylabel(y_label_1, color=color)
     ax1.plot(x_data, y_data_1, color=color)
     ax1.tick_params(axis="y", labelcolor=color)
-    ax1.set_xticks(np.arange(0, 1750, 250))
+    #ax1.set_xticks(np.arange(0, 1750, 250))
 
     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
@@ -246,3 +284,6 @@ def scatter(initial_data, stochastic_data):
     plt.xlabel("longitude [deg]")
     plt.grid()
     plt.show()
+
+def angleofattack(V):
+    return np.radians(50)
