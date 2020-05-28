@@ -58,6 +58,7 @@ class Motion:
         self.cl = cl
         self.cd = cd
         self.chutes = parachutes
+        self.i_chute = -1
 
     def dynamicpressure(self, V, r):
         altitude = r - self.Planet.r
@@ -146,7 +147,22 @@ class Motion:
             tau = flight[-1][4]
             delta = flight[-1][5]
 
-            chute_drag_area = sum([c.cd * c.A * c.n for c in self.chutes if time[-1] > c.deploy_time])
+            # Parachute deployment
+            chute_drag_area = 0
+            if len(self.chutes) > 0:
+                # If there's still parachutes after the current one, check if deployment time reached
+                if self.i_chute + 1 < len(self.chutes) and time[-1] > self.chutes[self.i_chute+1].deploy_time:
+                    # Increment parachute id -> deploy the parachute
+                    self.i_chute += 1
+                    print(f"Deployed chute {self.i_chute} at {round(time[-1], 2)}")
+                    # Remove the mass of the previous parachute from the capsule
+                    if self.i_chute >= 1:
+                        print(f"Got rid of chute {self.i_chute - 1} at {round(time[-1], 2)}")
+                        self.mass -= self.chutes[self.i_chute - 1].m
+                # Compute the drag * area of the current parachute
+                if self.i_chute >= 0:
+                    chute_drag_area = self.chutes[self.i_chute].drag_area
+
             q = self.dynamicpressure(V, r)
 
             D = q * (self.cd * self.S + chute_drag_area)
@@ -178,6 +194,7 @@ class pc():
         self.A = A
         self.m = m
         self.n = n
+        self.drag_area = A * n * cd
         self.deploy_time = deploy_time
 
 class Montecarlo:
