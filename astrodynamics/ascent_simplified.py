@@ -9,8 +9,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import simps
 from BAT import get_a, get_Mach, get_g, get_p, get_T, get_rho, get_ceff, Lambda, Mprop, get_Fl, get_Fd, get_TWratio, massfractions
-from Aero.aero_calcs import aerodynamics_coefficients
-
+#from Aero.aero_calcs import aerodynamics_coefficients
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Aero'))
+from aero_calcs import aerodynamics_coefficients
 #=====================================================================================================================================================================================================================
 # Mars properties=  Atmospheric composition: 95.32% CO2, 2.7% N2, 1.6% Ar, 0.13% O2, 0.08% CO  
 #=====================================================================================================================================================================================================================
@@ -23,7 +25,7 @@ sol=24.6597*60*60               #[s] length of a day
 i_mars=25.19*np.pi/180          #[rad] inlination of Mars' equator
 omega_mars=0.7088218*10**(-4)   #[rad/s] Martian angular velocity
 M_atm=43.34                     #[g/mol] Mean molecular weight
-Rgas=8314.4621/M_atm               #[J/(kg*K)] Martian air gas constant
+Rgas=8314.4621/M_atm            #[J/(kg*K)] Martian air gas constant
 gamma=1.37                      #[-] heat capacity of Martian air
 #=====================================================================================================================================================================================================================
 # Node's properties & phasing orbit & Mars base
@@ -35,10 +37,6 @@ V_phasing=3272.466              #[m/s]
 h_phasing=609.74*10**3          #[m]
 h0=-3*10**3                     #[m] altitude of the launch site wrt volumetric mean altitude
 i0=i_node                       #[rad]
-p0=get_p(h0)                        #[Pa]
-T0=get_T(h0)                        #[K]
-rho0=get_rho(p0,T0,Rgas)            #[kg/m^3]
-g0=get_g(mu,Req,R,h0,i0,J2)      #[m/s^2]
 #=====================================================================================================================================================================================================================
 # Vehicle's properties
 #=====================================================================================================================================================================================================================
@@ -59,28 +57,27 @@ tb=187                         #[s]
 #=====================================================================================================================================================================================================================
 
 def dVxdt(T,D,L,M,Vz,Vx):
-    dVxdt=(T-D)/M*Vx/np.sqrt(Vx*Vx+Vz*Vz)-L/M*Vz/np.sqrt(Vx*Vx+Vz*Vz)
+    dVxdt=(T-D)/M*Vx/(np.sqrt(Vx*Vx+Vz*Vz))-L/M*Vz/(np.sqrt(Vx*Vx+Vz*Vz))
     return dVxdt
 
-#initial condition Vx: Vx(t=0):
-Vx0=omega_mars*(R+h0)*np.cos(i0)
+#free Vx due to the rotation of Mars: Vx(t=0):
+Vxfree=omega_mars*(R+h0)*np.cos(i0)
+
+#initial condition for Vx wrt to surface: Vx(t=0):
+Vx0=0.00001
 
 #final condition for Vx: Vx(t=te):
 Vxe=V_phasing
 
 def dVzdt(T,D,L,M,Vz,Vx,g):
-    dVzdt=(T-D)/M*Vz/np.sqrt(Vx*Vx+Vz*Vz)-g+L/M*Vx/np.sqrt(Vx*Vx+Vz*Vz)
+    dVzdt=(T-D)/M*Vz/(np.sqrt(Vx*Vx+Vz*Vz))-g+L/M*Vx/(np.sqrt(Vx*Vx+Vz*Vz))
     return dVzdt
 
 #initial condition Vz: Vz(t=0):
-Vz0=0
+Vz0=0.00001
 
 #final condition for Vz: Vz(t=te):
 Vze=0
-
-#time span considered
-dt=0.1
-
 
 #=====================================================================================================================================================================================================================
 # Simulation
@@ -90,61 +87,64 @@ M=np.array([Mwet[0]])
 
 Vx=np.array([Vx0])
 Vz=np.array([Vz0])
+V=np.sqrt(Vx**2+Vz**2)
 
-Z=np.array([h0])
+#earth reference frame is on the surface of Mars (where the base is, i.e. -3km)
+Z=np.array([0])
 X=np.array([0])
 
-p=np.array([get_p(Z[0])])
-T=np.array([get_T(Z[0])])
+
+dt=0.01
+t_tot=0
+
+Mach_list=[]
+ax_list=[]
+az_list=[]
 
 
-while Z[-1]<h_phasing:
-    t=t+dt
+while Z[-1]<h_phasing+abs(h0):
+#for i in range(1):
+    t_tot=t_tot+dt #k
+    p=get_p(Z[-1]) #k
+    T=get_T(Z[-1]) #k
+    rho=get_rho(p,T,Rgas) #k
+    a=get_a(gamma,Rgas, T) #k
+    Mach=get_Mach(V[-1],a) #k
+    Mach_list.append(Mach)
+    Cl,Cd=aerodynamics_coefficients(Mach,0)
+    g=get_g(mu,Req,R,Z[-1],i0,J2)
+    Fd=get_Fd(Cd,rho,S,V[-1])
+    Fl=get_Fl(Cl,rho,S,V[-1])
     
-    #solve for Vx and Vz
-    #compute V
-    
-    M=np.append(M, M[-1] - mdot0*dt)
-    
-    
-
-#solving ODE's (Forward Euler) and updating new values
-for i in range(int(tf/dt)):
-    pnew=get_p(Z[i])
-    p=np.append(p,pnew)
-    Tnew=get_T(Z[i])
-    T=np.append(T,Tnew)
-    rho=get_rho(p,T,Rgas)
-    a=get_a(gamma,Rgas,T)
-    g=get_g(mu,Req,R,Z,i0,J2)
-    TWratio=get_TWratio(Ft,M,g)
-    Fd=get_Fd(Cd,rho,S,V)
-    Fl=get_Fl(Cl,rho,S,V)
     
     #solve for Vx
-    Vxnew=Vx[i]+dt*dVxdt(T,Fd[i],Fl[i],M[i],Vz[i],Vx[i])
-    #solve for Vy
-    Vznew=Vz[i]+dt*dVzdt(T,Fd[i],Fl[i],M[i],Vz[i],Vx[i],g[i])
-    
-    #update velocities
-    Vx=np.append(Vx[i],Vxnew)
-    Vz=np.append(Vz[i],Vznew)
-    
-    #absolute velocity
-    V=np.sqrt(Vx*Vx+Vz*Vz)
-    #Mach number
-    Mach=get_Mach(V,a)
-    #integrate the V's to get Xnew and Znew (note: h=Z)
+    ax=dVxdt(Ft,Fd,Fl,M[-1],Vz[-1],Vx[-1])
+    ax_list.append(ax)
+    Vxnew=Vx[-1]+dt*ax
     #Integrate using Trapezoidal rule 
-    Znew=(t[i+1]-t[i])/2*(Vz[i]+Vznew)
-    Z=np.append(Z,Znew)
-    
-    Xnew=(t[i+1]-t[i])/2*(Vx[i]+Vxnew)
+    Xnew=dt/2*(Vx[-1]+Vxnew)
     X=np.append(X,Xnew)
     
-    #differentiate the V's to get ax and ay
+    #solve for Vz
+    az=dVzdt(Ft,Fd,Fl,M[-1],Vz[-1],Vx[-1],g)
+    az_list.append(az)
+    Vznew=Vz[-1]+dt*az
+    #Integrate using Trapezoidal rule 
+    Znew=dt/2*(Vz[-1]+Vznew)
+    Z=np.append(Z,Znew)
+    print(az)
+
+    #update velocities
+    Vx=np.append(Vx,Vxnew)
+    Vz=np.append(Vz,Vznew)
+    #compute V
+    V=np.append(V,np.sqrt(Vxnew**2+Vznew**2))
     
-    #compute new mass:
-    Mnew=M[i]-mdot0
-    #update M: 
-    M=np.append(M,Mnew)
+  
+    M=np.append(M, M[-1] - mdot0*dt)
+
+"""
+t_array=np.linspace(0,t_tot,t_tot/dt)  
+plt.plot(t_array,V)    
+plt.show()
+"""  
