@@ -39,11 +39,12 @@ SS_Cd_M_1000 = np.array([0.14,0.11,0.08,0.07,0.08,0.13,0.19,0.31])
 SS_Cd_M_1500 = np.array([0.14,0.11,0.08,0.07,0.08,0.13,0.19,0.31])
 SS_Cd_M_2000 = np.array([0.14,0.11,0.08,0.07,0.08,0.13,0.19,0.31])
 
+"""
 plt.plot(SS_alpha_spacing,SS_Cd_M_0500)
 plt.show()
 plt.plot(SS_alpha_spacing,SS_Cl_M_0500)
 plt.show()
-
+"""
 def SS_aerodynamics_coefficients(Mach,alpha):
     ''''
     The input Mach number is changed to the nearest Mach number for which aero data is available.
@@ -149,8 +150,8 @@ def H_aerodynamics_coefficients(Mach,alpha):
         clvals = H_Cl_M_2000
         cdvals = H_Cd_M_2000
 
-    cd_function  = InterpolatedUnivariateSpline(SS_alpha_spacing,cdvals,k=1)
-    cl_function = InterpolatedUnivariateSpline(SS_alpha_spacing,clvals,k=1)
+    cd_function  = InterpolatedUnivariateSpline(H_alpha_spacing,cdvals,k=1)
+    cl_function = InterpolatedUnivariateSpline(H_alpha_spacing,clvals,k=1)
     cl = cl_function(alpha)
     cd = cd_function(alpha)
     return cl,cd

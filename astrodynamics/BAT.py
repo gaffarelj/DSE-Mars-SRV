@@ -144,3 +144,13 @@ def massfractions(ceff,M_wet,DV_ascent,DV_hohmann,DV_inclination,DV_rendezvous,D
     Mp=np.array(Mp)
     Mwet=np.array(Mwet)
     return Mp, Mwet
+
+
+#Rough order of magnitude for ascent delta V 
+#h0=altitude of launch site, horbit=altitude of orbit to be attained, omega_mars=angular velocity of Mars, i0=inclination of the launch site
+def ROM_deltaV(g0,R,h,h0,omega_mars,i0,Vorbit,tb):
+    Vrot=omega_mars*(R+h0)*np.cos(i0)
+    Vvert=np.sqrt(2*g0*h*(R)**2/(R+h)**2)
+    Vgloss=g0*tb
+    dV=np.sqrt((Vorbit-Vrot)**2+Vvert**2)+Vgloss
+    return dV
