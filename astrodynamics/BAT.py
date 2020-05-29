@@ -11,16 +11,16 @@ import numpy as np
 # Functions 
 #========================================================================================================================================================================================================================
 #Mach
-def M(V,a):
-    M=V/a
-    return M
+def get_Mach(V,a):
+    Mach=V/a
+    return Mach
 #speed of sound
-def a(gamma,R,T):
+def get_a(gamma,Rgas,T):
     a=np.sqrt(gamma*Rgas*T)
     return a
-#mu=gravitational parameter Mars, Req=equatorial radius Mars, R_mars=mean volumetric radius Mars, h=altitude, theta=latitude [rad]
+#mu=gravitational parameter Mars, Req=equatorial radius Mars, R=mean volumetric radius Mars, h=altitude, theta=latitude [rad]
 #gravitational acceleration
-def g(mu,Req,R,h,theta):
+def get_g(mu,Req,R,h,theta,J2):
     P2=3/2*np.sin(theta)**2-1/2
     g=mu/(R+h)**2*(1-3*J2*(Req/(R+h))**2*P2)
     return g
@@ -28,7 +28,7 @@ def g(mu,Req,R,h,theta):
 #From mars_standard_atmosphere code [based on Viking 1 measurements]:
 
 #pressure
-def p(h):
+def get_p(h):
 
     if h < 39000:
         p = 610.5*(228.5/(228.5-1.8*h/1000))**(19.435/-1.8)
@@ -53,7 +53,7 @@ def p(h):
     return p 
 
 #Temperature
-def T(h):
+def get_T(h):
 
     if h < 39000:
         T = 228.5 - 1.8*h/1000
@@ -79,11 +79,11 @@ def T(h):
     return T
 
 #density
-def rho(p, T, Rgas):
+def get_rho(p, T, Rgas):
     return p/(Rgas*T)
 
 #equivalent jet velocity
-def ceff(Isp):
+def get_ceff(Isp):
     ceff=9.80665*Isp
     return ceff
 
@@ -99,5 +99,58 @@ def Mprop(ceff,Mwet,deltaV):
     return Mprop
 
 
+#thrust force, where: mdot=mass flow,ceff=equivalent jet velocity,Ae=nozzle exit area,pe=nozzle exit pressure,p=atmospheric pressure at given altitude
+def get_Ft(mdot,ceff,Ae,pe,p):
+    Ft=-mdot*ceff+Ae*(pe-p)
+    return Ft
+
+#drag force
+def get_Fd(Cd,rho,S,V):
+    Fd=0.5*rho*V*V*S*Cd
+    return Fd
+
+#lift force
+def get_Fl(Cl,rho,S,V):
+    Fl=0.5*rho*V*V*S*Cl
+    return Fl
+
+#specific thrust
+def psi_sp(Ft,M,g):
+    psi_sp=Ft/(M*g)
+    return psi_sp
+
+#Thrust to weight ratio
+def get_TWratio(Ft,M,g):
+    TWratio=Ft/(M*g)
+    return TWratio
 
 
+#"phasing"=orbital velocity of phasing orbit + gravity loss
+#"Hohmann"=hohmann transfer from phasing orbit to LMO
+#"inclination"=inclination change of 5 deg at LMO
+#"reentry"=burn to insert into orbit needed for reentry (apoasis 300km under R)
+#"reserve"=10% reserves of tot deltav
+def massfractions(ceff,M_wet,DV_ascent,DV_hohmann,DV_inclination,DV_rendezvous,DV_docking,DV_reentry,DV_landing,DV_reserve):
+    #phase=["phasing","Hohmann","inclination","rendezvous","docking","reentry","landing","reserve"]
+    #deltaV_c2=np.array([3272.466+916.29, 45.842,289.485,88,30,391.492,373.65,487.238])
+    deltaV=np.array([DV_ascent,DV_hohmann,DV_inclination,DV_rendezvous,DV_docking,DV_reentry,DV_landing,DV_reserve])
+    Mp=[]
+    Mwet=[M_wet]
+    for i in range(5):
+        
+        Mp.append(Mprop(ceff,Mwet[i],deltaV[i]))
+        Mwet.append(Mwet[i]-Mp[i])
+        
+    Mp=np.array(Mp)
+    Mwet=np.array(Mwet)
+    return Mp, Mwet
+
+
+#Rough order of magnitude for ascent delta V 
+#h0=altitude of launch site, horbit=altitude of orbit to be attained, omega_mars=angular velocity of Mars, i0=inclination of the launch site
+def ROM_deltaV(g0,R,h,h0,omega_mars,i0,Vorbit,tb):
+    Vrot=omega_mars*(R+h0)*np.cos(i0)
+    Vvert=np.sqrt(2*g0*h*(R)**2/(R+h)**2)
+    Vgloss=g0*tb
+    dV=np.sqrt((Vorbit-Vrot)**2+Vvert**2)+Vgloss
+    return dV
