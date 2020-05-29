@@ -159,7 +159,6 @@ class Motion:
                     print(f"Deployed chute {self.i_chute} at {round(time[-1], 2)}")
                     # Remove the mass of the previous parachute from the capsule
                     if self.i_chute >= 1:
-                        print(f"Got rid of chute {self.i_chute - 1} at {round(time[-1], 2)}")
                         self.mass -= self.chutes[self.i_chute - 1].m
                 # Compute the drag * area of the current parachute
                 if self.i_chute >= 0:

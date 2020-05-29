@@ -39,7 +39,6 @@ SS_Cd_M_1000 = np.array([0.14,0.11,0.08,0.07,0.08,0.13,0.19,0.31])
 SS_Cd_M_1500 = np.array([0.14,0.11,0.08,0.07,0.08,0.13,0.19,0.31])
 SS_Cd_M_2000 = np.array([0.14,0.11,0.08,0.07,0.08,0.13,0.19,0.31])
 
-
 def SS_aerodynamics_coefficients(Mach,alpha):
     ''''
     The input Mach number is changed to the nearest Mach number for which aero data is available.
