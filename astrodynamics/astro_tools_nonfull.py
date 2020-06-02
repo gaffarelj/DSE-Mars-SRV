@@ -1,12 +1,10 @@
 import numpy as np
 import multiprocessing as mp
-from mpl_toolkits import mplot3d
 from matplotlib import pyplot as plt
 from scipy.optimize import fsolve
-import mars_standard_atmosphere as atm
 
 class Planet:
-    def __init__(self, mean_radius=3389500, scale_height=11.1e3, rho_0=0.01417111, gravitational_parameter=42828e9, equatorial_radius=3396200, J2=0.001960454, rotational_rate=7.08824e-5):
+    def __init__(self, mean_radius=3389500, scale_height=11.1e3, rho_0=0.01417111, gravitational_parameter=42828e9, equatorial_radius=3396200, J2=0.001960454, rotational_rate=2*np.pi/(24.6229*3600)):
         self.r = mean_radius
         self.req = equatorial_radius
         self.mu = gravitational_parameter
@@ -49,7 +47,7 @@ class Planet:
         return - np.arctan(dydx)
 
 class Motion:
-    def __init__(self, inital_conditions, roll_angle, alpha, S, mass, coefficients, Planet, parachutes=[]):
+    def __init__(self, inital_conditions, roll_angle, alpha, S, mass, cl, cd, Planet, parachutes=[]):
         self.initial = inital_conditions
         self.mu = roll_angle
         self.alpha = alpha
@@ -57,7 +55,8 @@ class Motion:
         self.omega = self.Planet.omega
         self.S = S
         self.mass = mass
-        self.coefficients = coefficients
+        self.cl = cl
+        self.cd = cd
         self.chutes = parachutes
         self.i_chute = -1
 
@@ -136,10 +135,9 @@ class Motion:
         return V / r * np.cos(gamma) * np.cos(xi)
 
     def forward_euler(self, timestep):
-        
         flight = [self.initial]
         time = [0]
-        self.a_s, self.q_s, self.mach, self.D = [], [], [], []
+        self.a_s, self.q_s = [], []
         while flight[-1][3] > self.Planet.r:
 
             V = flight[-1][0]
@@ -165,17 +163,17 @@ class Motion:
                     chute_drag_area = self.chutes[self.i_chute].drag_area
 
             q = self.dynamicpressure(V, r)
-            mach = V/np.sqrt(atm.gamma*atm.R*atm.get_temperature(self.Planet.r))
-            cl,cd = self.coefficients(mach, self.alpha)
 
-            D = q * (cd * self.S + chute_drag_area)
-            L = q * cl * self.S
+            D = q * (self.cd * self.S + chute_drag_area)
+            L = q * self.cl * self.S
             g = self.gravitational_acceleeration(r, delta)
 
             new_state = np.zeros(6)
             a = self.dVdt(g, D, r, gamma, delta, xi)
             new_state[0] = V + timestep * a
-            new_state[1] = gamma + timestep * self.dgammadt(g, D, L, V, r, gamma, delta, xi)
+            new_state[1] = gamma + timestep * self.dgammadt(
+                g, D, L, V, r, gamma, delta, xi
+            )
             new_state[2] = xi + timestep * self.dxidt(g, L, V, r, gamma, delta, xi)
             new_state[3] = r + timestep * self.drdt(V, gamma)
             new_state[4] = tau + timestep * self.dtaudt(V, r, gamma, delta, xi)
@@ -183,14 +181,10 @@ class Motion:
 
             self.a_s.append(a)
             self.q_s.append(q)
-            self.mach.append(mach)
-            self.D.append(D)
-
             flight.append(new_state)
             time.append(time[-1] + timestep)
             state = new_state
-        self.a_s.append(a), self.q_s.append(q), self.mach.append(mach), self.D.append(D)
-
+        self.a_s.append(a), self.q_s.append(q)
         return np.array(flight), time
 
 class pc():
@@ -211,24 +205,22 @@ class Montecarlo:
         self.per = None
         self.dt = dt
 
-    def trajectories(self, n):
-        np.random.seed(n)
-        self.Motion.initial[0] = np.random.normal(self.initial[0], 2)                       # 2 m/s
+    def trajectories(self):
+        self.Motion.initial[0] = np.random.normal(self.initial[0], 4)                       # 100 m/s
         self.Motion.initial[1] = np.random.normal(self.initial[1], np.radians(1.5 / 60))    # 1.5 arcsecs
         self.Motion.initial[2] = np.random.normal(self.initial[2], np.radians(1.5 / 60))    # 1.5 arcsecs
-        self.Motion.initial[3] = np.random.normal(self.initial[3], 50)                      # 50 m
-        self.Motion.initial[4] = np.random.normal(self.initial[4], np.radians(0.1 / 60))    # 1.5 arcsecs
-        self.Motion.initial[5] = np.random.normal(self.initial[5], np.radians(0.1 / 60))    # 1.5 arcsecs
+        self.Motion.initial[3] = np.random.normal(self.initial[3], np.radians(1.5 / 60))    # 1.5 arcsecs
+        self.Motion.initial[4] = np.random.normal(self.initial[4], np.radians(1.5 / 60))    # 1.5 arcsecs
+        self.Motion.initial[5] = np.random.normal(self.initial[5], np.radians(1.5 / 60))    # 1.5 arcsecs
         
-        self.Motion.Planet.hs = np.random.normal(self.scale_height, 50)                    # scale height of atmosphere
-        self.Motion.mu = np.random.normal(0, np.radians(1.5 / 60))  
+        self.Motion.Planet.hs = np.random.normal(self.scale_height, 100)                    # scale height of atmosphere
 
         flight, time = self.Motion.forward_euler(self.dt)
 
         return flight, time
 
     def impact_point(self, n):
-        flight, time = self.trajectories(n)
+        flight, time = self.trajectories()
         impact = flight[-1]
         return impact
 
@@ -275,9 +267,10 @@ def plot_dual(x_data, y_data_1, y_data_2, x_label, y_label_1, y_label_2):
     plt.grid()
     plt.show()
 
-def scatter(stochastic_data, base_lat, base_lon, Planet):
-    lat, lon = [], []
-    x_distance, y_distance = [], []
+
+def scatter(initial_data, stochastic_data):
+    lat = []
+    lon = []
     velocity = []
 
     for i in range(len(stochastic_data)):
@@ -285,31 +278,11 @@ def scatter(stochastic_data, base_lat, base_lon, Planet):
         lon.append(stochastic_data[i][4])
         velocity.append(stochastic_data[i][0])
 
-        x = (lat - base_lat)*Plantet.r
-        y = (lon - base_lon)*Plantet.r
-        x_distance.append(x)
-        y_distance.append(y)
-
     plt.scatter(np.degrees(np.array(lon)), np.degrees(np.array(lat)))
     plt.ylabel("latitude [deg]")
     plt.xlabel("longitude [deg]")
     plt.grid()
     plt.show()
 
-    plt.scatter(x_distance, y_distance)
-    plt.ylabel("latitude [deg]")
-    plt.xlabel("longitude [deg]")
-    plt.grid()
-    plt.show()
-
-
-def surfaceplots(xdata, ydata, zdata, x_label, y_label, z_label):
-
-    ax = plt.axes(projection='3d')
-
-    # Data for a three-dimensional line
-    ax.plot3D(xdata, ydata, zdata, 'red')
-    ax.set_xlabel(x_label)
-    ax.set_ylabel(y_label)
-    ax.set_zlabel(z_label)
-    plt.show()
+def angleofattack(V):
+    return np.radians(50)
