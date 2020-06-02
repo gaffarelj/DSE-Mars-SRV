@@ -39,12 +39,6 @@ SS_Cd_M_1000 = np.array([0.14,0.11,0.08,0.07,0.08,0.13,0.19,0.31])
 SS_Cd_M_1500 = np.array([0.14,0.11,0.08,0.07,0.08,0.13,0.19,0.31])
 SS_Cd_M_2000 = np.array([0.14,0.11,0.08,0.07,0.08,0.13,0.19,0.31])
 
-"""
-plt.plot(SS_alpha_spacing,SS_Cd_M_0500)
-plt.show()
-plt.plot(SS_alpha_spacing,SS_Cl_M_0500)
-plt.show()
-"""
 def SS_aerodynamics_coefficients(Mach,alpha):
     ''''
     The input Mach number is changed to the nearest Mach number for which aero data is available.
@@ -70,9 +64,6 @@ def SS_aerodynamics_coefficients(Mach,alpha):
         clvals = SS_Cl_M_0110
         cdvals = SS_Cd_M_0110
     if 1.3 <= Mach < 1.75:
-        clvals = SS_Cl_M_0150
-        cdvals = SS_Cd_M_0150
-    if 1.75 <= Mach < 2.5:
         clvals = SS_Cl_M_0200
         cdvals = SS_Cd_M_0200
     if 2.5 <= Mach < 3.5:
@@ -124,8 +115,11 @@ H_Cd_M_2000 = np.array([0.05,0.05,0.06,0.09,0.14,0.24,0.36,0.52,0.70,0.92])
 
 def H_aerodynamics_coefficients(Mach,alpha):
     ''''
-    The input Mach number is changed to the nearest Mach number for which aero data is available.
-    Alpha is linearly interpolated between the datapoints, and linearly extrapolated afterwards.
+plt.plot(SS_alpha_spacing,SS_Cd_M_0500)
+plt.show()
+plt.plot(SS_alpha_spacing,SS_Cl_M_0500)
+plt.show()
+e datapoints, and linearly extrapolated afterwards.
     Function testing has been performed, for various Mach and alpha values.
     '''
     if Mach < 1.25:
@@ -150,8 +144,20 @@ def H_aerodynamics_coefficients(Mach,alpha):
         clvals = H_Cl_M_2000
         cdvals = H_Cd_M_2000
 
-    cd_function  = InterpolatedUnivariateSpline(H_alpha_spacing,cdvals,k=1)
-    cl_function = InterpolatedUnivariateSpline(H_alpha_spacing,clvals,k=1)
-    cl = cl_function(alpha)
+    cd_function  = InterpolatedUnivariateSpline(H_alpha_spacing,cdvals,k=3)
+    cl_function = InterpolatedUnivariateSpline(H_alpha_spacing,clvals,k=3)
+    cl = cl_function(alpha)/2
     cd = cd_function(alpha)
     return cl,cd
+
+
+if __name__ == '__main__':
+    plt.plot(SS_alpha_spacing,SS_Cd_M_0500)
+    plt.show()
+    plt.plot(SS_alpha_spacing,SS_Cl_M_0500)
+    plt.show()
+
+    plt.plot(H_alpha_spacing,H_Cd_M_0500)
+    plt.show()
+    plt.plot(H_alpha_spacing,H_Cl_M_0500)
+    plt.show()
