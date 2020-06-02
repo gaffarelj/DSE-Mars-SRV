@@ -43,7 +43,57 @@ Td = dist.aerodynamic_disturbance(cp,cg,drag,alpha)
 
 
 #Torque required for slew during landing
-def slew_landing(alpha,S,cp,rho,velocity,cd,Td,cg,I):
+# def slew_landing(alpha,S,cp,rho,velocity,cd,Td,cg,I):
+#     slew_angle_tot = np.pi / 180 - alpha
+#     slew_i         = -int(slew_duration / dt)
+#
+#     v0             = velocity[slew_i]
+#     Td0            = Td[slew_i]
+#
+#     spin_rate =  slew_angle_tot / slew_duration
+#     spin_acc  =  spin_rate      / slew_acc_duration
+#     spin_dec  = -spin_acc
+#
+#
+#     RCS_torque = []
+#     slew_angle = 0
+#     for i in range(slew_i,0):
+#         slew_angle += spin_rate * dt
+#         # print(slew_angle)
+#         S_new, cp_new = dist.Drag_surface_cp(alpha+slew_angle)
+#         drag_new      = dist.Drag_force(rho[i],velocity[i],cd,S_new)
+#         Td_new        = dist.aerodynamic_disturbance(cp_new,cg,drag_new,alpha+slew_angle)
+#         dTd           = Td_new - Td0
+#         # print(Td_new)
+#         if i < (slew_i + slew_acc_duration/dt):
+#             Torque_net = I * spin_acc - dTd
+#         elif i > (slew_i + slew_acc_duration/dt) and i < (0 - slew_acc_duration/dt):
+#             Torque_net = -dTd
+#         elif i > (0 - slew_acc_duration/dt):
+#             Torque_net = I * spin_dec - dTd
+#         RCS_torque.append(Torque_net)
+#     RCS_torque = np.array(RCS_torque)
+#     return RCS_torque
+#
+# RCS_torque = slew_landing(alpha,S,cp,rho,velocity,cd,Td,cg,Iy)
+# RCS_thrust, number_thrusters  = act.RCS_torque_to_thrust(RCS_torque,"y",length,width,cg)
+# RCS_impulse = np.sum(RCS_thrust * dt)
+# Mp = act.RCSpropellant(RCS_impulse,Isp,number_thrusters)
+# RCS_thrust_max = np.max(RCS_thrust)
+#
+#     v0             = velocity[slew_i]
+#     Td0            = Td[slew_i]
+#
+#     spin_rate =  slew_angle_tot / slew_duration
+#
+# print('thrust per RCS engine:',RCS_thrust_max)
+# print('Impulse per RCS engine:', RCS_impulse)
+# print('Total propellant needed:', Mp)
+
+
+
+def slew_landing(thrust,alpha,S,cp,rho,velocity,cd,Td,cg,I):
+    RCS_torque = act.RCS_thrust_to_torque(thrust,"y",length,width,cg)
     slew_angle_tot = np.pi / 180 - alpha
     slew_i         = -int(slew_duration / dt)
 
@@ -54,33 +104,23 @@ def slew_landing(alpha,S,cp,rho,velocity,cd,Td,cg,I):
     spin_acc  =  spin_rate      / slew_acc_duration
     spin_dec  = -spin_acc
 
-
-    RCS_torque = []
+    slew_time  = 0
     slew_angle = 0
-    for i in range(slew_i,0):
-        slew_angle += spin_rate * dt
-        # print(slew_angle)
+    impulse    = 0
+    while slew_angle < slew_angle_tot:
         S_new, cp_new = dist.Drag_surface_cp(alpha+slew_angle)
-        drag_new      = dist.Drag_force(rho[i],velocity[i],cd,S_new)
-        Td_new        = dist.aerodynamic_disturbance(cp_new,cg,drag_new,alpha+slew_angle)
-        dTd           = Td_new - Td0
-        # print(Td_new)
-        if i < (slew_i + slew_acc_duration/dt):
-            Torque_net = I * spin_acc - dTd
-        elif i > (slew_i + slew_acc_duration/dt) and i < (0 - slew_acc_duration/dt):
-            Torque_net = -dTd
-        elif i > (0 - slew_acc_duration/dt):
-            Torque_net = I * spin_dec - dTd
-        RCS_torque.append(Torque_net)
-    RCS_torque = np.array(RCS_torque)
-    return RCS_torque
+        drag = dist.Drag_force(rho[i],velocity[i],cd,S_new)
+        Td_new = dist.aerodynamic_disturbance(cp_new,cg,drag_new,alpha+slew_angle)
+        dTd = Td_new - Td0
+        net_torque = RCS_torque - dTd
 
-RCS_torque = slew_landing(alpha,S,cp,rho,velocity,cd,Td,cg,Iy)
-RCS_thrust, number_thrusters  = act.RCS_torque_to_thrust(RCS_torque,"y",length,width,cg)
-RCS_impulse = np.sum(RCS_thrust * dt)
-Mp = act.RCSpropellant(RCS_impulse,Isp,number_thrusters)
-RCS_thrust_max = np.max(RCS_thrust)
+        spin_acc    = (net_torque) / I
+        spin_rate   = spin_acc * dt
+        slew_angle += spin_rate * dt
+        slew_time  += dt
+        i += 1
+        impulse = thrust * dt
+    return slew_time, impulse
 
-print('thrust per RCS engine:',RCS_thrust_max)
-print('Impulse per RCS engine:', RCS_impulse)
-print('Total propellant needed:', Mp)
+for i in time:
+    print(i)

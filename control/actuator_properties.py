@@ -45,6 +45,32 @@ def RCS_torque_to_thrust(T,axis,length,width,cg):
         n = n_bottom + n_top
     return f, n
 
+def RCS_thrust_to_torque(f,axis,length,width,cg):
+    lx, ly, lz = thruster_arms(cg,length,width)
+    # n: number of thrusters to provide torque
+    if axis   == "x":
+        #bottom RCS
+        n_bottom = 2
+        #capsule RCS
+        n_top = 2
+        n = n_bottom + n_top
+        T = f * (lx * n_bottom)
+    elif axis == "y":
+        #bottom RCS
+        n_bottom = 3
+        #capsule RCS
+        n_top = 3
+        T = f * (n_top * ly + n_bottom * cg)
+        n = n_bottom + n_top
+    elif axis == "z":
+        #bottom RCS
+        n_bottom = 3
+        #capsule RCS
+        n_top = 3
+        T = f * (n_top * lz + n_bottom * cg)
+        n = n_bottom + n_top
+    return T
+
 def RCS_displacement_to_thrust(F,axis):
     if axis == "x":
         n_bottom = 4
