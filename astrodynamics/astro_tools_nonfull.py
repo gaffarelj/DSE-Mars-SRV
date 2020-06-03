@@ -1,12 +1,10 @@
 import numpy as np
 import multiprocessing as mp
-from mpl_toolkits import mplot3d
 from matplotlib import pyplot as plt
 from scipy.optimize import fsolve
-import mars_standard_atmosphere as atm
 
 class Planet:
-    def __init__(self, mean_radius=3389500, scale_height=11.1e3, rho_0=0.01417111, gravitational_parameter=42828e9, equatorial_radius=3396200, J2=0.001960454, rotational_rate=7.08824e-5):
+    def __init__(self, mean_radius=3389500, scale_height=11.1e3, rho_0=0.01417111, gravitational_parameter=42828e9, equatorial_radius=3396200, J2=0.001960454, rotational_rate=2*np.pi/(24.6229*3600)):
         self.r = mean_radius
         self.req = equatorial_radius
         self.mu = gravitational_parameter
@@ -49,20 +47,18 @@ class Planet:
         return - np.arctan(dydx)
 
 class Motion:
-    def __init__(self, inital_conditions, MOI, S, mass, coefficients, Planet, My, pitch_start, parachutes=[]):
+    def __init__(self, inital_conditions, roll_angle, alpha, S, mass, cl, cd, Planet, parachutes=[]):
         self.initial = inital_conditions
-        self.Ixx = MOI[0]
-        self.Iyy = MOI[1]
-        self.Izz = MOI[2]
+        self.mu = roll_angle
+        self.alpha = alpha
         self.Planet = Planet
         self.omega = self.Planet.omega
         self.S = S
         self.mass = mass
-        self.coefficients = coefficients
+        self.cl = cl
+        self.cd = cd
         self.chutes = parachutes
         self.i_chute = -1
-        self.My = My
-        self.pitch_start = pitch_start
 
     def dynamicpressure(self, V, r):
         altitude = r - self.Planet.r
@@ -72,23 +68,6 @@ class Motion:
     def gravitational_acceleeration(self, r, delta):
         altitude = r - self.Planet.r
         return self.Planet.g(altitude, delta)
-
-    def normalshock(self, r, mach_initial):
-        altitude = r - self.Planet.r
-        gamma = atm.gamma
-        t_static = atm.get_temperature(altitude)
-        p_static = atm.get_pressure(altitude)
-        rho_static = atm.get_density(p_static, t_static)
-
-        mach = np.sqrt((1+((gamma-1)/2*mach_initial**2))/(gamma*mach_initial**2-(gamma-1)/2))
-        pressure = p_static * (1 + 2*gamma/(gamma+1) * (mach_initial**2 - 1))
-        density = rho_static * (((gamma+1)*mach_initial**2)/(2+(gamma-1)*mach_initial**2))
-        temperature = t_static * pressure/p_static * rho_static/density
-        a = np.sqrt(gamma*atm.R*temperature)
-
-        V = mach/a
-        dyn_pressure = 0.5*density*V*V
-        return pressure, dyn_pressure
 
     def dVdt(self, g, D, r, gamma, delta, xi):
         dVdt = (
@@ -102,11 +81,12 @@ class Motion:
                 - np.cos(gamma) * np.sin(delta) * np.cos(xi)
             )
         )
+        # dVdt = -D / self.mass - g * np.sin(gamma)
         return dVdt
 
-    def dgammadt(self, g, D, L, V, r, gamma, delta, xi, mu):
+    def dgammadt(self, g, D, L, V, r, gamma, delta, xi):
         dgammadt = (
-            L * np.cos(mu) / self.mass
+            L * np.cos(self.mu) / self.mass
             - g * np.cos(gamma)
             + 2 * self.omega * V * np.cos(delta) * np.sin(xi)
             + V * V / r * np.cos(gamma)
@@ -118,11 +98,15 @@ class Motion:
                 - np.sin(gamma) * np.sin(delta) * np.cos(xi)
             )
         ) / V
+
+        # dgammadt = (V / r - g / V) * np.cos(gamma) + (
+        #    L * np.cos(self.mu) - self.S * np.sin(self.mu)
+        # ) / self.mass / V
         return dgammadt
 
-    def dxidt(self, g, L, V, r, gamma, delta, xi, mu):
+    def dxidt(self, g, L, V, r, gamma, delta, xi):
         dxidt = (
-            L * np.sin(mu) / self.mass
+            L * np.sin(self.mu) / self.mass
             + 2
             * self.omega
             * V
@@ -133,6 +117,12 @@ class Motion:
             + V * V / r * np.cos(gamma) ** 2 * np.tan(delta) * np.sin(xi)
             + self.omega ** 2 * r * np.cos(delta) * np.sin(delta) * np.sin(xi)
         ) / (V * np.cos(gamma))
+
+        # dxidt = V / r * np.cos(gamma) * np.tan(delta) * np.sin(
+        #    xi
+        # ) - (L * np.sin(self.mu) - self.S * np.cos(self.mu)) / self.mass / V / np.cos(
+        #    gamma
+        # )
         return dxidt
 
     def drdt(self, V, gamma):
@@ -144,46 +134,19 @@ class Motion:
     def ddeltadt(self, V, r, gamma, xi):
         return V / r * np.cos(gamma) * np.cos(xi)
 
-    def dpdt(self, Mx, q, yaw_rate):
-        return Mx/self.Ixx + (self.Iyy-self.Izz)/self.Ixx * q * yaw_rate
-    
-    def dqdt(self, My, p, yaw_rate):
-        return My/self.Iyy + (self.Izz-self.Ixx)/self.Iyy * p * yaw_rate
-    
-    def drratedt(self, Mz, p, q):
-        return Mz/self.Izz + (self.Ixx-self.Iyy)/self.Izz * p * q
-
-    def dalphadt(self, p, q, yaw_rate, g, L, V, gamma, mu, alpha, beta):
-        return q - (p*np.cos(alpha)+yaw_rate*np.sin(alpha))*np.tan(beta) - (L - self.mass*g*np.cos(gamma)*np.cos(mu))/(self.mass*V*np.cos(beta))
-    
-    def dbetadt(self):
-        return 0
-
-    def dmudt(self):
-        return 0
-
     def forward_euler(self, timestep):
         flight = [self.initial]
         time = [0]
-        self.a_s, self.q_s, self.mach, self.pitch_control = [], [], [], []
-        Mx = 0
-        My = 0
-        Mz = 0
-
+        self.a_s, self.q_s = [], []
         while flight[-1][3] > self.Planet.r:
-            V          = flight[-1][0]
-            gamma      = flight[-1][1]
-            xi         = flight[-1][2]
-            r          = flight[-1][3]
-            tau        = flight[-1][4]
-            delta      = flight[-1][5]
-            p          = flight[-1][6]
-            pitch_rate = flight[-1][7]
-            yaw_rate   = flight[-1][8]
-            alpha      = flight[-1][9]
-            beta       = flight[-1][10]
-            mu         = flight[-1][11]
-      
+
+            V = flight[-1][0]
+            gamma = flight[-1][1]
+            xi = flight[-1][2]
+            r = flight[-1][3]
+            tau = flight[-1][4]
+            delta = flight[-1][5]
+
             # Parachute deployment
             chute_drag_area = 0
             if len(self.chutes) > 0:
@@ -200,54 +163,28 @@ class Motion:
                     chute_drag_area = self.chutes[self.i_chute].drag_area
 
             q = self.dynamicpressure(V, r)
-            mach = V/np.sqrt(atm.gamma*atm.R*atm.get_temperature(self.Planet.r))
-            cl,cd = self.coefficients(mach, -np.degrees(alpha))
 
-            D = q * (cd * self.S + chute_drag_area)
-            L = q * cl * self.S
+            D = q * (self.cd * self.S + chute_drag_area)
+            L = q * self.cl * self.S
             g = self.gravitational_acceleeration(r, delta)
 
-            new_state = np.zeros(12)
+            new_state = np.zeros(6)
             a = self.dVdt(g, D, r, gamma, delta, xi)
             new_state[0] = V + timestep * a
-            new_state[1] = gamma + timestep * self.dgammadt(g, D, L, V, r, gamma, delta, xi, mu)
-            new_state[2] = xi + timestep * self.dxidt(g, L, V, r, gamma, delta, xi, mu)
+            new_state[1] = gamma + timestep * self.dgammadt(
+                g, D, L, V, r, gamma, delta, xi
+            )
+            new_state[2] = xi + timestep * self.dxidt(g, L, V, r, gamma, delta, xi)
             new_state[3] = r + timestep * self.drdt(V, gamma)
             new_state[4] = tau + timestep * self.dtaudt(V, r, gamma, delta, xi)
             new_state[5] = delta + timestep * self.ddeltadt(V, r, gamma, xi)
-            
-            if time[-1] < self.pitch_start:
-                new_state[6] = 0
-                new_state[7] = 0
-                new_state[8] = 0
-                new_state[9] = self.initial[9]
-                new_state[10] = 0
-                new_state[11] = 0
-                self.pitch_control.append(self.dalphadt(p, pitch_rate, yaw_rate, g, L, V, gamma, mu, alpha, beta))
-            else: 
-                My = self.My
-                if round(abs(alpha) - np.pi/2,3) == round(abs(gamma),3):
-                    self.My = 0
-                    pitch_rate = 0
-                new_state[6] = p + timestep * self.dpdt(Mx, pitch_rate, yaw_rate)
-                new_state[7] = pitch_rate + timestep * self.dqdt(My, p, yaw_rate)
-                new_state[8] = yaw_rate + timestep * self.drratedt(Mz, p, pitch_rate)
-                new_state[9] = alpha + timestep * self.dalphadt(p, pitch_rate, yaw_rate, g, L, V, gamma, mu, alpha, beta)
-                new_state[10] = beta + timestep * self.dbetadt()
-                new_state[11] = mu + timestep * self.dmudt()
-                self.pitch_control.append(self.dalphadt(p, pitch_rate, yaw_rate, g, L, V, gamma, mu, alpha, beta))
-
 
             self.a_s.append(a)
             self.q_s.append(q)
-            self.mach.append(mach)
-
             flight.append(new_state)
             time.append(time[-1] + timestep)
             state = new_state
-
-        self.a_s.append(a), self.q_s.append(q), self.mach.append(mach), self.pitch_control.append(0)
-
+        self.a_s.append(a), self.q_s.append(q)
         return np.array(flight), time
 
 class pc():
@@ -268,24 +205,22 @@ class Montecarlo:
         self.per = None
         self.dt = dt
 
-    def trajectories(self, n):
-        np.random.seed(n)
-        self.Motion.initial[0] = np.random.normal(self.initial[0], 1)                       # 2 m/s
-        self.Motion.initial[1] = np.random.normal(self.initial[1], np.radians(1 / 60))    # 1.5 arcsecs
-        self.Motion.initial[2] = np.random.normal(self.initial[2], np.radians(1 / 60))    # 1.5 arcsecs
-        self.Motion.initial[3] = np.random.normal(self.initial[3], 20)                      # 50 m
-        self.Motion.initial[4] = np.random.normal(self.initial[4], np.radians(0.1 / 60))    # 1.5 arcsecs
-        self.Motion.initial[5] = np.random.normal(self.initial[5], np.radians(0.1 / 60))    # 1.5 arcsecs
+    def trajectories(self):
+        self.Motion.initial[0] = np.random.normal(self.initial[0], 4)                       # 100 m/s
+        self.Motion.initial[1] = np.random.normal(self.initial[1], np.radians(1.5 / 60))    # 1.5 arcsecs
+        self.Motion.initial[2] = np.random.normal(self.initial[2], np.radians(1.5 / 60))    # 1.5 arcsecs
+        self.Motion.initial[3] = np.random.normal(self.initial[3], np.radians(1.5 / 60))    # 1.5 arcsecs
+        self.Motion.initial[4] = np.random.normal(self.initial[4], np.radians(1.5 / 60))    # 1.5 arcsecs
+        self.Motion.initial[5] = np.random.normal(self.initial[5], np.radians(1.5 / 60))    # 1.5 arcsecs
         
-        #self.Motion.Planet.hs = np.random.normal(self.scale_height, 50)                    # scale height of atmosphere
-        self.Motion.mu = np.random.normal(0, np.radians(1.5 / 60))  
+        self.Motion.Planet.hs = np.random.normal(self.scale_height, 100)                    # scale height of atmosphere
 
         flight, time = self.Motion.forward_euler(self.dt)
 
         return flight, time
 
     def impact_point(self, n):
-        flight, _ = self.trajectories(n)
+        flight, time = self.trajectories()
         impact = flight[-1]
         return impact
 
@@ -299,6 +234,7 @@ def plot_single(x_data, y_data, x_label, y_label):
     fig, ax1 = plt.subplots()
 
     color = "tab:blue"
+    ax1.set_xlabel(x_label)
     ax1.set_ylabel(y_label, color=color)
     ax1.plot(x_data, y_data, color=color)
     ax1.tick_params(axis="y", labelcolor=color)
@@ -331,9 +267,10 @@ def plot_dual(x_data, y_data_1, y_data_2, x_label, y_label_1, y_label_2):
     plt.grid()
     plt.show()
 
-def scatter(stochastic_data, base_lat, base_lon, Planet):
-    lat, lon = [], []
-    x_distance, y_distance = [], []
+
+def scatter(initial_data, stochastic_data):
+    lat = []
+    lon = []
     velocity = []
 
     for i in range(len(stochastic_data)):
@@ -341,41 +278,11 @@ def scatter(stochastic_data, base_lat, base_lon, Planet):
         lon.append(stochastic_data[i][4])
         velocity.append(stochastic_data[i][0])
 
-        y = (lat[-1] - base_lat)*Planet.r
-        x = (lon[-1] - base_lon)*Planet.r
-        x_distance.append(x)
-        y_distance.append(y)
-
     plt.scatter(np.degrees(np.array(lon)), np.degrees(np.array(lat)))
     plt.ylabel("latitude [deg]")
     plt.xlabel("longitude [deg]")
     plt.grid()
     plt.show()
 
-    plt.scatter(x_distance, y_distance)
-    plt.ylabel("[m]")
-    plt.xlabel("[m]")
-    plt.grid()
-    plt.show()
-
-
-def surfaceplots(xdata, ydata, zdata, x_label, y_label, z_label):
-    ax = plt.axes(projection='3d')
-
-    # Data for a three-dimensional line
-    ax.plot3D(xdata, ydata, zdata, 'red')
-    ax.set_xlabel(x_label)
-    ax.set_ylabel(y_label)
-    ax.set_zlabel(z_label)
-    plt.show()
-
-def differentiate(data, time, dt):
-    t = np.ndarray(len(time) - 2)
-    diff = np.ndarray(len(time) - 2)
-
-    for i in range(1,len(data)-2):
-        diff[i] = (data[i-1] + data[i+1])/(2*dt) 
-        t[i] = time[i]
-
-    return diff, t
-
+def angleofattack(V):
+    return np.radians(50)
