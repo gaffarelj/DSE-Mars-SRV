@@ -1,15 +1,10 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri May 15 20:06:20 2020
-
-@author: lucat
-"""
-
 import numpy as np
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Aero'))
 from aero_calcs import H_aerodynamics_coefficients
+
+
 #========================================================================================================================================================================================================================
 # Functions
 #========================================================================================================================================================================================================================
@@ -195,46 +190,26 @@ def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7
 	
 	
 	INPUTS:
-		
 		-tb: burn time [s]
-	   
 		-initial_tilt: the tilt in the initial flight path angle (at the launch pad) off the vertical axis [deg]. An initial_tilt=0
 						would mean the rocket starts vertically.
-
 		-i_base: latitude of the launch pad [deg]
-		
 		-h0: altitude of the launch pad wrt the volumetric mean altitude of Mars [m].
-		
 		-d: diameter of the vehicle [m]. Symmetric vehicle assumed
-		
 		-M_initial: mass of the vehicle sitting on the launch pad [kg]
-		
 		-Mp_class2: propellant Mass needed to attain phasing orbit, as estimated in the Class II deltaV for single stage vehicle [m/s].
-		
-		
 		-Isp: specific impulse of the engines [s].
-		
 		-n: number of engines [-].
-		
 		-De: diameter of the exit plane of the nozzle [m].
-		
 		-pe: pressure of the exhaust gasses at the exti plane of the nozzle [Pa]
-		
-		-
+
 	OUTPUTS:
-		
 		-V: array of the velocity throughout flight
-		
 		-Vxfree: float of the free velocity of the vehcile thanks to Mars rotation at that latitude
-		
 		-ascent_DeltaV: float of the predicted delta_V required to obtain the final conditions
-	
 		-q: array containing the dynamic pressure throughout flight
-		
 		-others: a dictionary containing other parameters that other people might need. 
-		
 		!NOTE: if there's another parameter that you need that was computed, please add it inside the "others" dictionary to return it.
-		
 	"""
 	
 	#=====================================================================================================================================================================================================================
@@ -277,45 +252,47 @@ def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7
 	#=====================================================================================================================================================================================================================
 	# Simulation
 	#=====================================================================================================================================================================================================================
-	M = np.array([M_initial])
+	M = [M_initial]
 		
-	Vx = np.array([Vx0])
-	Vz = np.array([Vz0])
-	V = np.array([V0])
+	Vx = [Vx0]
+	Vz = [Vz0]
+	V = [V0]
 		
 	#earth reference frame is on the surface of Mars (where the base is, i.e.
 	#-3km)
-	Z = np.array([0.0])    #Z0=10m
-	X = np.array([0.0]) #X0=0.524m
+	Z = [0.0]    #Z0=10m
+	X = [0.0] #X0=0.524m
 	
 	TW0 = 1.5
 	TWe = 4
 		
-	g = np.array([get_g(mu,Req,R,Z[-1],i0,J2)])
+	g = [get_g(mu,Req,R,Z[-1],i0,J2)]
 	dt = 0.01
 	t_tot = 0
 		
 	 
-	p = np.array([get_p(Z[-1])])
-	T = np.array([get_T(Z[-1])])
-	rho = np.array([get_rho(p[-1],T[-1],Rgas)])
-	Mach = np.array([get_Mach(V[0],get_a(gamma_gas,Rgas, T[0]))])
-	#TWratio=np.array([get_TWprofile(mode,0,g[0],1.5,4,tb,i0,Z[0])])
+	p = [get_p(Z[-1])]
+	T = [get_T(Z[-1])]
+	rho = [get_rho(p[-1],T[-1],Rgas)]
+	Mach = [get_Mach(V[-1],get_a(gamma_gas,Rgas, T[-1]))]
+	#TWratio=np.array([get_TWprofile(mode,0,g[-1],1.5,4,tb,i0,Z[-1])])
 	TWratio = np.linspace(TW0 * 9.80665 / g0_mars,TWe * 9.80665 / g0_mars,round(tb / dt))
-	Cl0,Cd0 = H_aerodynamics_coefficients(Mach,0)
-	Cl = np.array([Cl0])
-	Cd = np.array([Cd0])
-	Fd = np.array([get_Fd(Cd[0],rho[0],S,V[0])])
-	Fl = np.array([get_Fl(Cl[0],rho[0],S,V[0])])
-	mdot = np.array([1 / ceff * (M[0] * g[0] * TWratio[0] - Ae * (pe - p[0]))])
-	Ft = np.array([get_Ft(mdot[0],ceff,Ae,pe,p)])
-	ax_array = np.array([dVxdt(Ft,get_Fd(Cd,rho,S,V[-1]),get_Fl(Cl,rho,S,V[-1]),M[-1],Vz[-1],Vx[-1])])
-	az_array = np.array([dVzdt(Ft,get_Fd(Cd,rho,S,V[-1]),get_Fl(Cl,rho,S,V[-1]),M[-1],Vz[-1],Vx[-1],g[-1])])
+	Cl0,Cd0 = H_aerodynamics_coefficients(Mach[-1],0)
+	Cl = [Cl0]
+	Cd = [Cd0]
+	Fd = [get_Fd(Cd[-1],rho[-1],S,V[-1])]
+	Fl = [get_Fl(Cl[-1],rho[-1],S,V[-1])]
+	mdot = [1 / ceff * (M[-1] * g[-1] * TWratio[-1] - Ae * (pe - p[-1]))]
+	Ft = [get_Ft(mdot[-1],ceff,Ae,pe,p[-1])]
+	ax_array = [dVxdt(Ft[-1],get_Fd(Cd[-1],rho[-1],S,V[-1]),get_Fl(Cl[-1],rho[-1],S,V[-1]),M[-1],Vz[-1],Vx[-1])]
+	az_array = [dVzdt(Ft[-1],get_Fd(Cd[-1],rho[-1],S,V[-1]),get_Fl(Cl[-1],rho[-1],S,V[-1]),M[-1],Vz[-1],Vx[-1],g[-1])]
 	
-	#TWratio=np.array([Ft[0]/(M[0]*g[0])])
+	t_array = [t_tot]
+
+	#TWratio=np.array([Ft[-1]/(M[-1]*g[-1])])
 		
 	i = -1
-		
+	
 	while Z[-1] < h_phasing + abs(h0) and Z[-1] >= 0:
 	#for i in range(1):
 			
@@ -324,6 +301,7 @@ def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7
 			#######################################################
 			t_tot+=dt 
 			i+=1
+			t_array.append(t_tot)
 			
 			a = get_a(gamma_gas,Rgas, T[-1]) 
 			#######################################################
@@ -331,48 +309,51 @@ def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7
 			#######################################################
 			#solve for Vx
 			ax = dVxdt(Ft[-1],Fd[-1],Fl[-1],M[-1],Vz[-1],Vx[-1])
-			ax_array = np.append(ax_array,ax)
+			ax_array.append(ax)
 			Vxnew = Vx[-1] + dt * ax
 			
 			#Integrate using Trapezoidal rule
 			deltaX = dt / 2 * (Vx[-1] + Vxnew)
 			Xnew = X[-1] + deltaX
-			X = np.append(X,Xnew)
+			X.append(Xnew)
 			#solve for Vz
 			az = dVzdt(Ft[-1],Fd[-1],Fl[-1],M[-1],Vz[-1],Vx[-1],g[-1])
-			az_array = np.append(az_array,az)
+			az_array.append(az)
 			Vznew = Vz[-1] + dt * az
 			
 			#Integrate using Trapezoidal rule
 			deltaZ = dt / 2 * (Vz[-1] + Vznew)
 			Znew = Z[-1] + deltaZ
-			Z = np.append(Z,Znew)
-			progress = round(Znew/h_phasing*100, 2)
-			print(progress)
+			Z.append(Znew)
+
+			# Progress indication
+			progress = round(Z[-1]/h_phasing*100)
+			print(progress, "%", sep="", end="\r")
+
 			#update velocities
-			Vx = np.append(Vx,Vxnew)
-			Vz = np.append(Vz,Vznew)
+			Vx.append(Vxnew)
+			Vz.append(Vznew)
 			
 			
 			#######################################################
 			#   Update Parameters #
 			#######################################################
-			V = np.append(V,np.sqrt(Vxnew * Vxnew + Vznew * Vznew))
+			V.append(np.sqrt(Vxnew * Vxnew + Vznew * Vznew))
 			Machnew = get_Mach(V[-1],a) 
-			Mach = np.append(Mach,Machnew)
+			Mach.append(Machnew)
 			gnew = get_g(mu,Req,R,Z[-1],i0,J2)
-			g = np.append(g,gnew)
-			p = np.append(p,get_p(Z[-1]))
-			T = np.append(T,get_T(Z[-1]))
-			rho = np.append(rho,get_rho(p[-1],T[-1],Rgas))
+			g.append(gnew)
+			p.append(get_p(Z[-1]))
+			T.append(get_T(Z[-1]))
+			rho.append(get_rho(p[-1],T[-1],Rgas))
 			Clnew,Cdnew = H_aerodynamics_coefficients(Mach[-1],0)
-			Cl = np.append(Cl,Clnew)
-			Cd = np.append(Cd,Cdnew)
+			Cl.append(Clnew)
+			Cd.append(Cdnew)
 			Fdnew = get_Fd(Cdnew,rho[-1],S,V[-1])
-			Fd = np.append(Fd,Fdnew)
+			Fd.append(Fdnew)
 			Flnew = get_Fl(Clnew,rho[-1],S,V[-1])
-			Fl = np.append(Fl,Flnew)
-			M = np.append(M, M[-1] - mdot[-1] * dt)
+			Fl.append(Flnew)
+			M.append(M[-1] - mdot[-1] * dt)
 			
 			if t_tot <= tb:
 				#TWratio=np.append(TWratio,get_TWprofile(mode,t_tot,g[-1],1.5,4,tb,i0,Z[-1]))
@@ -384,26 +365,34 @@ def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7
 				mdotnew = 0
 				Ftnew = 0
 				
-			Ft = np.append(Ft,Ftnew)
-			mdot = np.append(mdot,mdotnew)
+			Ft.append(Ftnew)
+			mdot.append(mdotnew)
 	
-	
-	t_array = np.linspace(0,t_tot,len(Z)) 
-	a_array = np.sqrt(ax_array * ax_array + az_array * az_array) 
+	print()
+	#t_array = np.linspace(0,t_tot,len(Z))
+	ax_array, az_array = np.array(ax_array), np.array(az_array)
+	Vx, Vz = np.array(Vx), np.array(Vz)
+	mdot = np.array(mdot)
+	rho, V = np.array(rho), np.array(V)
+	a_array = np.sqrt(ax_array ** 2 + az_array ** 2) 
 	gamma = np.arctan(Vz / Vx) * 180 / np.pi                  #in degrees
 	Mprop = np.sum(mdot * dt)
 	ascent_DeltaV = ceff * np.log(M[0] / (M[0] - Mprop))
-	q = 0.5 * rho * V * V
+	q = 0.5 * rho * V **2
 	
-	others = {"Mach": Mach,
-			"Lift": Fl,
-			"Drag": Fd,
-			"Thrust": Ft,
-			"Mass": M,
-			"V": V,
-			"acceleration x": ax_array,
-			"acceleration z": az_array,
-			"altitude": Z,
-			"density": rho}
+	others = {
+		"time": t_array,
+		"Mach": Mach,
+		"Lift": Fl,
+		"Drag": Fd,
+		"Thrust": Ft,
+		"Mass": M,
+		"V": V,
+		"acceleration x": ax_array,
+		"acceleration z": az_array,
+		"altitude": Z,
+		"density": rho,
+		"q": q
+		}
 	
 	return V, Vxfree, ascent_DeltaV, q, others

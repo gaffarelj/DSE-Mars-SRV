@@ -1,7 +1,16 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import sys
 sys.path.append(".")
 from astrodynamics import astro_tools_nonfull as AT
+from astrodynamics import BAT
+
+
+ascent = BAT.ascent_sim()[4]
+plt.plot(ascent["time"], ascent["q"])
+plt.show()
+plt.plot(ascent["time"], ascent["V"])
+plt.show()
 
 
 mars = AT.Planet()
