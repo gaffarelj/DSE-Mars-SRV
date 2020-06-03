@@ -127,7 +127,7 @@ class Motion:
 					# Increment parachute id -> deploy the parachute
 					self.i_chute += 1
 					if self.print_deploy:
-						print(f"Deployed chute {self.chutes[self.i_chute].name} ({self.i_chute}) at {round(time[-1], 2)}")
+						print(f"Deployed chute {self.chutes[self.i_chute].name} ({self.i_chute}) at {round(time[-1], 2)}, q={round(self.q_s[-1], 2)} Pa, v={round(V, 2)}")
 					# Remove the mass of the previous parachute from the capsule
 					if self.i_chute > 0:
 					    self.mass -= self.chutes[self.i_chute - 1].m
