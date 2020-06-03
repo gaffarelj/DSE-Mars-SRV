@@ -7,7 +7,7 @@ import pickle
 import astrodynamics.mars_standard_atmosphere as MSA
 import csv
 
-mesh_elements = pd.read_csv("surfacemesh.csv",sep=";")
+mesh_elements = pd.read_csv("001_surfacemesh.csv",sep=";")
 
 mesh_elements = pd.DataFrame(mesh_elements).to_numpy()
 
@@ -56,13 +56,13 @@ def mesh_elements_with_vector(mesh_elements):
         uber_list.append(cp)
         uber_uber_list.append(uber_list)
 
-    with open("mesh_with_vectors.txt", "wb") as f:
+    with open("001_mesh_with_vectors.txt", "wb") as f:
         pickle.dump(uber_uber_list,f)
     return uber_uber_list
 
 #some_list = mesh_elements_with_vector(mesh_elements)
 
-with open("mesh_with_vectors.txt", "rb") as f:
+with open("001_mesh_with_vectors.txt", "rb") as f:
   new_list = pickle.load(f)
 
 #print(new_list)
@@ -113,7 +113,6 @@ def aero_angles(alpha, mesh_list):
 def aero_cp_calcs(upstream_mesh,downstream_mesh, p_inf, p_02,M_inf,alpha):
     gamma = 1.37
     Cp_max = 2/(gamma*M_inf**2)*(p_02/p_inf -1)
-    #print(Cp_max)
     perp_alpha = (alpha + 90) * np.pi/180
     alpha = alpha * np.pi/180
     aero_vector = np.array([0, np.sin(alpha), -np.cos(alpha)])
@@ -184,7 +183,7 @@ def aero_cp_calcs(upstream_mesh,downstream_mesh, p_inf, p_02,M_inf,alpha):
     return cl, cd, pressure_list
 
 def ultimate_aero_functions(p_inf, p_02, M_inf, alpha):
-    with open("mesh_with_vectors.txt", "rb") as f:
+    with open("001_mesh_with_vectors.txt", "rb") as f:
         new_list = pickle.load(f)
 
     upstream_mesh, downstream_mesh = aero_angles(alpha, new_list)
@@ -207,7 +206,7 @@ def aero_normalshock(altitude, mach_initial):
     temperature = t_static * pressure / p_static * rho_static / density
     a = np.sqrt(gamma * MSA.R * temperature)
 
-    V = mach / a
+    V = mach * a
     dyn_pressure = 0.5 * density * V * V
     return pressure, dyn_pressure
 
@@ -224,13 +223,53 @@ def aero_normalshock(altitude, mach_initial):
 #    print("Cl, Cd:", cl, cd, "at altitude,", altitude_list[i])
 
 
+def write_aero_to_csv():
+    alphalist = np.arange(30,60.1,0.1)
+    machlist = np.arange(0.1,20.1,0.1)
+    cl_matrix = np.zeros((len(machlist)+1,len(alphalist)+1))
+    cd_matrix = np.zeros((len(machlist)+1,len(alphalist)+1))
+    cl_matrix[0][0] = 0
+    cd_matrix[0][0] = 0
+    for j in range(len(machlist)):
+        cl_matrix[j+1][0] = machlist[j]
+        cd_matrix[j+1][0] = machlist[j]
 
-alphalist = np.arange(-10,70.1,0.1)
-machlist = np.arange(1,20.1,0.1)
+        for i in range(len(alphalist)):
+            cl_matrix[0][i+1] = alphalist[i]
+            cd_matrix[0][i+1] = alphalist[i]
+            p_inf = MSA.get_pressure(10000)
+            p_02, irrelevant = aero_normalshock(10000, machlist[j])
+            cl,cd,pressures = ultimate_aero_functions(p_inf,p_02,machlist[j],alphalist[i])
+            cl_matrix[j+1][i+1] = cl
+            cd_matrix[j+1][i+1] = cd
+
+        print("Progress:",(j+1)/len(machlist)*100,"%")
+
+    with open ('cl_standard_config.csv', mode = 'w') as csv_file:
+        csv_writer = csv.writer(csv_file, delimiter = ';', quotechar= '"', quoting=csv.QUOTE_MINIMAL)
+        #csv_writer.writerow(alphalist)
+        for i in range(len(cl_matrix)):
+            csv_writer.writerow(cl_matrix[i])
+
+    with open ('cd_standard_config.csv', mode = 'w') as csv_file:
+        csv_writer = csv.writer(csv_file, delimiter = ';', quotechar= '"', quoting=csv.QUOTE_MINIMAL)
+        #csv_writer.writerow(alphalist)
+        for i in range(len(cd_matrix)):
+            csv_writer.writerow(cd_matrix[i])
+
+    return
+
+
+write_aero_to_csv()
+
+'''
+alphalist = np.arange(10,70,10)
+machlist = np.arange(5,25,5)
 cl_matrix = np.zeros((len(machlist)+1,len(alphalist)+1))
 cd_matrix = np.zeros((len(machlist)+1,len(alphalist)+1))
 cl_matrix[0][0] = 0
 cd_matrix[0][0] = 0
+
 for j in range(len(machlist)):
     cl_matrix[j+1][0] = machlist[j]
     cd_matrix[j+1][0] = machlist[j]
@@ -238,29 +277,14 @@ for j in range(len(machlist)):
     for i in range(len(alphalist)):
         cl_matrix[0][i+1] = alphalist[i]
         cd_matrix[0][i+1] = alphalist[i]
-        p_inf, p_02 = aero_normalshock(10000, machlist[j])
+        p_inf = MSA.get_pressure(10000)
+        p_02, irrelevant = aero_normalshock(10000, machlist[j])
         cl,cd,pressures = ultimate_aero_functions(p_inf,p_02,machlist[j],alphalist[i])
         cl_matrix[j+1][i+1] = cl
         cd_matrix[j+1][i+1] = cd
 
     print("Progress:",(j+1)/len(machlist)*100,"%")
-
-#print(cl_matrix)
-#print(cd_matrix)
-
-with open ('cl_standard_config.csv', mode = 'w') as csv_file:
-    csv_writer = csv.writer(csv_file, delimiter = ';', quotechar= '"', quoting=csv.QUOTE_MINIMAL)
-    #csv_writer.writerow(alphalist)
-    for i in range(len(cl_matrix)):
-        csv_writer.writerow(cl_matrix[i])
-
-with open ('cd_standard_config.csv', mode = 'w') as csv_file:
-    csv_writer = csv.writer(csv_file, delimiter = ';', quotechar= '"', quoting=csv.QUOTE_MINIMAL)
-    #csv_writer.writerow(alphalist)
-    for i in range(len(cd_matrix)):
-        csv_writer.writerow(cd_matrix[i])
-
-
+print(cd_matrix)'''
 
 #upstream_mesh, downstream_mesh = aero_angles(alpha,new_list)
 
@@ -279,17 +303,16 @@ xlist = []
 ylist = []
 zlist = []
 cplist = []
-for i in pressures:
-    xlist.append(i[0])
-    ylist.append(i[1])
-    zlist.append(i[2])
-    cplist.append(i[3])
+#for i in pressures:
+#    xlist.append(i[0])
+#    ylist.append(i[1])
+#    zlist.append(i[2])
+#    cplist.append(i[3])
 
 xlist = np.array(xlist)
 ylist = np.array(ylist)
 zlist = np.array(zlist)
 cplist = np.array(cplist)
-
 
 
 def scatter3d(x,y,z, cs, colorsMap='jet'):
