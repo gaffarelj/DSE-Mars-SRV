@@ -50,9 +50,8 @@ def run_motion(V0, gamma, h0, chutes=[], print_deploy=False, prop_reentry=[]):
 
 def def_chutes(times):
 	#ballute = AT.pc(0.35, 12, 50, deploy_time=times[0], n=1, name="ballute")
-	drogue = AT.pc(0.4, 10, 40, deploy_time=times[0], n=5, name="drogue")
-	main = AT.pc(0.55, 25, 35, deploy_time=times[1], n=3, name="main")
-	#return [ballute, drogue, main]
+	drogue = AT.pc(0.4, 10, 20, deploy_time=times[0], n=5, name="drogue")
+	main = AT.pc(0.55, 25, 30, deploy_time=times[1], n=3, name="main")
 	return [drogue, main]
 
 def dV(Isp, m0, mf):
