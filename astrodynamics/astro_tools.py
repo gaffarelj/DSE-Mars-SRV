@@ -16,11 +16,11 @@ class Planet:
         self.hs = scale_height
 
     def g(self, altitude, latitude):
-        p = 3 / 2 * np.sin(latitude) ** 2 - 1 / 2
+        roll_rate = 3 / 2 * np.sin(latitude) ** 2 - 1 / 2
         g = (
             self.mu
             / (self.r + altitude) ** 2
-            * (1 - 3 * self.J2 * (self.req / (self.r + altitude)) ** 2 * p)
+            * (1 - 3 * self.J2 * (self.req / (self.r + altitude)) ** 2 * roll_rate)
         )
         return g
 
@@ -49,7 +49,7 @@ class Planet:
         return - np.arctan(dydx)
 
 class Motion:
-    def __init__(self, inital_conditions, MOI, S, mass, coefficients, Planet, My, pitch_start, parachutes=[]):
+    def __init__(self, inital_conditions, MOI, S, mass, coefficients, Planet, pitch_control = True, thrust = 0, thrust_start = 0, parachutes=[]):
         self.initial = inital_conditions
         self.Ixx = MOI[0]
         self.Iyy = MOI[1]
@@ -61,8 +61,9 @@ class Motion:
         self.coefficients = coefficients
         self.chutes = parachutes
         self.i_chute = -1
-        self.My = My
-        self.pitch_start = pitch_start
+        self.thrust = thrust
+        self.thrust_start = thrust_start
+        self.pitch_control = pitch_control
 
     def dynamicpressure(self, V, r):
         altitude = r - self.Planet.r
@@ -84,11 +85,8 @@ class Motion:
         pressure = p_static * (1 + 2*gamma/(gamma+1) * (mach_initial**2 - 1))
         density = rho_static * (((gamma+1)*mach_initial**2)/(2+(gamma-1)*mach_initial**2))
         temperature = t_static * pressure/p_static * rho_static/density
-        a = np.sqrt(gamma*atm.R*temperature)
 
-        V = mach/a
-        dyn_pressure = 0.5*density*V*V
-        return pressure, dyn_pressure
+        return pressure
 
     def dVdt(self, g, D, r, gamma, delta, xi):
         dVdt = (
@@ -144,40 +142,40 @@ class Motion:
     def ddeltadt(self, V, r, gamma, xi):
         return V / r * np.cos(gamma) * np.cos(xi)
 
-    def dpdt(self, Mx, q, yaw_rate):
-        return Mx/self.Ixx + (self.Iyy-self.Izz)/self.Ixx * q * yaw_rate
+    def dpdt(self, Mx, pitch_rate, yaw_rate):
+        return Mx/self.Ixx + (self.Iyy-self.Izz)/self.Ixx * pitch_rate * yaw_rate
     
-    def dqdt(self, My, p, yaw_rate):
-        return My/self.Iyy + (self.Izz-self.Ixx)/self.Iyy * p * yaw_rate
+    def dqdt(self, My, roll_rate, yaw_rate):
+        return My/self.Iyy + (self.Izz-self.Ixx)/self.Iyy * roll_rate * yaw_rate
     
-    def drratedt(self, Mz, p, q):
-        return Mz/self.Izz + (self.Ixx-self.Iyy)/self.Izz * p * q
+    def drratedt(self, Mz, roll_rate, pitch_rate):
+        return Mz/self.Izz + (self.Ixx-self.Iyy)/self.Izz * roll_rate * pitch_rate
 
-    def dalphadt(self, p, q, yaw_rate, g, L, V, gamma, mu, alpha, beta):
-        return q - (p*np.cos(alpha)+yaw_rate*np.sin(alpha))*np.tan(beta) - (L - self.mass*g*np.cos(gamma)*np.cos(mu))/(self.mass*V*np.cos(beta))
+    def dalphadt(self, roll_rate, pitch_rate, yaw_rate, g, L, V, gamma, mu, alpha, beta):
+        return pitch_rate - (roll_rate*np.cos(alpha)+yaw_rate*np.sin(alpha))*np.tan(beta) - (L - self.mass*g*np.cos(gamma)*np.cos(mu))/(self.mass*V*np.cos(beta))
     
-    def dbetadt(self):
-        return 0
+    def dbetadt(self, roll_rate, yaw_rate, g, V, gamma, mu, alpha):
+        return roll_rate*np.sin(alpha) - yaw_rate*np.cos(alpha) - (self.S+self.mass*g*np.cos(gamma)*np.sin(mu))/(self.mass*V)
 
-    def dmudt(self):
-        return 0
+    def dmudt(self, roll_rate, q, yaw_rate, g, L, V, gamma, mu, alpha, beta):
+        return -(roll_rate*np.cos(alpha) + yaw_rate*np.sin(alpha))/np.cos(beta) - (L - self.mass*g*np.cos(gamma)*np.cos(mu))/(self.mass*V)*np.tan(beta) + (L*np.sin(mu) + self.S*np.cos(mu))/(self.mass*V)*np.tan(gamma)
 
     def forward_euler(self, timestep):
         flight = [self.initial]
         time = [0]
-        self.a_s, self.q_s, self.mach, self.pitch_control = [], [], [], []
+        self.a_s, self.q_s, self.mach, self.pitch = [], [], [], []
         Mx = 0
         My = 0
         Mz = 0
 
-        while flight[-1][3] > self.Planet.r:
+        while flight[-1][3] > self.Planet.r - 3000:
             V          = flight[-1][0]
             gamma      = flight[-1][1]
             xi         = flight[-1][2]
             r          = flight[-1][3]
             tau        = flight[-1][4]
             delta      = flight[-1][5]
-            p          = flight[-1][6]
+            roll_rate  = flight[-1][6]
             pitch_rate = flight[-1][7]
             yaw_rate   = flight[-1][8]
             alpha      = flight[-1][9]
@@ -200,12 +198,17 @@ class Motion:
                     chute_drag_area = self.chutes[self.i_chute].drag_area
 
             q = self.dynamicpressure(V, r)
-            mach = V/np.sqrt(atm.gamma*atm.R*atm.get_temperature(self.Planet.r))
-            cl,cd = self.coefficients(mach, -np.degrees(alpha))
+            altitude = r - self.Planet.r
+            mach = V/np.sqrt(atm.gamma*atm.R*atm.get_temperature(altitude))
+            postshock_pressure = self.normalshock(r, mach)
+            cl,cd = self.coefficients(mach,-np.degrees(alpha))
 
             D = q * (cd * self.S + chute_drag_area)
             L = q * cl * self.S
             g = self.gravitational_acceleeration(r, delta)
+
+            if time[-1] > self.thrust_start:
+                D = D + self.thrust
 
             new_state = np.zeros(12)
             a = self.dVdt(g, D, r, gamma, delta, xi)
@@ -215,39 +218,29 @@ class Motion:
             new_state[3] = r + timestep * self.drdt(V, gamma)
             new_state[4] = tau + timestep * self.dtaudt(V, r, gamma, delta, xi)
             new_state[5] = delta + timestep * self.ddeltadt(V, r, gamma, xi)
+            new_state[6] = roll_rate + timestep * self.dpdt(Mx, pitch_rate, yaw_rate)
+            new_state[7] = pitch_rate + timestep * self.dqdt(My, roll_rate, yaw_rate)
+            new_state[8] = yaw_rate + timestep * self.drratedt(Mz, roll_rate, pitch_rate)
+            new_state[10] = beta + timestep * self.dbetadt(roll_rate, yaw_rate, g, V, gamma, mu, alpha)
+            new_state[11] = mu + timestep * self.dmudt(roll_rate, q, yaw_rate, g, L, V, gamma, mu, alpha, beta)
             
-            if time[-1] < self.pitch_start:
-                new_state[6] = 0
-                new_state[7] = 0
-                new_state[8] = 0
+            if self.pitch_control == True:
                 new_state[9] = self.initial[9]
-                new_state[10] = 0
-                new_state[11] = 0
-                self.pitch_control.append(self.dalphadt(p, pitch_rate, yaw_rate, g, L, V, gamma, mu, alpha, beta))
-            else: 
-                My = self.My
-                if round(abs(alpha) - np.pi/2,3) == round(abs(gamma),3):
-                    self.My = 0
-                    pitch_rate = 0
-                new_state[6] = p + timestep * self.dpdt(Mx, pitch_rate, yaw_rate)
-                new_state[7] = pitch_rate + timestep * self.dqdt(My, p, yaw_rate)
-                new_state[8] = yaw_rate + timestep * self.drratedt(Mz, p, pitch_rate)
-                new_state[9] = alpha + timestep * self.dalphadt(p, pitch_rate, yaw_rate, g, L, V, gamma, mu, alpha, beta)
-                new_state[10] = beta + timestep * self.dbetadt()
-                new_state[11] = mu + timestep * self.dmudt()
-                self.pitch_control.append(self.dalphadt(p, pitch_rate, yaw_rate, g, L, V, gamma, mu, alpha, beta))
-
+                pitchrate = (L - self.mass*g*np.cos(gamma)*np.cos(mu))/(self.mass*V*np.cos(beta))
+                My = (pitchrate - ((self.Izz-self.Ixx)/self.Iyy * roll_rate * yaw_rate))*self.Iyy
+            else:
+                new_state[9] = alpha + timestep * self.dalphadt(roll_rate, pitch_rate, yaw_rate, g, L, V, gamma, mu, alpha, beta)
 
             self.a_s.append(a)
             self.q_s.append(q)
             self.mach.append(mach)
+            self.pitch.append(My)
 
             flight.append(new_state)
             time.append(time[-1] + timestep)
             state = new_state
 
-        self.a_s.append(a), self.q_s.append(q), self.mach.append(mach), self.pitch_control.append(0)
-
+        self.a_s.append(a), self.q_s.append(q), self.mach.append(mach), self.pitch.append(My)
         return np.array(flight), time
 
 class pc():
@@ -379,3 +372,9 @@ def differentiate(data, time, dt):
 
     return diff, t
 
+def angle_of_attack_profile(V):
+    if V > 1600:
+        AoA = 50
+    else:
+        AoA = (40-50)/1200**2 * (V-1600)**2 + 50
+    return -np.radians(AoA)

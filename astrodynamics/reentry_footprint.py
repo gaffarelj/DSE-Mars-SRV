@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import astro_tools
+import csv
 
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Aero'))
@@ -36,7 +37,7 @@ state[10] = 0																									# sideslip angle
 state[11] = 0																									# bank angle 	
 
 
-motion = astro_tools.Motion(state, MOI, S, vehicle_mass, ac.H_aerodynamics_coefficients, mars, -500, 1000)
+motion = astro_tools.Motion(state, MOI, S, vehicle_mass, ac.H_aerodynamics_coefficients, mars)
 flight, time = motion.forward_euler(dt)
 
 astro_tools.plot_dual(time, (flight[:,3] - mean_radius)/1000, flight[:,0], 'Time [s]', 'Altitude [km]', 'Velocity [m/s]')
@@ -47,11 +48,23 @@ astro_tools.plot_single(time , np.degrees(flight[:,1]), 'Time [s]', 'flight path
 astro_tools.surfaceplots( np.degrees(flight[:,5]),  np.degrees(flight[:,4]), (flight[:,3] - mean_radius)/1000, 'latitude [deg]', 'longitude [deg]', 'Altitude [km]' )
 
 astro_tools.plot_single(time , -np.degrees(flight[:,9]), 'Time [s]', 'AoA [deg]')
-astro_tools.plot_single(time , motion.pitch_control, 'Time [s]', 'pitch rate [rad/s]')
 
-angular_acceleration, t = astro_tools.differentiate(motion.pitch_control, time, dt)
-astro_tools.plot_single(t, angular_acceleration*MOI[1], 'Time [s]', 'Pitching moment [Nm]')
+astro_tools.plot_single(time, motion.pitch, 'Time [s]', 'Pitching moment [Nm]')
 
 #random = astro_tools.Montecarlo(motion, state, dt)
 #random.get_trajectories_linux()
 #astro_tools.scatter(random.per, np.radians(42.5), np.radians(25.5), mars)
+
+with open('accelerations.csv', mode='w') as file:
+    accelerations = csv.writer(file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    accelerations.writerow(['time [s]', 'downwards acceleration [m/s^2]', 'forwards acceleration [m/s^2]', 'x', 'y', 'z'])
+    for i in range(len(motion.a_s)):
+        x = (mars.r+reentry_altitude)*np.cos(flight[i,5])*np.cos(flight[i,4])
+        y = (mars.r+reentry_altitude)*np.cos(flight[i,5])*np.sin(flight[i,4])
+        z = (mars.r+reentry_altitude)*np.sin(flight[i,5])   
+        accelerations.writerow([time[i], np.sin(flight[i,1])*motion.a_s[i], np.cos(flight[i,1])*motion.a_s[i], x, y, z])
+
+with open('initial.csv', mode='w') as file:
+    initial = csv.writer(file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    initial.writerow([ 'downwards acceleration [m/s^2]', 'forwards acceleration [m/s^2]', 'downwards velocity [m/s^2]', 'forwards velocity [m/s^2]'])
+    initial.writerow([np.sin(flight[0,1])*motion.a_s[0], np.cos(flight[0,1])*motion.a_s[0], np.sin(flight[0,1])*flight[0,0], np.cos(flight[0,1])*flight[0,0]])
