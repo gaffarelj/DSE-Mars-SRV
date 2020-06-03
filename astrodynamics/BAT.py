@@ -187,7 +187,7 @@ def dVzdt(T,D,L,M,Vz,Vx,g):
 	return dVzdt
 
 #point mass ascent simulation
-def ascent_sim(tb,initial_tilt,i_base,h0,d,M_initial,Mp_class2,Isp,n,De,pe):
+def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7.67,M_initial=198948.0,Mp_class2=140235.07208472778,Isp=350,n=6,De=2,pe=5066.25):
 	"""
 	Function that simulates the gravity turn ascent profile constrained by a linear variation of the T/W_ratio (T/W_0=1.5, T/W_final=4).
 	It simulates it for a point mass in 2D accounting for aerodynamic forces. 

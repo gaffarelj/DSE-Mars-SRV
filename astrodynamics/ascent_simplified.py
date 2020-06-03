@@ -84,7 +84,7 @@ def dVzdt(T,D,L,M,Vz,Vx,g):
 
 #initial conditions
 V0=0.00001                      #8.33[m/s] circa 30 km/h
-gamma0=(90-3.2)*np.pi/180      #degs off vertical axis 2.45
+gamma0=(90-3.2)*np.pi/180      #degs off vertical axis 3.2
 
 Vx0=V0*np.cos(gamma0)
 Vz0=V0*np.sin(gamma0)
