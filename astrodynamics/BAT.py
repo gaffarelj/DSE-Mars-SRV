@@ -328,7 +328,7 @@ def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7
 
 			# Progress indication
 			progress = round(Z[-1]/h_phasing*100)
-			print(progress, "%", sep="", end="\r")
+			print("Ascent progress: ", progress, "%", sep="", end="\r")
 
 			#update velocities
 			Vx.append(Vxnew)
