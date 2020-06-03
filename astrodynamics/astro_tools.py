@@ -49,7 +49,7 @@ class Planet:
         return - np.arctan(dydx)
 
 class Motion:
-    def __init__(self, inital_conditions, MOI, S, mass, coefficients, Planet, pitch_control = True, thrust = 0, thrust_start = 0, parachutes=[]):
+    def __init__(self, inital_conditions, MOI, S, mass, coefficients, Planet, pitch_control = True, thrust = 0, thrust_start = 0, rotation_start = 0, parachutes=[]):
         self.initial = inital_conditions
         self.Ixx = MOI[0]
         self.Iyy = MOI[1]
@@ -64,6 +64,7 @@ class Motion:
         self.thrust = thrust
         self.thrust_start = thrust_start
         self.pitch_control = pitch_control
+        self.rotation_start = rotation_start
 
     def dynamicpressure(self, V, r):
         altitude = r - self.Planet.r
@@ -201,11 +202,19 @@ class Motion:
             altitude = r - self.Planet.r
             mach = V/np.sqrt(atm.gamma*atm.R*atm.get_temperature(altitude))
             #postshock_pressure = self.normalshock(r, mach)
-            cl,cd = self.coefficients(mach,-np.degrees(alpha))
+            cl,cd = self.coefficients(mach, 44)
+            
 
             D = q * (cd * self.S + chute_drag_area)
             L = q * cl * self.S
             g = self.gravitational_acceleeration(r, delta)
+
+            if time[-1] > self.rotation_start:
+                self.pitch_control = False
+                My = 7
+                if abs(alpha + gamma) > np.pi/2:
+                    My = 0
+                    pitch_rate = 0
 
             if time[-1] > self.thrust_start:
                 D = D + self.thrust
@@ -226,10 +235,11 @@ class Motion:
             
             if self.pitch_control == True:
                 new_state[9] = self.initial[9]
-                pitchrate = (L - self.mass*g*np.cos(gamma)*np.cos(mu))/(self.mass*V*np.cos(beta))
-                My = (pitchrate - ((self.Izz-self.Ixx)/self.Iyy * roll_rate * yaw_rate))*self.Iyy
             else:
-                new_state[9] = alpha + timestep * self.dalphadt(roll_rate, pitch_rate, yaw_rate, g, L, V, gamma, mu, alpha, beta)
+                new_state[9] = -np.pi - gamma #alpha + timestep * self.dalphadt(roll_rate, pitch_rate, yaw_rate, g, L, V, gamma, mu, alpha, beta)
+            
+            pitchrate = (L - self.mass*g*np.cos(gamma)*np.cos(mu))/(self.mass*V*np.cos(beta))
+            My = (pitchrate - ((self.Izz-self.Ixx)/self.Iyy * roll_rate * yaw_rate))*self.Iyy
 
             self.a_s.append(a)
             self.q_s.append(q)
@@ -372,9 +382,15 @@ def differentiate(data, time, dt):
 
     return diff, t
 
-def angle_of_attack_profile(V):
-    if V > 1600:
-        AoA = 50
-    else:
-        AoA = (40-50)/1200**2 * (V-1600)**2 + 50
-    return -np.radians(AoA)
+
+cl_data = np.genfromtxt('cl_standard_config.csv', delimiter=";", dtype=None)
+cd_data = np.genfromtxt('cd_standard_config.csv', delimiter=";", dtype=None)
+alpha_list = np.round(cl_data[0][1:],1) 
+mach_list = np.round(cl_data[:,0],1)
+
+def cl_cd(mach,alpha):
+    col = np.where(alpha_list == round(alpha,1))[0][0]+1
+    row = np.where(mach_list == round(mach,1))[0][0]
+
+    return cl_data[row][col], cd_data[row][col]
+
