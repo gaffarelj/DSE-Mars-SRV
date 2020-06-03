@@ -1,7 +1,7 @@
 import numpy as np
 import sys
 sys.path.append(".")
-from astrodynamics import astro_tools as AT
+from astrodynamics import astro_tools_nonfull as AT
 
 
 mars = AT.Planet()
