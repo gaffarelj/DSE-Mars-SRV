@@ -25,11 +25,11 @@ print(f"Last abort to surface at t={LAS_T} s, at M={Mach_T} and q={q_T} Pa")
 print(f"\t- at a velocity of {V_T} m/s and an altitude of {h_T} m")
 
 mars = AT.Planet()
-
+gamma = ascent["gamma"][-1]
 state = np.zeros(6)
 state[0] = V_T						# velocity
-state[1] = np.radians(85)			# flight path angle
-state[2] = np.radians(85)			# heading angle
+state[1] = np.radians(gamma)		# flight path angle
+state[2] = np.radians(gamma)		# heading angle
 state[3] = mars.r + h_T				# radius 
 state[4] = np.radians(-27.088)      # longitude 25.5
 state[5] = np.radians(4.51)         # latitude 42.5

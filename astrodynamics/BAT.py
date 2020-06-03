@@ -379,7 +379,6 @@ def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7
 	Mprop = np.sum(mdot * dt)
 	ascent_DeltaV = ceff * np.log(M[0] / (M[0] - Mprop))
 	q = 0.5 * rho * V **2
-	
 	others = {
 		"time": t_array,
 		"Mach": Mach,
@@ -392,7 +391,8 @@ def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7
 		"acceleration z": az_array,
 		"altitude": Z,
 		"density": rho,
-		"q": q
+		"q": q,
+		"gamma": gamma
 		}
 	
 	return V, Vxfree, ascent_DeltaV, q, others
