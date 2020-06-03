@@ -14,7 +14,8 @@ cg = act.cg_empty
 length = act.length
 width = act. width
 Isp = act.Isp
-
+thrust_levels = np.arange(100,1400,200)
+print(thrust_levels)
 
 #Initial slew values
 #Assume spin acceleration/deceleration of 5%, coast time of 90%
@@ -92,13 +93,9 @@ Td = dist.aerodynamic_disturbance(cp,cg,drag,alpha)
 
 
 
-def slew_landing(thrust,alpha,S,cp,rho,velocity,cd,Td,cg,I):
-    RCS_torque = act.RCS_thrust_to_torque(thrust,"y",length,width,cg)
-    slew_angle_tot = np.pi / 180 - alpha
-    slew_i         = -int(slew_duration / dt)
-
-    v0             = velocity[slew_i]
-    Td0            = Td[slew_i]
+def slew_landing(RCS_thrust,alpha,S,cp,cd,rho,V0,Td0,cg,I,i):
+    slew_angle_tot = 180 * np.pi / 180 - alpha
+    max_spin_rate = 0.10
 
     spin_rate =  slew_angle_tot / slew_duration
     spin_acc  =  spin_rate      / slew_acc_duration
@@ -107,20 +104,48 @@ def slew_landing(thrust,alpha,S,cp,rho,velocity,cd,Td,cg,I):
     slew_time  = 0
     slew_angle = 0
     impulse    = 0
-    while slew_angle < slew_angle_tot:
-        S_new, cp_new = dist.Drag_surface_cp(alpha+slew_angle)
-        drag = dist.Drag_force(rho[i],velocity[i],cd,S_new)
-        Td_new = dist.aerodynamic_disturbance(cp_new,cg,drag_new,alpha+slew_angle)
-        dTd = Td_new - Td0
-        net_torque = RCS_torque - dTd
 
+    while slew_angle < slew_angle_tot and i < len(time):
+        if spin_rate > max_spin_rate:
+            thrust = RCS_thrust * 0
+        else:
+            thrust = RCS_thrust
+
+        RCS_torque = act.RCS_thrust_to_torque(thrust,"y",length,width,cg)
+        S_new, cp_new = dist.Drag_surface_cp(alpha+slew_angle)
+        drag_new    = dist.Drag_force(rho[i],velocity[i],cd,S_new)
+        Td_new      = dist.aerodynamic_disturbance(cp_new,cg,drag_new,alpha+slew_angle)
+        dTd         = Td_new - Td0
+        net_torque  = RCS_torque - dTd
         spin_acc    = (net_torque) / I
         spin_rate   = spin_acc * dt
+
+
         slew_angle += spin_rate * dt
         slew_time  += dt
-        i += 1
-        impulse = thrust * dt
+        impulse    += thrust * dt
+        i          += 1
     return slew_time, impulse
 
-for i in time:
-    print(i)
+tot_times_and_impulses = []
+for i in range(len(time)):
+    t0 = time[i]
+    Td0 = Td[i]
+    V0 = velocity[i]
+    times_and_impulses = []
+
+    for j in thrust_levels:
+        slew_time, impulse = slew_landing(j,alpha,S,cp,cd,rho,V0,Td0,cg,Iy,i)
+        if slew_time > time[-1] - t0:
+            t1 = 0
+        else:
+            t1 = t0 + time[int(slew_time/dt)]
+        times_and_impulses.append((t0,t1,slew_time,impulse,j))
+
+    index_min_impulse = np.argmin(np.array(times_and_impulses)[:,-2])
+    min_impulse = times_and_impulses[index_min_impulse]
+    tot_times_and_impulses.append(min_impulse)
+
+index_tot_min_impulse = np.argmin(np.array(tot_times_and_impulses)[:,-2])
+tot_min_impulse = tot_times_and_impulses[index_tot_min_impulse]
+print(tot_min_impulse)
