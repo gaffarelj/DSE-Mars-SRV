@@ -6,21 +6,37 @@ from sympy.utilities.lambdify import lambdify
 import copy
 
 class Jacobian:
-    def __init__(self,sys):
-        self.main = []
-        for eq in sys.sym:
+    def __init__(self,sys,comp = "an",h=0,size = 1):
+        self.comp = comp
+        if self.comp == "an":
+            self.main = []
+            for eq in sys.sym:
                 temp = []
                 for r in sys.var:
                     temp.append(lambdify(sys.var,smp.diff(eq,r)))
                 self.main.append(temp)
-        self.size = np.shape(self.main)
+            self.size = np.shape(self.main)
+        elif self.comp == "num":
+            self.main = sys
+            self.h = h
+            self.size = (size,size)
+
        
-    def eval(self,x):
+    def eval(self,x, ig = 0):
         M = np.ndarray(self.size)
-        for i in range(self.size[0]):
+        if self.comp == "an":
+            for i in range(self.size[0]):
                 for j in range(self.size[1]):
                     M[i][j] = self.main[i][j](*x)
+        elif self.comp == "num" and type(ig) != int:
+
+            for j in range(self.size[0]):
+                xg = np.zeros(self.size[0])
+                xg[j] = self.h
+                M[j] = (self.main(x+xg,ig)-self.main(x-xg,ig))/(2*self.h)
+            M = np.transpose(M)
         return M
+
 
 class vector_func:
     def __init__(self,function,vector):
@@ -74,36 +90,36 @@ class vector_func:
         return np.array([eq(*x) for eq in self.main])
             
 class EKF:
-    def __init__(self,f,h,Q,R,x0):
-        self.x_var = f.var
-        self.x = x0
+    def __init__(self,f,h,Q,R,x0,comp = "an", h_val=0,n = 1):
         self.f = f
-        self.f.lamb()
+        self.n = n
+        self.comp = comp
+        if comp == "an":
+            self.x_var = f.var
+            self.f.lamb()
+            self.n = len(f.sym)
+        self.J = Jacobian(f,comp,h_val,n)
+        self.x = x0
         self.h = h
         self.h.lamb()
-        self.P = np.ndarray([len(f.main),len(f.main)])
+        self.P = R
         self.Q = Q
-        self.J = Jacobian(f)
         self.R = R
-        self.n = len(f.main)
 
-    def step(self):
-        Jn  = self.J.eval(self.x)
-        self.x = self.f.eval(self.x)
+
+    def step(self,ig=0):
+        Jn  = self.J.eval(self.x,ig)
+        if self.comp == "an":
+            self.x = self.f.eval(self.x)
+        elif self.comp == "num":
+            self.x = self.f(self.x,ig)
         self.P = Jn*self.P*np.transpose(Jn) + self.Q
 
-    def corr(self,z):
-        Jn = self.J.eval(self.x)
-        #print("Jn")
-        #print(Jn)
 
+    def corr(self,z,ig=0):
+        Jn  = self.J.eval(self.x, ig)
         self.K = self.P*Jn*npl.inv(Jn*self.P*np.transpose(Jn)+self.R)
-        #print("K")
-        #print(self.K)
+
         self.Pn = (np.eye(self.n)-self.K*Jn)*self.P
-        #print("Pn")
-        #print(self.Pn)
         self.P = self.Pn
-        #print("x")
-        #print(self.x)
         self.x = self.x + np.dot(self.K,(z-self.h.eval(self.x)))
