@@ -407,3 +407,11 @@ def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7
 			"density": rho}
 	
 	return V, Vxfree, ascent_DeltaV, q, others
+
+
+
+
+def vac_thrust(DeltaV,Isp,Mbegin,tb,De=0,pe=0):
+    Ae=np.pi/4*De*De
+    thrust=((np.exp(DeltaV/(Isp*9.80665))*Mbegin-Mbegin))(tb*np.exp(DeltaV/(Isp*9.80665)))*Isp*9.80665+Ae*(pe)
+    return thrust
