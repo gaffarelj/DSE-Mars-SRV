@@ -49,7 +49,7 @@ class Planet:
         return - np.arctan(dydx)
 
 class Motion:
-    def __init__(self, inital_conditions, MOI, S, mass, coefficients, Planet, pitch_control = True, thrust = 0, thrust_start = 0, rotation_start = 0, parachutes=[]):
+    def __init__(self, inital_conditions, MOI, S, mass, coefficients, Planet, pitch_control = True, thrust = 0, thrust_start = 0, rotation_start = 100000, parachutes=[]):
         self.initial = inital_conditions
         self.Ixx = MOI[0]
         self.Iyy = MOI[1]
@@ -211,7 +211,7 @@ class Motion:
 
             if time[-1] > self.rotation_start:
                 self.pitch_control = False
-                My = 7
+                My = -79000
                 if abs(alpha + gamma) > np.pi/2:
                     My = 0
                     pitch_rate = 0
@@ -236,21 +236,21 @@ class Motion:
             if self.pitch_control == True:
                 new_state[9] = self.initial[9]
             else:
-                new_state[9] = -np.pi - gamma #alpha + timestep * self.dalphadt(roll_rate, pitch_rate, yaw_rate, g, L, V, gamma, mu, alpha, beta)
+                new_state[9] = alpha + timestep * self.dalphadt(roll_rate, pitch_rate, yaw_rate, g, L, V, gamma, mu, alpha, beta)
             
             pitchrate = (L - self.mass*g*np.cos(gamma)*np.cos(mu))/(self.mass*V*np.cos(beta))
-            My = (pitchrate - ((self.Izz-self.Ixx)/self.Iyy * roll_rate * yaw_rate))*self.Iyy
+            pitching_moment = (pitchrate - ((self.Izz-self.Ixx)/self.Iyy * roll_rate * yaw_rate))*self.Iyy
 
             self.a_s.append(a)
             self.q_s.append(q)
             self.mach.append(mach)
-            self.pitch.append(My)
+            self.pitch.append(pitching_moment)
 
             flight.append(new_state)
             time.append(time[-1] + timestep)
             state = new_state
 
-        self.a_s.append(a), self.q_s.append(q), self.mach.append(mach), self.pitch.append(My)
+        self.a_s.append(a), self.q_s.append(q), self.mach.append(mach), self.pitch.append(pitching_moment)
         return np.array(flight), time
 
 class pc():

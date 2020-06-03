@@ -35,7 +35,7 @@ state[10] = 0																									# sideslip angle
 state[11] = 0																									# bank angle 	
 
 
-motion = astro_tools.Motion(state, MOI, S, vehicle_mass, ac.H_aerodynamics_coefficients, mars, True, 230e3, 978.89, 800)
+motion = astro_tools.Motion(state, MOI, S, vehicle_mass, ac.H_aerodynamics_coefficients, mars, True, 230e3, 978.89, 8000)
 flight, time = motion.forward_euler(dt)
 
 astro_tools.plot_dual(time, (flight[:,3] - mean_radius)/1000, flight[:,0], 'Time [s]', 'Altitude [km]', 'Velocity [m/s]')
@@ -47,8 +47,7 @@ astro_tools.plot_single(time , np.degrees(flight[:,1]), 'Time [s]', 'flight path
 
 astro_tools.plot_single(time , -np.degrees(flight[:,9]), 'Time [s]', 'AoA [deg]')
 
-#astro_tools.plot_single(time, motion.pitch, 'Time [s]', 'Pitching moment [Nm]')
-
+astro_tools.plot_single(time, motion.pitch, 'Time [s]', 'Pitching moment [Nm]')
 #random = astro_tools.Montecarlo(motion, state, dt)
 #random.get_trajectories_linux()
 #astro_tools.scatter(random.per, np.radians(42.5), np.radians(25.5), mars)
@@ -60,12 +59,12 @@ with open('accelerations.csv', mode='w') as file:
         x = (mars.r+reentry_altitude)*np.cos(flight[i,5])*np.cos(flight[i,4])
         y = (mars.r+reentry_altitude)*np.cos(flight[i,5])*np.sin(flight[i,4])
         z = (mars.r+reentry_altitude)*np.sin(flight[i,5])   
-        accelerations.writerow([time[i], np.sin(flight[i,1])*motion.a_s[i], np.cos(flight[i,1])*motion.a_s[i], x, y, z])
+        accelerations.writerow([time[i], np.sin(flight[i,1])*motion.a_s[i][0], np.cos(flight[i,1])*motion.a_s[i][0], x, y, z])
 
 with open('initial.csv', mode='w') as file:
     initial = csv.writer(file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
     initial.writerow([ 'downwards a', 'forwards a', 'downwards v', 'forwards v'])
-    initial.writerow([np.sin(flight[0,1])*motion.a_s[0], np.cos(flight[0,1])*motion.a_s[0], np.sin(flight[0,1])*flight[0,0], np.cos(flight[0,1])*flight[0,0]])
+    initial.writerow([np.sin(flight[0,1])*motion.a_s[0][0], np.cos(flight[0,1])*motion.a_s[0][0], np.sin(flight[0,1])*flight[0,0], np.cos(flight[0,1])*flight[0,0]])
 
 '''
 times = np.arange(980,970,-0.1)
