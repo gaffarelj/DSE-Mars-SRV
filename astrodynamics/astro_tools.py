@@ -200,7 +200,7 @@ class Motion:
             q = self.dynamicpressure(V, r)
             altitude = r - self.Planet.r
             mach = V/np.sqrt(atm.gamma*atm.R*atm.get_temperature(altitude))
-            postshock_pressure = self.normalshock(r, mach)
+            #postshock_pressure = self.normalshock(r, mach)
             cl,cd = self.coefficients(mach,-np.degrees(alpha))
 
             D = q * (cd * self.S + chute_drag_area)

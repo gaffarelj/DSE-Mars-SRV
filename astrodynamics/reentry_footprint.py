@@ -37,19 +37,19 @@ state[10] = 0																									# sideslip angle
 state[11] = 0																									# bank angle 	
 
 
-motion = astro_tools.Motion(state, MOI, S, vehicle_mass, ac.H_aerodynamics_coefficients, mars)
+motion = astro_tools.Motion(state, MOI, S, vehicle_mass, ac.H_aerodynamics_coefficients, mars, True, 180000, 1000)
 flight, time = motion.forward_euler(dt)
 
 astro_tools.plot_dual(time, (flight[:,3] - mean_radius)/1000, flight[:,0], 'Time [s]', 'Altitude [km]', 'Velocity [m/s]')
-astro_tools.plot_single(time , np.degrees(flight[:,5]), 'Time [s]', 'latitude [deg]')
-astro_tools.plot_single(time , np.degrees(flight[:,4]), 'Time [s]', 'longitude [deg]')
-astro_tools.plot_single(time , np.degrees(flight[:,2]), 'Time [s]', 'heading angle [deg]')
-astro_tools.plot_single(time , np.degrees(flight[:,1]), 'Time [s]', 'flight path angle [deg]')
-astro_tools.surfaceplots( np.degrees(flight[:,5]),  np.degrees(flight[:,4]), (flight[:,3] - mean_radius)/1000, 'latitude [deg]', 'longitude [deg]', 'Altitude [km]' )
+#astro_tools.plot_single(time , np.degrees(flight[:,5]), 'Time [s]', 'latitude [deg]')
+#astro_tools.plot_single(time , np.degrees(flight[:,4]), 'Time [s]', 'longitude [deg]')
+#astro_tools.plot_single(time , np.degrees(flight[:,2]), 'Time [s]', 'heading angle [deg]')
+#astro_tools.plot_single(time , np.degrees(flight[:,1]), 'Time [s]', 'flight path angle [deg]')
+#astro_tools.surfaceplots( np.degrees(flight[:,5]),  np.degrees(flight[:,4]), (flight[:,3] - mean_radius)/1000, 'latitude [deg]', 'longitude [deg]', 'Altitude [km]' )
 
-astro_tools.plot_single(time , -np.degrees(flight[:,9]), 'Time [s]', 'AoA [deg]')
+#astro_tools.plot_single(time , -np.degrees(flight[:,9]), 'Time [s]', 'AoA [deg]')
 
-astro_tools.plot_single(time, motion.pitch, 'Time [s]', 'Pitching moment [Nm]')
+#astro_tools.plot_single(time, motion.pitch, 'Time [s]', 'Pitching moment [Nm]')
 
 #random = astro_tools.Montecarlo(motion, state, dt)
 #random.get_trajectories_linux()
