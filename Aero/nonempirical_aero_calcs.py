@@ -5,8 +5,7 @@ import matplotlib
 import matplotlib.cm as cmx
 import pickle
 import astrodynamics.mars_standard_atmosphere as MSA
-
-
+import csv
 
 mesh_elements = pd.read_csv("surfacemesh.csv",sep=";")
 
@@ -77,9 +76,6 @@ from mpl_toolkits.mplot3d import Axes3D
 #    ax.quiver(i[1],i[2],i[3],i[4][0],i[4][1],i[4][2], length=0.8,arrow_length_ratio=0.6)
 
 
-
-
-
 def aero_angles(alpha, mesh_list):
 
     '''
@@ -98,7 +94,7 @@ def aero_angles(alpha, mesh_list):
 
         dotprod = np.dot(aero_vector,mesh_vector)
         mesh_item = mesh_list[i]
-        if dotprod > 0.05:
+        if dotprod > 0.05 and mesh_vector[2] is not 0:
             angle1 = np.arctan(aero_vector[1]/aero_vector[2])
             angle2 = np.arctan(mesh_vector[1]/mesh_vector[2])
             angle = angle1-angle2
@@ -185,7 +181,7 @@ def aero_cp_calcs(upstream_mesh,downstream_mesh, p_inf, p_02,M_inf,alpha):
     #print(vectorsum)
 
 
-    return cl, cd
+    return cl, cd, pressure_list
 
 def ultimate_aero_functions(p_inf, p_02, M_inf, alpha):
     with open("mesh_with_vectors.txt", "rb") as f:
@@ -193,14 +189,78 @@ def ultimate_aero_functions(p_inf, p_02, M_inf, alpha):
 
     upstream_mesh, downstream_mesh = aero_angles(alpha, new_list)
 
-    cl, cd = aero_cp_calcs(upstream_mesh, downstream_mesh, p_inf, p_02, M_inf, alpha)
+    cl, cd, pressures = aero_cp_calcs(upstream_mesh, downstream_mesh, p_inf, p_02, M_inf, alpha)
 
-    return cl, cd
+    return cl, cd, pressures
 
-p_inf = MSA.get_pressure(20000)
-p_02 = 783
-M_inf = 3
-alpha = 50
+
+def aero_normalshock(altitude, mach_initial):
+    altitude = altitude
+    gamma = MSA.gamma
+    t_static = MSA.get_temperature(altitude)
+    p_static = MSA.get_pressure(altitude)
+    rho_static = MSA.get_density(p_static, t_static)
+
+    mach = np.sqrt((1 + ((gamma - 1) / 2 * mach_initial ** 2)) / (gamma * mach_initial ** 2 - (gamma - 1) / 2))
+    pressure = p_static * (1 + 2 * gamma / (gamma + 1) * (mach_initial ** 2 - 1))
+    density = rho_static * (((gamma + 1) * mach_initial ** 2) / (2 + (gamma - 1) * mach_initial ** 2))
+    temperature = t_static * pressure / p_static * rho_static / density
+    a = np.sqrt(gamma * MSA.R * temperature)
+
+    V = mach / a
+    dyn_pressure = 0.5 * density * V * V
+    return pressure, dyn_pressure
+
+#altitude_list = [10000,20000,50000,100000]
+#for i in range(len(altitude_list)):
+#    p_inf = MSA.get_pressure(altitude_list[i])
+#    #print(p_inf)
+#    M_inf = 3
+#    p_inf, p_02 = aero_normalshock(altitude_list[i],M_inf)
+#    #print(p_inf, p_02)
+#    alpha = 50
+#    cl, cd, pressures = ultimate_aero_functions(p_inf, p_02, M_inf, alpha)
+
+#    print("Cl, Cd:", cl, cd, "at altitude,", altitude_list[i])
+
+
+
+alphalist = np.arange(-10,70.1,0.1)
+machlist = np.arange(1,20.1,0.1)
+cl_matrix = np.zeros((len(machlist)+1,len(alphalist)+1))
+cd_matrix = np.zeros((len(machlist)+1,len(alphalist)+1))
+cl_matrix[0][0] = 0
+cd_matrix[0][0] = 0
+for j in range(len(machlist)):
+    cl_matrix[j+1][0] = machlist[j]
+    cd_matrix[j+1][0] = machlist[j]
+
+    for i in range(len(alphalist)):
+        cl_matrix[0][i+1] = alphalist[i]
+        cd_matrix[0][i+1] = alphalist[i]
+        p_inf, p_02 = aero_normalshock(10000, machlist[j])
+        cl,cd,pressures = ultimate_aero_functions(p_inf,p_02,machlist[j],alphalist[i])
+        cl_matrix[j+1][i+1] = cl
+        cd_matrix[j+1][i+1] = cd
+
+    print("Progress:",(j+1)/len(machlist)*100,"%")
+
+#print(cl_matrix)
+#print(cd_matrix)
+
+with open ('cl_standard_config.csv', mode = 'w') as csv_file:
+    csv_writer = csv.writer(csv_file, delimiter = ';', quotechar= '"', quoting=csv.QUOTE_MINIMAL)
+    #csv_writer.writerow(alphalist)
+    for i in range(len(cl_matrix)):
+        csv_writer.writerow(cl_matrix[i])
+
+with open ('cd_standard_config.csv', mode = 'w') as csv_file:
+    csv_writer = csv.writer(csv_file, delimiter = ';', quotechar= '"', quoting=csv.QUOTE_MINIMAL)
+    #csv_writer.writerow(alphalist)
+    for i in range(len(cd_matrix)):
+        csv_writer.writerow(cd_matrix[i])
+
+
 
 #upstream_mesh, downstream_mesh = aero_angles(alpha,new_list)
 
@@ -209,19 +269,21 @@ alpha = 50
 
 
 
-cl, cd = ultimate_aero_functions(p_inf,p_02, M_inf, alpha)
-print(cl, cd)
+#cl, cd, pressures = ultimate_aero_functions(p_inf,p_02, M_inf, alpha)
+
+
+#print(cl, cd)
 
 
 xlist = []
 ylist = []
 zlist = []
 cplist = []
-#for i in pressures:
-#    xlist.append(i[0])
-#    ylist.append(i[1])
-#    zlist.append(i[2])
-#    cplist.append(i[3])
+for i in pressures:
+    xlist.append(i[0])
+    ylist.append(i[1])
+    zlist.append(i[2])
+    cplist.append(i[3])
 
 xlist = np.array(xlist)
 ylist = np.array(ylist)
@@ -236,7 +298,9 @@ def scatter3d(x,y,z, cs, colorsMap='jet'):
     scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cm)
     fig = plt.figure()
     ax = Axes3D(fig)
-    ax.scatter(x, y, z, c=scalarMap.to_rgba(cs))
+    #z = np.array([z.T,z])
+    ax.plot_wireframe(x,y,z)
+    #ax.scatter(x, y, z, c=scalarMap.to_rgba(cs))
     scalarMap.set_array(cs)
     fig.colorbar(scalarMap)
     plt.show()
