@@ -36,8 +36,8 @@ def Drag_surface_cp(alpha):
     return A_tot, Cp
 
 
-def Drag_force(rho,velocity,CD,S):
-    drag = 0.5*rho*velocity**2*CD*S
+def Drag_force(q,CD,S):
+    drag = q**2*CD*S
     return drag
 
 def aerodynamic_disturbance(Cp,Cg,Drag,alpha):

@@ -12,7 +12,7 @@ cg_full  = 7.7085 #m
 cg_empty = 10.0344 #m
 
 #RCS propellant properties
-Isp = 150 #mono liquid, N2H2
+Isp = 390 #mono liquid, N2H2
 #Thruster arms
 def thruster_arms(cg,length,width):
     lx = width / 2
@@ -45,6 +45,19 @@ def RCS_torque_to_thrust(T,axis,length,width,cg):
         n = n_bottom + n_top
     return f, n
 
+
+def RCS_displacement_to_thrust(F,axis):
+    if axis == "x":
+        n_bottom = 4
+        n_top    = 4
+        n        = n_bottom + n_top
+    if axis == "y" or axis == "z":
+        n_bottom = 6
+        n_top    = 6
+        n        = n_bottom + n_top
+    f = F / n
+    return f, n
+
 def RCS_thrust_to_torque(f,axis,length,width,cg):
     lx, ly, lz = thruster_arms(cg,length,width)
     # n: number of thrusters to provide torque
@@ -71,19 +84,12 @@ def RCS_thrust_to_torque(f,axis,length,width,cg):
         n = n_bottom + n_top
     return T
 
-def RCS_displacement_to_thrust(F,axis):
-    if axis == "x":
-        n_bottom = 4
-        n_top    = 4
-        n        = n_bottom + n_top
-    if axis == "y" or axis == "z":
-        n_bottom = 6
-        n_top    = 6
-        n        = n_bottom + n_top
-    f = F / n
-    return f, n
-
-def RCSpropellant(Impulse,Isp,n):
+def RCSpropellant(f,t,Isp):
     g = 9.81
-    Mp = Impulse / (Isp * g) * n
+    impulse = f * t
+    Mp = impulse / (Isp * g)
     return Mp
+
+thrust_levels = np.arange(100,1000,200)
+RCS_torque = RCS_thrust_to_torque(thrust_levels[-1],'z',length_body,width,cg_empty)
+print(RCS_torque)
