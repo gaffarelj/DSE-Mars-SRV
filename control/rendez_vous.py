@@ -99,18 +99,15 @@ error_zdot = 0.1
 
 def error_x(error_xm,error_zm,error_xdot,error_zdot,omega,t):
     delta_x = error_xm + 6 * error_zm * (omega * t - np.sin(omega * t)) +  error_xdot * (4 / omega * np.sin(omega * t) - 3 * t) + 2 / omega * error_zdot * (1 - np.cos(omega * t))
-    delta_xdot = 0.2*np.sin(186.550706606968*t) - 1678.55635946271*np.cos(186.550706606968*t) + 1678.65635946271
-    delta_xdotdot = 313135.87493739*np.sin(186.550706606968*t) + 37.3101413213937*np.cos(186.550706606968*t)
-    # delta_x_dot = 6 * error_zm * (omega - omega * np.cos(omega * t)) +  error_xdot * (4 * np.cos(omega * t) - 3) + 2 / omega * error_zdot * (omega *  np.sin(omega * t))
-    #
-    # delta_x_dotdot = 6 * error_zm * (omega ** 2 * np.sin(omega * t)) +  error_xdot * (-4 * omega * np.sin(omega * t)) + 2 / omega * error_zdot * (omega ** 2 * np.cos(omega * t))
+    delta_x_dot = 6 * error_zm * (omega - omega * np.cos(omega * t)) +  error_xdot * (4 * np.cos(omega * t) - 3) + 2 / omega * error_zdot * (omega *  np.sin(omega * t))
+    delta_x_dotdot = 6 * error_zm * (omega ** 2 * np.sin(omega * t)) +  error_xdot * (-4 * omega * np.sin(omega * t)) + 2 / omega * error_zdot * (omega ** 2 * np.cos(omega * t))
 
     return delta_x, delta_xdot, delta_xdotdot
 
 def error_y(error_ym,omega,t):
     delta_y = error_ym * np.cos(omega * t) + 1 / omega * error_ydot * np.sin(omega * t)
-    delta_ydot = -279.826059910452*np.sin(186.550706606968*t) + 0.1*np.cos(186.550706606968*t)
-    delta_ydotdot = -18.6550706606968*np.sin(186.550706606968*t) - 52201.7492033387*np.cos(186.550706606968*t)
+    delta_ydot = -omega * error_ym * np.sin(omega * t) + error_ydot * np.cos(omega * t)
+    delta_ydotdot = -omega ** 2 * error_ym * np.cos(omega * t) - omega * error_ydot * np.sin(omega * t)
 
     return delta_y, delta_ydot, delta_ydotdot
 
@@ -164,7 +161,7 @@ ydotdot = delta_ydotdot
 z   = z0 + delta_z
 zdot    = delta_zdot
 zdotdot = delta_zdotdot
-
+print('initial xyz: ', x,y,z)
 
 fx0 = m * thrust_x(x,zdot,xdotdot,omega,t)
 fy0 = m * thrust_y(y,ydotdot,omega,t)
@@ -179,6 +176,7 @@ mp_array  = np.array(mp)
 while x >= x0_A and x < x1_A:
     Vx = Vx_A
 
+    t += dt
     delta_x_new, delta_xdot_new, delta_xdotdot_new = error_x(error_xm,error_zm,error_xdot,error_zdot,omega,t)
     delta_y_new, delta_ydot_new, delta_ydotdot_new = error_y(error_ym,omega,t)
     delta_z_new, delta_zdot_new, delta_zdotdot_new = error_z(error_xm,error_zm,error_zdot,omega,t)
@@ -195,7 +193,7 @@ while x >= x0_A and x < x1_A:
     delta_zdot_rel    = delta_zdot_new - delta_zdot
     delta_zdotdot_rel = delta_zdotdot_new - delta_zdotdot
 
-    x       = Vx*t + delta_x_rel
+    x       = x0_A + Vx*t + delta_x_rel
     xdot    = Vx + delta_xdot_rel
     xdotdot = delta_xdotdot_rel
 
@@ -214,7 +212,7 @@ while x >= x0_A and x < x1_A:
     print("this is thrust",ftot)
     mp = act.RCSpropellant(ftot,dt,Isp)
     # m -= mp
-    t += dt
+
 
 
     f_array  = np.append(f_array,[[fx,fy,fz]],axis=0)
@@ -234,10 +232,10 @@ while x >= x0_A and x < x1_A:
     delta_zdot    = delta_zdot_new
     delta_zdotdot = delta_zdotdot_new
 
-    # print('phase A')
-    # print('x: ',x)
-    # print(delta_x,delta_y,delta_z)
-    # print('============================')
+    print('phase A')
+    print('x: ',x)
+    print(delta_x_rel,delta_y_rel,delta_z_rel)
+    print('============================')
 
 while x >= x0_B and x < x1_B:
     Vx = Vx_B
@@ -259,7 +257,7 @@ while x >= x0_B and x < x1_B:
     delta_zdotdot_rel = delta_zdotdot_new - delta_zdotdot
 
 
-    x       = Vx*t + delta_x_rel
+    x       = x0_B + Vx*t + delta_x_rel
     xdot    = Vx + delta_xdot_rel
     xdotdot = delta_xdotdot_rel
 
@@ -296,9 +294,9 @@ while x >= x0_B and x < x1_B:
     delta_zdot    = delta_zdot_new
     delta_zdotdot = delta_zdotdot_new
 
-    # print('phase B')
-    # print('x: ',x)
-    # print('============================')
+    print('phase B')
+    print('x: ',x)
+    print('============================')
 
 while x >= x0_d and x < x1_d:
     Vx = Vx_d
@@ -319,7 +317,8 @@ while x >= x0_d and x < x1_d:
     delta_zdot_rel    = delta_zdot_new - delta_zdot
     delta_zdotdot_rel = delta_zdotdot_new - delta_zdotdot
 
-    x       = Vx*t + delta_x_rel
+    print('deltas: ',delta_x_rel,delta_y_rel,delta_z_rel)
+    x       = x0_d + Vx*t + delta_x_rel
     xdot    = Vx + delta_xdot_rel
     xdotdot = delta_xdotdot_rel
 
@@ -356,9 +355,9 @@ while x >= x0_d and x < x1_d:
     delta_zdot    = delta_zdot_new
     delta_zdotdot = delta_zdotdot_new
 
-    # print('phase d')
-    # print('x: ',x)
-    # print('============================')
+    print('phase d')
+    print('x: ',x)
+    print('============================')
 
 
 # print(f_array[:,1])
@@ -399,17 +398,17 @@ if plotting:
     axs[0][0].plot(t_array,f_array[:,0],color="navy")
     axs[0][0].grid(color="gainsboro")
     axs[0][0].set_xlabel("Time [s]")
-    axs[0][0].set_ylabel("Thrust [N]")
+    axs[0][0].set_ylabel("Thrust in X [N]")
 
     #Fx vs time
     axs[0][1].plot(t_array,f_array[:,1],color="navy")
     axs[0][1].grid(color="gainsboro")
     axs[0][1].set_xlabel("Time [s]")
-    axs[0][1].set_ylabel("Thrust [N]")
+    axs[0][1].set_ylabel("Thrust in Y [N]")
 
     #Fx vs time
     axs[0][2].plot(t_array,f_array[:,2],color="navy")
     axs[0][2].grid(color="gainsboro")
     axs[0][2].set_xlabel("Time [s]")
-    axs[0][2].set_ylabel("Thrust [N]")
+    axs[0][2].set_ylabel("Thrust in Z [N]")
     plt.show()
