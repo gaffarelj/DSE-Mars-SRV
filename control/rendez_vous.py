@@ -180,10 +180,11 @@ mp_array  = np.array(mp)
 
 thrust_deltaV1, mp_deltaV1 = vac_thrust(deltaV_A_0,Isp,m0,tburn,De=0,pe=0)
 m -= mp_deltaV1
+t += tburn
 f_array = np.append(f_array,[[thrust_deltaV1,0,0]],axis=0)
-X_array  = np.append(X_array,[[0,0,0]],axis=0)
+X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV1)
-t_array  = np.append(t_array,tburn)
+t_array  = np.append(t_array,t)
 #Proximity operations A:
 
 while x >= x0_A-1 and x < x1_A:
@@ -244,17 +245,19 @@ while x >= x0_A-1 and x < x1_A:
 
 thrust_deltaV2, mp_deltaV2 = vac_thrust(deltaV_A_1,Isp,m,tburn,De=0,pe=0)
 m -= mp_deltaV2
+t += tburn
 f_array = np.append(f_array,[[thrust_deltaV2,0,0]],axis=0)
-X_array  = np.append(X_array,[[0,0,0]],axis=0)
+X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV2)
-t_array  = np.append(t_array,tburn)
+t_array  = np.append(t_array,t)
 
 thrust_deltaV3, mp_deltaV3 = vac_thrust(deltaV_B_0,Isp,m0,tburn,De=0,pe=0)
 m -= mp_deltaV3
+t += tburn
 f_array = np.append(f_array,[[thrust_deltaV3,0,0]],axis=0)
-X_array  = np.append(X_array,[[0,0,0]],axis=0)
+X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV3)
-t_array  = np.append(t_array,tburn)
+t_array  = np.append(t_array,t)
 
 while x >= x0_B-1 and x < x1_B:
     t  += dt
@@ -318,18 +321,20 @@ while x >= x0_B-1 and x < x1_B:
 
 thrust_deltaV4, mp_deltaV4 = vac_thrust(deltaV_B_1,Isp,m0,tburn,De=0,pe=0)
 m -= mp_deltaV4
+t += tburn
 f_array = np.append(f_array,[[thrust_deltaV4,0,0]],axis=0)
-X_array  = np.append(X_array,[[0,0,0]],axis=0)
+X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV4)
-t_array  = np.append(t_array,tb)
+t_array  = np.append(t_array,t)
 
 thrust_deltaV5, mp_deltaV5 = vac_thrust(deltaV_d_0,Isp,m0,tburn,De=0,pe=0)
 m -= mp_deltaV5
+t += tburn
 print('thrust,mp: ',thrust_deltaV5,mp)
 f_array = np.append(f_array,[[thrust_deltaV5,0,0]],axis=0)
-X_array  = np.append(X_array,[[0,0,0]],axis=0)
+X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV5)
-t_array  = np.append(t_array,tb)
+t_array  = np.append(t_array,t)
 
 while x >= x0_d-1 and x < x1_d:
     Vx  = Vx_d
