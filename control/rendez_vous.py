@@ -27,9 +27,8 @@ mu=0.042828*10**6*(10**3)**3    #[m^3/s^2] gravitational parameter
 R=3389.5*10**3                  #[m] volumetric mean radius
 h_node=500*10**3                #[m]
 
-period = np.sqrt((R+h_node) ** 3 / mu)
-omega  = period / (2 * np.pi)
-
+period = 2 * np.pi * np.sqrt((R+h_node) **  3 / mu)     #[s]
+omega = (2 * np.pi) / period                            #[1/s]
 #=====================================================================================================================================================================================================================
 #Vehicle properties
 #=====================================================================================================================================================================================================================
@@ -44,21 +43,21 @@ Isp  = 221                      #previous value was: 390
 #Proximity operations A:
 x0_A = -1000         #m
 x1_A = -250          #m
-t_A  = 5 * period   #s
-Vx_A   = (x0_A - x1_A) / t_A #m/s
+t_A  = 1 * period   #s
+Vx_A   = (x1_A - x0_A) / t_A #m/s
 deltaV_A_0 = deltaV_A_1 = Vx_A
 
 #Proximity operations B:
 x0_B = x1_A         #m
 x1_B = -30           #m
 t_B  = 60 * 60      #s
-Vx_B  = (x0_B - x1_B) / t_B #m/s
+Vx_B  = (x1_B - x0_B) / t_B #m/s
 deltaV_B_0 = deltaV_B_1 = Vx_B
 #Docking:
 x0_d = x1_B         #m
 x1_d = -3            #m
-t_d  = (5*((x0_d - x1_d)/10)) * 60       #m
-Vx_d  = (x0_d - x1_d) / t_d #m/s
+t_d  = (5*((x1_d - x0_d)/10)) * 60       #m
+Vx_d  = (x1_d - x0_d) / t_d #m/s
 deltaV_d_0 = deltaV_d_1 = Vx_d
 
 y0 = z0 = 0
@@ -89,13 +88,13 @@ deltaV_tot = deltaV_A_0 + deltaV_A_1 + deltaV_B_0 + deltaV_B_1 + deltaV_d_0 + de
 #=====================================================================================================================================================================================================================
 #Navigation measurement errors
 #=====================================================================================================================================================================================================================
-error_xm = 1.0
-error_ym = 1.0
-error_zm = 1.0
+error_xm = 0.1
+error_ym = 0.1
+error_zm = 0.1
 
-error_xdot = 0.1
-error_ydot = 0.1
-error_zdot = 0.1
+error_xdot = 0.01
+error_ydot = 0.01
+error_zdot = 0.01
 
 def error_x(error_xm,error_zm,error_xdot,error_zdot,omega,t):
     delta_x = error_xm + 6 * error_zm * (omega * t - np.sin(omega * t)) +  error_xdot * (4 / omega * np.sin(omega * t) - 3 * t) + 2 / omega * error_zdot * (1 - np.cos(omega * t))
@@ -144,11 +143,13 @@ def thrust_z(z,zdotdot,xdot,omega,t):
 #=====================================================================================================================================================================================================================
 # Simulation
 #=====================================================================================================================================================================================================================
-dt = 0.01
-t  = 0.
+dt = 1.
+t  = 0.1
+ta = tb = td = 0.1
 mp = 0.
-
 m = m0
+m_deltaV = [m]
+
 delta_x, delta_xdot, delta_xdotdot = error_x(error_xm,error_zm,error_xdot,error_zdot,omega,t)
 delta_y, delta_ydot, delta_ydotdot = error_y(error_ym,omega,t)
 delta_z, delta_zdot, delta_zdotdot = error_z(error_xm,error_zm,error_zdot,omega,t)
@@ -162,6 +163,7 @@ z   = z0 + delta_z
 zdot    = delta_zdot
 zdotdot = delta_zdotdot
 print('initial xyz: ', x,y,z)
+print('initial delta xyz: ', delta_x,delta_y,delta_z)
 
 fx0 = m * thrust_x(x,zdot,xdotdot,omega,t)
 fy0 = m * thrust_y(y,ydotdot,omega,t)
@@ -173,10 +175,12 @@ t_array   = np.array(t)
 mp_array  = np.array(mp)
 
 #Proximity operations A:
-while x >= x0_A and x < x1_A:
+
+while x >= x0_A-1 and x < x1_A:
     Vx = Vx_A
 
-    t += dt
+    t  += dt
+    ta += dt
     delta_x_new, delta_xdot_new, delta_xdotdot_new = error_x(error_xm,error_zm,error_xdot,error_zdot,omega,t)
     delta_y_new, delta_ydot_new, delta_ydotdot_new = error_y(error_ym,omega,t)
     delta_z_new, delta_zdot_new, delta_zdotdot_new = error_z(error_xm,error_zm,error_zdot,omega,t)
@@ -193,7 +197,7 @@ while x >= x0_A and x < x1_A:
     delta_zdot_rel    = delta_zdot_new - delta_zdot
     delta_zdotdot_rel = delta_zdotdot_new - delta_zdotdot
 
-    x       = x0_A + Vx*t + delta_x_rel
+    x       = x0_A + Vx*ta + delta_x_rel
     xdot    = Vx + delta_xdot_rel
     xdotdot = delta_xdotdot_rel
 
@@ -208,13 +212,12 @@ while x >= x0_A and x < x1_A:
     fx = m * thrust_x(x,zdot,xdotdot,omega,t)
     fy = m * thrust_y(y,ydotdot,omega,t)
     fz = m * thrust_z(z,zdotdot,xdot,omega,t)
-    ftot = fx + fy + fz
-    print("this is thrust",ftot)
+    ftot = abs(fx + fy + fz)
     mp = act.RCSpropellant(ftot,dt,Isp)
-    # m -= mp
+    m -= mp
 
     f_array  = np.append(f_array,[[fx,fy,fz]],axis=0)
-    X_array  = np.append(X_array,[[delta_x_rel,y,z]],axis=0)
+    X_array  = np.append(X_array,[[x,y,z]],axis=0)
     mp_array = np.append(mp_array,mp)
     t_array  = np.append(t_array,t)
 
@@ -230,33 +233,30 @@ while x >= x0_A and x < x1_A:
     delta_zdot    = delta_zdot_new
     delta_zdotdot = delta_zdotdot_new
 
-    print('phase A')
-    print('x: ',x)
-    print('delta x: ', delta_x_rel,delta_y_rel,delta_z_rel)
-    print('============================')
 
-while x >= x0_B and x < x1_B:
+while x >= x0_B-1 and x < x1_B:
+    t  += dt
+    tb += dt
     Vx = Vx_B
-    t += dt
 
     delta_x_new, delta_xdot_new, delta_xdotdot_new = error_x(error_xm,error_zm,error_xdot,error_zdot,omega,t)
     delta_y_new, delta_ydot_new, delta_ydotdot_new = error_y(error_ym,omega,t)
-    delta_z_new,delta_zdot,_new, delta_zdotdot_new = error_z(error_xm,error_zm,error_zdot,omega,t)
+    delta_z_new, delta_zdot_new, delta_zdotdot_new = error_z(error_xm,error_zm,error_zdot,omega,t)
 
     delta_x_rel       = delta_x_new - delta_x
     delta_xdot_rel    = delta_xdot_new - delta_xdot
     delta_xdotdot_rel = delta_xdotdot_new - delta_xdotdot
 
     delta_y_rel       = delta_y_new - delta_y
-    delta_ydot_rel    = delta_ydot_new - delta_y_dot
-    delta_ydotdot_rel = delta_ydotdot_new - delta_y_dotdot
+    delta_ydot_rel    = delta_ydot_new - delta_ydot
+    delta_ydotdot_rel = delta_ydotdot_new - delta_ydotdot
 
     delta_z_rel       = delta_z_new - delta_z
     delta_zdot_rel    = delta_zdot_new - delta_zdot
     delta_zdotdot_rel = delta_zdotdot_new - delta_zdotdot
 
 
-    x       = x0_B + Vx*t + delta_x_rel
+    x       = x0_B + Vx*tb + delta_x_rel
     xdot    = Vx + delta_xdot_rel
     xdotdot = delta_xdotdot_rel
 
@@ -271,15 +271,15 @@ while x >= x0_B and x < x1_B:
     fx = m * thrust_x(x,zdot,xdotdot,omega,t)
     fy = m * thrust_y(y,ydotdot,omega,t)
     fz = m * thrust_z(z,zdotdot,xdot,omega,t)
-    ftot = fx + fy + fz
+    ftot = abs(fx + fy + fz)
     mp = act.RCSpropellant(ftot,dt,Isp)
-    # m -= mp
+    m -= mp
 
 
-    # f_array = np.append(f_array,[[fx,fy,fz]],axis=0)
-    # X_array = np.append(X_array,[[x,y,z]],axis=0)
-    # mp_array = np.append(mp_array,mp)
-    # t_array = np.append(t_array,t)
+    f_array = np.append(f_array,[[fx,fy,fz]],axis=0)
+    X_array = np.append(X_array,[[x,y,z]],axis=0)
+    mp_array = np.append(mp_array,mp)
+    t_array = np.append(t_array,t)
 
     delta_x       = delta_x_new
     delta_xdot    = delta_xdot_new
@@ -293,32 +293,30 @@ while x >= x0_B and x < x1_B:
     delta_zdot    = delta_zdot_new
     delta_zdotdot = delta_zdotdot_new
 
-    print('phase B')
-    print('x: ',x)
-    print('============================')
 
-while x >= x0_d and x < x1_d:
-    Vx = Vx_d
-    t += dt
+
+while x >= x0_d-1 and x < x1_d:
+    Vx  = Vx_d
+    t  += dt
+    td += dt
 
     delta_x_new, delta_xdot_new, delta_xdotdot_new = error_x(error_xm,error_zm,error_xdot,error_zdot,omega,t)
     delta_y_new, delta_ydot_new, delta_ydotdot_new = error_y(error_ym,omega,t)
-    delta_z_new,delta_zdot,_new, delta_zdotdot_new = error_z(error_xm,error_zm,error_zdot,omega,t)
+    delta_z_new, delta_zdot_new, delta_zdotdot_new = error_z(error_xm,error_zm,error_zdot,omega,t)
 
     delta_x_rel       = delta_x_new - delta_x
     delta_xdot_rel    = delta_xdot_new - delta_xdot
     delta_xdotdot_rel = delta_xdotdot_new - delta_xdotdot
 
     delta_y_rel       = delta_y_new - delta_y
-    delta_ydot_rel    = delta_ydot_new - delta_y_dot
-    delta_ydotdot_rel = delta_ydotdot_new - delta_y_dotdot
+    delta_ydot_rel    = delta_ydot_new - delta_ydot
+    delta_ydotdot_rel = delta_ydotdot_new - delta_ydotdot
 
     delta_z_rel       = delta_z_new - delta_z
     delta_zdot_rel    = delta_zdot_new - delta_zdot
     delta_zdotdot_rel = delta_zdotdot_new - delta_zdotdot
 
-    print('deltas: ',delta_x_rel,delta_y_rel,delta_z_rel)
-    x       = x0_d + Vx*t + delta_x_rel
+    x       = x0_d + Vx*td + delta_x_rel
     xdot    = Vx + delta_xdot_rel
     xdotdot = delta_xdotdot_rel
 
@@ -333,14 +331,14 @@ while x >= x0_d and x < x1_d:
     fx = m * thrust_x(x,zdot,xdotdot,omega,t)
     fy = m * thrust_y(y,ydotdot,omega,t)
     fz = m * thrust_z(z,zdotdot,xdot,omega,t)
-    ftot = fx + fy + fz
+    ftot = abs(fx + fy + fz)
     mp = act.RCSpropellant(ftot,dt,Isp)
-    # m -= mp
+    m -= mp
 
-    # f_array = np.append(f_array,[[fx,fy,fz]],axis=0)
-    # X_array = np.append(X_array,[[x,y,z]],axis=0)
-    # mp_array = np.append(mp_array,mp)
-    # t_array = np.append(t_array,t)
+    f_array = np.append(f_array,[[fx,fy,fz]],axis=0)
+    X_array = np.append(X_array,[[x,y,z]],axis=0)
+    mp_array = np.append(mp_array,mp)
+    t_array = np.append(t_array,t)
 
     delta_x       = delta_x_new
     delta_xdot    = delta_xdot_new
@@ -354,12 +352,23 @@ while x >= x0_d and x < x1_d:
     delta_zdot    = delta_zdot_new
     delta_zdotdot = delta_zdotdot_new
 
-    print('phase d')
-    print('x: ',x)
-    print('============================')
+#=====================================================================================================================================================================================================================
+# Total thrust and propellant mass
+#=====================================================================================================================================================================================================================
 
+#Delta V maneuvers in between phases
+thrust_deltaV1, mp_deltaV1 = vac_thrust(DeltaV_tot,Isp,m0,tb,De=0,pe=0)
+thrust_deltaV2, mp_deltaV2 = vac_thrust(DeltaV_tot,Isp,m0,tb,De=0,pe=0)
+thrust_deltaV3, mp_deltaV3 = vac_thrust(DeltaV_tot,Isp,m0,tb,De=0,pe=0)
+thrust_deltaV4, mp_deltaV2 = vac_thrust(DeltaV_tot,Isp,m0,tb,De=0,pe=0)
 
-# print(f_array[:,1])
+#During phases
+thrust_phases = np.sum(f_array)
+mp_phases     = np.sum(mp)
+
+print('Total propellant used: ', mp_tot)
+print('Total thrust from RCS: ', np.sum(f_array))
+print('Thrust for initial and final delta Vs: ', thrust_deltaV)
 #=====================================================================================================================================================================================================================
 # Plotting
 #=====================================================================================================================================================================================================================
@@ -389,6 +398,12 @@ if plotting:
     axs[1][0].grid(color="gainsboro")
     axs[1][0].set_xlabel("Time [s]")
     axs[1][0].set_ylabel("Propellant mass [kg]")
+
+    #Vehicle mass
+    axs[1][1].plot(t_array,m0-mp_array,color="navy")
+    axs[1][1].grid(color="gainsboro")
+    axs[1][1].set_xlabel("Time [s]")
+    axs[1][1].set_ylabel("Vehicle mass [kg]")
     plt.show()
 
     fig, axs = plt.subplots(2, 3, constrained_layout=True)
