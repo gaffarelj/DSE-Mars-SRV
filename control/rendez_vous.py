@@ -27,7 +27,7 @@ def vac_thrust(DeltaV,Isp,Mbegin,tb,De=0,pe=0):
 mu=0.042828*10**6*(10**3)**3    #[m^3/s^2] gravitational parameter
 R=3389.5*10**3                  #[m] volumetric mean radius
 h_node=500*10**3                #[m]
-V_node=np.sqrt(mu/(R+h_node))
+
 period =2*np.pi* np.sqrt((R+h_node) ** 3 / mu)
 omega  = (2 * np.pi)/period
 
@@ -148,6 +148,7 @@ def thrust_z(z,zdotdot,xdot,omega,t):
 dt = 1.
 t  = 0.1
 ta = tb = td = 0.1
+tburn = 1.
 mp = 0.
 m = m0
 m_deltaV = [m]
@@ -177,10 +178,12 @@ t_array   = np.array(t)
 mp_array  = np.array(mp)
 
 
-thrust_deltaV1, mp_deltaV1 = vac_thrust(deltaV_A_0,Isp,m0,tb,De=0,pe=0)
+thrust_deltaV1, mp_deltaV1 = vac_thrust(deltaV_A_0,Isp,m0,tburn,De=0,pe=0)
 m -= mp_deltaV1
 f_array = np.append(f_array,[[thrust_deltaV1,0,0]],axis=0)
+X_array  = np.append(X_array,[[0,0,0]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV1)
+t_array  = np.append(t_array,tburn)
 #Proximity operations A:
 
 while x >= x0_A-1 and x < x1_A:
@@ -239,15 +242,19 @@ while x >= x0_A-1 and x < x1_A:
     delta_zdot    = delta_zdot_new
     delta_zdotdot = delta_zdotdot_new
 
-thrust_deltaV2, mp_deltaV2 = vac_thrust(deltaV_A_0,Isp,m,tb,De=0,pe=0)
+thrust_deltaV2, mp_deltaV2 = vac_thrust(deltaV_A_1,Isp,m,tburn,De=0,pe=0)
 m -= mp_deltaV2
 f_array = np.append(f_array,[[thrust_deltaV2,0,0]],axis=0)
+X_array  = np.append(X_array,[[0,0,0]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV2)
+t_array  = np.append(t_array,tburn)
 
-thrust_deltaV3, mp_deltaV3 = vac_thrust(deltaV_B_0,Isp,m0,tb,De=0,pe=0)
+thrust_deltaV3, mp_deltaV3 = vac_thrust(deltaV_B_0,Isp,m0,tburn,De=0,pe=0)
 m -= mp_deltaV3
 f_array = np.append(f_array,[[thrust_deltaV3,0,0]],axis=0)
+X_array  = np.append(X_array,[[0,0,0]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV3)
+t_array  = np.append(t_array,tburn)
 
 while x >= x0_B-1 and x < x1_B:
     t  += dt
@@ -309,15 +316,20 @@ while x >= x0_B-1 and x < x1_B:
     delta_zdotdot = delta_zdotdot_new
 
 
-thrust_deltaV4, mp_deltaV4 = vac_thrust(deltaV_B_1,Isp,m0,tb,De=0,pe=0)
+thrust_deltaV4, mp_deltaV4 = vac_thrust(deltaV_B_1,Isp,m0,tburn,De=0,pe=0)
 m -= mp_deltaV4
 f_array = np.append(f_array,[[thrust_deltaV4,0,0]],axis=0)
+X_array  = np.append(X_array,[[0,0,0]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV4)
+t_array  = np.append(t_array,tb)
 
-thrust_deltaV5, mp_deltaV5 = vac_thrust(deltaV_B_1,Isp,m0,tb,De=0,pe=0)
+thrust_deltaV5, mp_deltaV5 = vac_thrust(deltaV_d_0,Isp,m0,tburn,De=0,pe=0)
 m -= mp_deltaV5
+print('thrust,mp: ',thrust_deltaV5,mp)
 f_array = np.append(f_array,[[thrust_deltaV5,0,0]],axis=0)
+X_array  = np.append(X_array,[[0,0,0]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV5)
+t_array  = np.append(t_array,tb)
 
 while x >= x0_d-1 and x < x1_d:
     Vx  = Vx_d
@@ -380,12 +392,7 @@ while x >= x0_d-1 and x < x1_d:
 # Total thrust and propellant mass
 #=====================================================================================================================================================================================================================
 
-# print(f_array[:,1])
-    
-  
-
 #Delta V maneuvers in between phases
-tb = 1.
 thrust_deltaV = thrust_deltaV1 + thrust_deltaV2 + thrust_deltaV3 + thrust_deltaV4 + thrust_deltaV5
 mp_deltaV = mp_deltaV1 + mp_deltaV2 + mp_deltaV3 + mp_deltaV4 + mp_deltaV5
 #During phases
@@ -398,8 +405,9 @@ mp_tot     = mp_deltaV + mp_phases
 
 print('Total propellant used: ', mp_tot)
 print('Total thrust from RCS: ', thrust_tot)
-print("Thrust for initial and final delta Vs: ", thrust_deltaV)
-
+print('Thrust for initial and final delta Vs: ', thrust_deltaV)
+print('Thrust for phases: ', thrust_phases)
+print(t_array.shape,X_array.shape)
 #=====================================================================================================================================================================================================================
 # Plotting
 #=====================================================================================================================================================================================================================
