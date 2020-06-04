@@ -244,7 +244,7 @@ m -= mp_deltaV2
 f_array = np.append(f_array,[[thrust_deltaV2,0,0]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV2)
 
-thrust_deltaV3, mp_deltaV3 = vac_thrust(DeltaV_B_0,Isp,m0,tb,De=0,pe=0)
+thrust_deltaV3, mp_deltaV3 = vac_thrust(deltaV_B_0,Isp,m0,tb,De=0,pe=0)
 m -= mp_deltaV3
 f_array = np.append(f_array,[[thrust_deltaV3,0,0]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV3)
@@ -309,12 +309,12 @@ while x >= x0_B-1 and x < x1_B:
     delta_zdotdot = delta_zdotdot_new
 
 
-thrust_deltaV4, mp_deltaV4 = vac_thrust(DeltaV_B_1,Isp,m0,tb,De=0,pe=0)
+thrust_deltaV4, mp_deltaV4 = vac_thrust(deltaV_B_1,Isp,m0,tb,De=0,pe=0)
 m -= mp_deltaV4
 f_array = np.append(f_array,[[thrust_deltaV4,0,0]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV4)
 
-thrust_deltaV5, mp_deltaV5 = vac_thrust(DeltaV_B_1,Isp,m0,tb,De=0,pe=0)
+thrust_deltaV5, mp_deltaV5 = vac_thrust(deltaV_B_1,Isp,m0,tb,De=0,pe=0)
 m -= mp_deltaV5
 f_array = np.append(f_array,[[thrust_deltaV5,0,0]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV5)
@@ -397,8 +397,8 @@ thrust_tot = thrust_deltaV + thrust_phases
 mp_tot     = mp_deltaV + mp_phases
 
 print('Total propellant used: ', mp_tot)
-print('Total thrust from RCS: ', thrust_tot
-print('Thrust for initial and final delta Vs: ', thrust_deltaV)
+print('Total thrust from RCS: ', thrust_tot)
+print("Thrust for initial and final delta Vs: ", thrust_deltaV)
 
 #=====================================================================================================================================================================================================================
 # Plotting
