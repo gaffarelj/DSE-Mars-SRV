@@ -127,7 +127,7 @@ class Motion:
 			if len(self.chutes) > 0:
 				# If there's still parachutes after the current one, check if deployment
 				# time reached
-				if self.i_chute + 1 < len(self.chutes) and time[-1] >= self.chutes[self.i_chute + 1].deploy_time:
+				if self.i_chute + 1 < len(self.chutes) and time[-1] >= self.chutes[self.i_chute + 1].deploy_time and apogee:
 					# Increment parachute id -> deploy the parachute
 					self.i_chute += 1
 					if self.print_deploy:

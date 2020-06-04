@@ -16,6 +16,7 @@ mars = AT.Planet()
 h0 = 175*1e3
 he = 125*1e3
 V0 = get_V(mars, h0)
+#print(V0, V0-1427.87)
 S = 11.9
 m = 12500 - 1500
 gamma = 0
