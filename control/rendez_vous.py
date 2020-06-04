@@ -18,6 +18,7 @@ def vac_thrust(DeltaV,Isp,Mbegin,tb,De=0,pe=0):
     """
     Ae=np.pi/4*De*De
     thrust=(np.exp(DeltaV/(Isp*9.80665))*Mbegin-Mbegin)/(tb*np.exp(DeltaV/(Isp*9.80665)))*Isp*9.80665+Ae*(pe)
+    Mprop=(np.exp(DeltaV/(Isp*9.80665))*Mbegin-Mbegin)/(np.exp(DeltaV/(Isp*9.80665)))
     return thrust
 
 #=====================================================================================================================================================================================================================
@@ -27,8 +28,9 @@ mu=0.042828*10**6*(10**3)**3    #[m^3/s^2] gravitational parameter
 R=3389.5*10**3                  #[m] volumetric mean radius
 h_node=500*10**3                #[m]
 
-period = 2 * np.pi * np.sqrt((R+h_node) **  3 / mu)     #[s]
-omega = (2 * np.pi) / period                            #[1/s]
+period =2*np.pi* np.sqrt((R+h_node) ** 3 / mu)
+omega  = (2 * np.pi)/period
+
 #=====================================================================================================================================================================================================================
 #Vehicle properties
 #=====================================================================================================================================================================================================================
@@ -43,7 +45,7 @@ Isp  = 221                      #previous value was: 390
 #Proximity operations A:
 x0_A = -1000         #m
 x1_A = -250          #m
-t_A  = 1 * period   #s
+t_A  =  period   #s
 Vx_A   = (x1_A - x0_A) / t_A #m/s
 deltaV_A_0 = deltaV_A_1 = Vx_A
 
@@ -174,12 +176,14 @@ X_array   = np.array([[x,y,z]])
 t_array   = np.array(t)
 mp_array  = np.array(mp)
 
+
+ta=0
+
 #Proximity operations A:
 
 while x >= x0_A-1 and x < x1_A:
     Vx = Vx_A
-
-    t  += dt
+    t += dt
     ta += dt
     delta_x_new, delta_xdot_new, delta_xdotdot_new = error_x(error_xm,error_zm,error_xdot,error_zdot,omega,t)
     delta_y_new, delta_ydot_new, delta_ydotdot_new = error_y(error_ym,omega,t)
