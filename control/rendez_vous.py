@@ -19,7 +19,7 @@ def vac_thrust(DeltaV,Isp,Mbegin,tb,De=0,pe=0):
     Ae=np.pi/4*De*De
     thrust=(np.exp(DeltaV/(Isp*9.80665))*Mbegin-Mbegin)/(tb*np.exp(DeltaV/(Isp*9.80665)))*Isp*9.80665+Ae*(pe)
     Mprop=(np.exp(DeltaV/(Isp*9.80665))*Mbegin-Mbegin)/(np.exp(DeltaV/(Isp*9.80665)))
-    return thrust
+    return thrust, Mprop
 
 #=====================================================================================================================================================================================================================
 #Node properties
@@ -177,8 +177,8 @@ t_array   = np.array(t)
 mp_array  = np.array(mp)
 
 
-ta=0
-
+thrust_deltaV1, mp_deltaV1 = vac_thrust(deltaV_A_0,Isp,m0,tb,De=0,pe=0)
+m -= mp_deltaV1
 #Proximity operations A:
 
 while x >= x0_A-1 and x < x1_A:
@@ -237,7 +237,7 @@ while x >= x0_A-1 and x < x1_A:
     delta_zdot    = delta_zdot_new
     delta_zdotdot = delta_zdotdot_new
 
-
+thrust_deltaV1, mp_deltaV1 = vac_thrust(deltaV_A_0,Isp,m,tb,De=0,pe=0)
 while x >= x0_B-1 and x < x1_B:
     t  += dt
     tb += dt
@@ -298,7 +298,7 @@ while x >= x0_B-1 and x < x1_B:
     delta_zdotdot = delta_zdotdot_new
 
 
-
+m_deltaV.append(m)
 while x >= x0_d-1 and x < x1_d:
     Vx  = Vx_d
     t  += dt
@@ -361,10 +361,12 @@ while x >= x0_d-1 and x < x1_d:
 #=====================================================================================================================================================================================================================
 
 #Delta V maneuvers in between phases
-thrust_deltaV1, mp_deltaV1 = vac_thrust(DeltaV_tot,Isp,m0,tb,De=0,pe=0)
-thrust_deltaV2, mp_deltaV2 = vac_thrust(DeltaV_tot,Isp,m0,tb,De=0,pe=0)
-thrust_deltaV3, mp_deltaV3 = vac_thrust(DeltaV_tot,Isp,m0,tb,De=0,pe=0)
-thrust_deltaV4, mp_deltaV2 = vac_thrust(DeltaV_tot,Isp,m0,tb,De=0,pe=0)
+tb = 1.
+thrust_deltaV1, mp_deltaV1 = vac_thrust(deltaV_A_0,Isp,m0,tb,De=0,pe=0)
+thrust_deltaV2, mp_deltaV2 = vac_thrust(deltaV_A_1,Isp,m0,tb,De=0,pe=0)
+thrust_deltaV3, mp_deltaV3 = vac_thrust(DeltaV_B_0,Isp,m0,tb,De=0,pe=0)
+thrust_deltaV4, mp_deltaV4 = vac_thrust(DeltaV_B_1,Isp,m0,tb,De=0,pe=0)
+thrust_deltaV5, mp_deltaV5 = vac_thrust(DeltaV_B_1,Isp,m0,tb,De=0,pe=0)
 
 #During phases
 thrust_phases = np.sum(f_array)
