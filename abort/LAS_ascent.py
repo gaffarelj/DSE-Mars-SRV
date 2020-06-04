@@ -6,6 +6,12 @@ from astrodynamics import astro_tools_nonfull as AT
 from astrodynamics import BAT
 
 
+def al(n):
+	try:
+		return n[0]
+	except IndexError:
+		return n
+
 def run_ascent(max_M=7, min_q=100):
 	ascent = BAT.ascent_sim()[4]
 	# Get index when M = 8
@@ -17,10 +23,10 @@ def run_ascent(max_M=7, min_q=100):
 	LAS_T_i = min(q_T_i, Mach_T_i)
 	# Get corresponding time, and data
 	LAS_T = round(ascent["time"][LAS_T_i], 2)
-	Mach_T = round(ascent["Mach"][LAS_T_i], 2)
+	Mach_T = round(al(ascent["Mach"][LAS_T_i]), 2)
 	q_T = round(ascent["q"][LAS_T_i], 2)
 	V_T = round(ascent["V"][LAS_T_i], 2)
-	h_T = round(ascent["altitude"][LAS_T_i], 2)
+	h_T = round(al(ascent["altitude"][LAS_T_i]), 2)
 	# Print results
 	gamma = ascent["gamma"][-1]
 	print(f"Last abort to surface at t={LAS_T} s, at M={Mach_T} and q={q_T} Pa")
@@ -50,7 +56,7 @@ def run_motion(V0, gamma, h0, chutes=[], print_deploy=False, prop_reentry=[]):
 
 def def_chutes(times):
 	#ballute = AT.pc(0.35, 12, 50, deploy_time=times[0], n=1, name="ballute")
-	drogue = AT.pc(0.4, 10, 20, deploy_time=times[0], n=5, name="drogue")
+	drogue = AT.pc(0.35, 10, 20, deploy_time=times[0], n=5, name="drogue")
 	main = AT.pc(0.55, 25, 30, deploy_time=times[1], n=3, name="main")
 	return [drogue, main]
 
@@ -60,7 +66,6 @@ def dV(Isp, m0, mf):
 
 #V_T, gamma, h_T = run_ascent()
 #print(V_T, gamma, h_T)
-#input()
 V_T, gamma, h_T = 1427.87, 48.02, 43497.6
 
 m_fuel_tot = 2000
@@ -86,7 +91,7 @@ for i, q_chute in enumerate(q_s):
 	
 chutes = def_chutes(chute_ts)
 print("Parachutes deployment times are at ", ", ".join([str(round(t, 2)) for t in chute_ts]), "[s]")
-t, a, v, q, h, angle, final_m = run_motion(V_T + dV_abort, gamma, h_T, chutes)
+t, a, v, q, h, angle, final_m = run_motion(V_T + dV_abort, gamma, h_T, chutes, print_deploy=True)
 
 dV_land = dV(Isp_abort_vac, final_m, m_fuel_tot-m_fuel_abort)
 
