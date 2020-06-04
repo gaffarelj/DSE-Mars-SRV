@@ -49,7 +49,7 @@ class Planet:
         return - np.arctan(dydx)
 
 class Motion:
-    def __init__(self, inital_conditions, MOI, S, mass, coefficients, Planet, pitch_control = True, thrust = 0, thrust_start = 0, rotation_start = 0, parachutes=[]):
+    def __init__(self, inital_conditions, MOI, S, mass, coefficients, Planet, pitch_control = True, thrust = 0, thrust_start = 0, rotation_start = 100000, parachutes=[]):
         self.initial = inital_conditions
         self.Ixx = MOI[0]
         self.Iyy = MOI[1]
@@ -70,6 +70,12 @@ class Motion:
         altitude = r - self.Planet.r
         rho = self.Planet.density(altitude)
         return 0.5 * rho * V * V
+
+    def stagnation_heating(self, nose_radius, V, rho_inf):
+        c = 1.9027e-4
+        q = rho_inf**0.5 * V**3 * c * nose_radius**(-0.5)
+        return q
+
 
     def gravitational_acceleeration(self, r, delta):
         altitude = r - self.Planet.r
@@ -164,7 +170,7 @@ class Motion:
     def forward_euler(self, timestep):
         flight = [self.initial]
         time = [0]
-        self.a_s, self.q_s, self.mach, self.pitch = [], [], [], []
+        self.a_s, self.q_s, self.mach, self.pitch, self.heatflux = [], [], [], [], []
         Mx = 0
         My = 0
         Mz = 0
@@ -202,7 +208,7 @@ class Motion:
             altitude = r - self.Planet.r
             mach = V/np.sqrt(atm.gamma*atm.R*atm.get_temperature(altitude))
             #postshock_pressure = self.normalshock(r, mach)
-            cl,cd = self.coefficients(mach, 44)
+            cl,cd = cl_cd(mach, -np.degrees(self.initial[9]))
             
 
             D = q * (cd * self.S + chute_drag_area)
@@ -211,8 +217,8 @@ class Motion:
 
             if time[-1] > self.rotation_start:
                 self.pitch_control = False
-                My = 7
-                if abs(alpha + gamma) > np.pi/2:
+                My = -79000 
+                if abs(alpha + gamma) > np.pi:
                     My = 0
                     pitch_rate = 0
 
@@ -235,22 +241,23 @@ class Motion:
             
             if self.pitch_control == True:
                 new_state[9] = self.initial[9]
+                pitchrate = (L - self.mass*g*np.cos(gamma)*np.cos(mu))/(self.mass*V*np.cos(beta))
+                pitching_moment = (pitchrate - ((self.Izz-self.Ixx)/self.Iyy * roll_rate * yaw_rate))*self.Iyy
             else:
-                new_state[9] = -np.pi - gamma #alpha + timestep * self.dalphadt(roll_rate, pitch_rate, yaw_rate, g, L, V, gamma, mu, alpha, beta)
-            
-            pitchrate = (L - self.mass*g*np.cos(gamma)*np.cos(mu))/(self.mass*V*np.cos(beta))
-            My = (pitchrate - ((self.Izz-self.Ixx)/self.Iyy * roll_rate * yaw_rate))*self.Iyy
+                new_state[9] = alpha + timestep * self.dalphadt(roll_rate, pitch_rate, yaw_rate, g, L, V, gamma, mu, alpha, beta)
+                pitching_moment = 0
 
             self.a_s.append(a)
             self.q_s.append(q)
             self.mach.append(mach)
-            self.pitch.append(My)
+            self.pitch.append(pitching_moment)
+            self.heatflux.append(self.stagnation_heating(10, V, self.Planet.density(r - self.Planet.r)))
 
             flight.append(new_state)
             time.append(time[-1] + timestep)
             state = new_state
 
-        self.a_s.append(a), self.q_s.append(q), self.mach.append(mach), self.pitch.append(My)
+        self.a_s.append(a), self.q_s.append(q), self.mach.append(mach), self.pitch.append(pitching_moment), self.heatflux.append(self.stagnation_heating(3.5, V, self.Planet.density(r - self.Planet.r)))
         return np.array(flight), time
 
 class pc():
@@ -389,6 +396,8 @@ alpha_list = np.round(cl_data[0][1:],1)
 mach_list = np.round(cl_data[:,0],1)
 
 def cl_cd(mach,alpha):
+    if mach < 1.1:
+        mach = 1.1
     col = np.where(alpha_list == round(alpha,1))[0][0]+1
     row = np.where(mach_list == round(mach,1))[0][0]
 
