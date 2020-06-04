@@ -330,7 +330,6 @@ t_array  = np.append(t_array,t)
 thrust_deltaV5, mp_deltaV5 = vac_thrust(deltaV_d_0,Isp,m0,tburn,De=0,pe=0)
 m -= mp_deltaV5
 t += tburn
-print('thrust,mp: ',thrust_deltaV5,mp)
 f_array = np.append(f_array,[[thrust_deltaV5,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV5)
@@ -402,13 +401,13 @@ thrust_deltaV = thrust_deltaV1 + thrust_deltaV2 + thrust_deltaV3 + thrust_deltaV
 mp_deltaV = mp_deltaV1 + mp_deltaV2 + mp_deltaV3 + mp_deltaV4 + mp_deltaV5
 #During phases
 thrust_phases = np.sum(f_array)
-mp_phases     = np.sum(mp)
+mp_phases     = np.sum(mp_array)
 
 #Total
 thrust_tot = thrust_deltaV + thrust_phases
 mp_tot     = mp_deltaV + mp_phases
 
-print('Total propellant used: ', mp_tot)
+print('Total propellant used: ', mp_phases, mp_deltaV)
 print('Total thrust from RCS: ', thrust_tot)
 print('Thrust for initial and final delta Vs: ', thrust_deltaV)
 print('Thrust for phases: ', thrust_phases)
