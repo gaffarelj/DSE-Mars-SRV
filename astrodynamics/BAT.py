@@ -303,7 +303,7 @@ def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7
 			i+=1
 			t_array.append(t_tot)
 			
-			a = get_a(gamma_gas,Rgas, T[-1]) 
+			a = get_a(gamma_gas,Rgas, T[-1])
 			#######################################################
 			#   Solve for ax, az, Vx, Vz, X, Z #
 			#######################################################
@@ -327,25 +327,25 @@ def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7
 			Z.append(Znew)
 
 			# Progress indication
-			progress = round(Z[-1]/h_phasing*100)
+			progress = round(Znew[0]/h_phasing*100)
 			print("Ascent progress: ", progress, "%", sep="", end="\r")
 
 			#update velocities
-			Vx.append(Vxnew)
-			Vz.append(Vznew)
+			Vx.append(Vxnew[0])
+			Vz.append(Vznew[0])
 			
 			
 			#######################################################
 			#   Update Parameters #
 			#######################################################
-			V.append(np.sqrt(Vxnew * Vxnew + Vznew * Vznew))
-			Machnew = get_Mach(V[-1],a) 
+			V.append(np.sqrt(Vxnew * Vxnew + Vznew * Vznew)[0])
+			Machnew = get_Mach(V[-1],a)
 			Mach.append(Machnew)
 			gnew = get_g(mu,Req,R,Z[-1],i0,J2)
 			g.append(gnew)
 			p.append(get_p(Z[-1]))
 			T.append(get_T(Z[-1]))
-			rho.append(get_rho(p[-1],T[-1],Rgas))
+			rho.append(get_rho(p[-1],T[-1],Rgas)[0])
 			Clnew,Cdnew = H_aerodynamics_coefficients(Mach[-1],0)
 			Cl.append(Clnew)
 			Cd.append(Cdnew)
@@ -396,3 +396,4 @@ def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7
 		}
 	
 	return V, Vxfree, ascent_DeltaV, q, others
+
