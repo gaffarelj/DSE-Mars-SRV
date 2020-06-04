@@ -43,7 +43,7 @@ class Planet:
 		return - np.arctan(dydx)
 
 class Motion:
-	def __init__(self, inital_conditions, roll_angle, alpha, S, mass, cl, cd, Planet, parachutes=[], print_deploy=False, prop_reentry=[]):
+	def __init__(self, inital_conditions, roll_angle, alpha, S, mass, cl, cd, Planet, parachutes=[], print_deploy=False, prop_reentry=[], end_t=float("Inf")):
 		self.initial = inital_conditions
 		self.mu = roll_angle
 		self.alpha = alpha
@@ -57,6 +57,7 @@ class Motion:
 		self.i_chute = -1
 		self.print_deploy = print_deploy
 		self.prop_reentry = prop_reentry
+		self.end_time = end_t
 
 	def dynamicpressure(self, V, r):
 		altitude = r - self.Planet.r
@@ -106,7 +107,10 @@ class Motion:
 		self.a_s, self.q_s = [], []
 		apogee, entry_burn = False, True
 		state = np.zeros(6)
-		while flight[-1][3] > self.Planet.r:
+		while flight[-1][3] > self.Planet.r and self.end_time > time[-1]:
+			if self.end_time != float("Inf"):
+				progress = time[-1]/self.end_time*100
+				print(round(progress, 2), "%", sep="", end="\r")
 			V = flight[-1][0]
 			gamma = flight[-1][1]
 			xi = flight[-1][2]
@@ -160,6 +164,7 @@ class Motion:
 		if self.i_chute > -1 and self.i_chute == len(self.chutes) - 1:
 			self.mass -= self.chutes[self.i_chute].m
 		self.a_s.append(a), self.q_s.append(q)
+		print()
 		return np.array(flight), time
 
 class pc():
