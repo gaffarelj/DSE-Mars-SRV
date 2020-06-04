@@ -53,7 +53,7 @@ y0 = z0 = 0
 
 deltaV_tot = deltaV_A_0 + deltaV_A_1 + deltaV_B_0 + deltaV_B_1 + deltaV_d_0 + deltaV_d_1
 
-print('Velocities:',Vx_A,Vx_B,Vx_d)
+
 #=====================================================================================================================================================================================================================
 #Rbar approach
 #=====================================================================================================================================================================================================================
@@ -91,6 +91,7 @@ def error_x(error_xm,error_zm,error_xdot,error_zdot,omega,t):
     delta_xdot = sp.diff(delta_x)
 
     delta_xdotdot = sp.diff(delta_xdot)
+    print('check: ', delta_xdot,delta_xdotdot)
     # delta_x_dot = 6 * error_zm * (omega - omega * np.cos(omega * t)) +  error_xdot * (4 * np.cos(omega * t) - 3) + 2 / omega * error_zdot * (omega *  np.sin(omega * t))
     #
     # delta_x_dotdot = 6 * error_zm * (omega ** 2 * np.sin(omega * t)) +  error_xdot * (-4 * omega * np.sin(omega * t)) + 2 / omega * error_zdot * (omega ** 2 * np.cos(omega * t))
@@ -98,6 +99,7 @@ def error_x(error_xm,error_zm,error_xdot,error_zdot,omega,t):
     return delta_x, delta_xdot, delta_xdotdot
 
 def error_y(error_ym,omega,t):
+    t = sp.Symbol('t')
     delta_y = error_ym * sp.cos(omega * t) + 1 / omega * error_ydot * sp.sin(omega * t)
 
     delta_ydot = sp.diff(delta_y)
@@ -107,6 +109,7 @@ def error_y(error_ym,omega,t):
     return delta_y, delta_ydot, delta_ydotdot
 
 def error_z(error_xm,error_zm,error_zdot,omega,t):
+    t = sp.Symbol('t')
     delta_z = error_zm * (4 - 3 * sp.cos(omega * t)) + 2 / omega * error_xdot * (sp.cos(omega * t) -1) + 1 / omega * error_zdot * sp.sin(omega * t)
 
     delta_zdot = sp.diff(delta_z)
