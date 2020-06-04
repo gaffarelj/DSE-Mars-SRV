@@ -99,7 +99,7 @@ error_ydot = 0.1
 error_zdot = 0.1
 
 def error_x(error_xm,error_zm,error_xdot,error_zdot,omega,t):
-    t = sp.Symbol('t')
+    t=sp.Symbol("t")
     delta_x = error_xm + 6 * error_zm * (omega * t - sp.sin(omega * t)) +  error_xdot * (4 / omega * sp.sin(omega * t) - 3 * t) + 2 / omega * error_zdot * (1 - sp.cos(omega * t))
 
     delta_xdot = sp.diff(delta_x)
@@ -112,6 +112,7 @@ def error_x(error_xm,error_zm,error_xdot,error_zdot,omega,t):
     return delta_x, delta_xdot, delta_xdotdot
 
 def error_y(error_ym,omega,t):
+    t=sp.Symbol("t")
     delta_y = error_ym * sp.cos(omega * t) + 1 / omega * error_ydot * sp.sin(omega * t)
 
     delta_ydot = sp.diff(delta_y)
@@ -121,11 +122,12 @@ def error_y(error_ym,omega,t):
     return delta_y, delta_ydot, delta_ydotdot
 
 def error_z(error_xm,error_zm,error_zdot,omega,t):
+    t=sp.Symbol("t")
     delta_z = error_zm * (4 - 3 * sp.cos(omega * t)) + 2 / omega * error_xdot * (sp.cos(omega * t) -1) + 1 / omega * error_zdot * sp.sin(omega * t)
 
-    delta_zdot = sp.diff(delta_z)
-
-    delta_zdotdot = sp.diff(delta_zdot)
+    delta_zdot =839.278179731357*np.sin(186.550706606968*t) + 0.1*np.cos(186.550706606968*t)
+    
+    delta_zdotdot = -18.6550706606968*np.sin(186.550706606968*t) + 156567.937468695*np.cos(186.550706606968*t)
 
     return delta_z, delta_zdot, delta_zdotdot
 
@@ -160,19 +162,31 @@ t  = 0.1
 mp = 0.
 
 m = m0
+
 delta_x, delta_xdot, delta_xdotdot = error_x(error_xm,error_zm,error_xdot,error_zdot,omega,t)
 delta_y, delta_ydot, delta_ydotdot = error_y(error_ym,omega,t)
 delta_z, delta_zdot, delta_zdotdot = error_z(error_xm,error_zm,error_zdot,omega,t)
+print("###HERE###",delta_ydotdot)
+
 
 x   = x0_A + delta_x
+
 xdot    = delta_xdot
+
 xdotdot = delta_xdotdot
+
 y   = y0 + delta_y
+
 ydot    = delta_ydot
+
 ydotdot = delta_ydotdot
+
 z   = z0 + delta_z
+
 zdot    = delta_zdot
+
 zdotdot = delta_zdotdot
+
 
 
 fx0 = m * thrust_x(x,zdot,xdotdot,omega,t)
@@ -184,9 +198,10 @@ X_array   = np.array([[x,y,z]])
 t_array   = np.array(t)
 mp_array  = np.array(mp)
 
+
 #Proximity operations A:
 while x >= x0_A and x < x1_A:
-<<<<<<< HEAD
+#<<<<<<< HEAD
     delta_x_new = error_x(error_xm,error_zm,error_xdot,error_zdot,omega,t)
     delta_y_new = error_y(error_ym,omega,t)
     delta_z_new = error_z(error_xm,error_zm,error_zdot,omega,t)
@@ -195,8 +210,8 @@ while x >= x0_A and x < x1_A:
     delta_y_rel = delta_y_new - delta_y
     delta_z_rel = delta_z_new - delta_z
     #print('deltas: ', delta_x_rel,delta_y_rel,delta_z_rel)
-=======
->>>>>>> 2971ec0a5fc6523c2ae811ea0a890e0d70133cd0
+#=======
+#>>>>>>> 2971ec0a5fc6523c2ae811ea0a890e0d70133cd0
     Vx = Vx_A
 
     delta_x_new, delta_xdot_new, delta_xdotdot_new = error_x(error_xm,error_zm,error_xdot,error_zdot,omega,t)
@@ -376,7 +391,7 @@ while x >= x0_d and x < x1_d:
     delta_zdot    = delta_zdot_new
     delta_zdotdot = delta_zdotdot_new
 
-<<<<<<< HEAD
+#<<<<<<< HEAD
 print(f_array[:,1])
 
 #=====================================================================================================================================================================================================================
@@ -386,14 +401,14 @@ print(f_array[:,1])
 
 
 
-=======
+#=======
     # print('phase d')
     # print('x: ',x)
     # print('============================')
 
 
 # print(f_array[:,1])
->>>>>>> 2971ec0a5fc6523c2ae811ea0a890e0d70133cd0
+#>>>>>>> 2971ec0a5fc6523c2ae811ea0a890e0d70133cd0
 #=====================================================================================================================================================================================================================
 # Plotting
 #=====================================================================================================================================================================================================================
