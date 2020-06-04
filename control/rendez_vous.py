@@ -179,6 +179,8 @@ mp_array  = np.array(mp)
 
 thrust_deltaV1, mp_deltaV1 = vac_thrust(deltaV_A_0,Isp,m0,tb,De=0,pe=0)
 m -= mp_deltaV1
+f_array = np.append(f_array,[[thrust_deltaV1,0,0]],axis=0)
+mp_array = np.append(mp_array,mp_deltaV1)
 #Proximity operations A:
 
 while x >= x0_A-1 and x < x1_A:
@@ -237,7 +239,16 @@ while x >= x0_A-1 and x < x1_A:
     delta_zdot    = delta_zdot_new
     delta_zdotdot = delta_zdotdot_new
 
-thrust_deltaV1, mp_deltaV1 = vac_thrust(deltaV_A_0,Isp,m,tb,De=0,pe=0)
+thrust_deltaV2, mp_deltaV2 = vac_thrust(deltaV_A_0,Isp,m,tb,De=0,pe=0)
+m -= mp_deltaV2
+f_array = np.append(f_array,[[thrust_deltaV2,0,0]],axis=0)
+mp_array = np.append(mp_array,mp_deltaV2)
+
+thrust_deltaV3, mp_deltaV3 = vac_thrust(DeltaV_B_0,Isp,m0,tb,De=0,pe=0)
+m -= mp_deltaV3
+f_array = np.append(f_array,[[thrust_deltaV3,0,0]],axis=0)
+mp_array = np.append(mp_array,mp_deltaV3)
+
 while x >= x0_B-1 and x < x1_B:
     t  += dt
     tb += dt
@@ -298,7 +309,16 @@ while x >= x0_B-1 and x < x1_B:
     delta_zdotdot = delta_zdotdot_new
 
 
-m_deltaV.append(m)
+thrust_deltaV4, mp_deltaV4 = vac_thrust(DeltaV_B_1,Isp,m0,tb,De=0,pe=0)
+m -= mp_deltaV4
+f_array = np.append(f_array,[[thrust_deltaV4,0,0]],axis=0)
+mp_array = np.append(mp_array,mp_deltaV4)
+
+thrust_deltaV5, mp_deltaV5 = vac_thrust(DeltaV_B_1,Isp,m0,tb,De=0,pe=0)
+m -= mp_deltaV5
+f_array = np.append(f_array,[[thrust_deltaV5,0,0]],axis=0)
+mp_array = np.append(mp_array,mp_deltaV5)
+
 while x >= x0_d-1 and x < x1_d:
     Vx  = Vx_d
     t  += dt
@@ -366,18 +386,18 @@ while x >= x0_d-1 and x < x1_d:
 
 #Delta V maneuvers in between phases
 tb = 1.
-thrust_deltaV1, mp_deltaV1 = vac_thrust(deltaV_A_0,Isp,m0,tb,De=0,pe=0)
-thrust_deltaV2, mp_deltaV2 = vac_thrust(deltaV_A_1,Isp,m0,tb,De=0,pe=0)
-thrust_deltaV3, mp_deltaV3 = vac_thrust(DeltaV_B_0,Isp,m0,tb,De=0,pe=0)
-thrust_deltaV4, mp_deltaV4 = vac_thrust(DeltaV_B_1,Isp,m0,tb,De=0,pe=0)
-thrust_deltaV5, mp_deltaV5 = vac_thrust(DeltaV_B_1,Isp,m0,tb,De=0,pe=0)
-
+thrust_deltaV = thrust_deltaV1 + thrust_deltaV2 + thrust_deltaV3 + thrust_deltaV4 + thrust_deltaV5
+mp_deltaV = mp_deltaV1 + mp_deltaV2 + mp_deltaV3 + mp_deltaV4 + mp_deltaV5
 #During phases
 thrust_phases = np.sum(f_array)
 mp_phases     = np.sum(mp)
 
+#Total
+thrust_tot = thrust_deltaV + thrust_phases
+mp_tot     = mp_deltaV + mp_phases
+
 print('Total propellant used: ', mp_tot)
-print('Total thrust from RCS: ', np.sum(f_array))
+print('Total thrust from RCS: ', thrust_tot
 print('Thrust for initial and final delta Vs: ', thrust_deltaV)
 
 #=====================================================================================================================================================================================================================
