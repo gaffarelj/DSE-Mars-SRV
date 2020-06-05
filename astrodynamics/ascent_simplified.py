@@ -139,7 +139,7 @@ while Z[-1]<h_phasing+abs(h0) and Z[-1]>=0:
         #######################################################
         t_tot+=dt 
         i+=1
-        
+    
         a=get_a(gamma_gas,Rgas, T[-1]) 
         #######################################################
         #   Solve for ax, az, Vx, Vz, X, Z                    #
@@ -187,7 +187,7 @@ while Z[-1]<h_phasing+abs(h0) and Z[-1]>=0:
         Flnew=get_Fl(Clnew,rho[-1],S,V[-1])
         Fl=np.append(Fl,Flnew)
         M=np.append(M, M[-1] - mdot[-1]*dt)
-        
+
         if t_tot<=tb:
             #TWratio=np.append(TWratio,get_TWprofile(mode,t_tot,g[-1],1.5,4,tb,i0,Z[-1]))
             mdotnew=1/ceff*(M[-1]*g[-1]*TWratio[i]-Ae*(pe-p[-1]))
@@ -200,7 +200,6 @@ while Z[-1]<h_phasing+abs(h0) and Z[-1]>=0:
             
         Ft=np.append(Ft,Ftnew)
         mdot=np.append(mdot,mdotnew)
-
 
 t_array=np.linspace(0,t_tot,len(Z)) 
 a_array=np.sqrt(ax_array*ax_array+az_array*az_array) 

@@ -3,7 +3,10 @@ import multiprocessing as mp
 from mpl_toolkits import mplot3d
 from matplotlib import pyplot as plt
 from scipy.optimize import fsolve
+from matplotlib.patches import Ellipse
+import matplotlib.transforms as transforms
 import mars_standard_atmosphere as atm
+import thermo
 
 class Planet:
     def __init__(self, mean_radius=3389500, scale_height=11.1e3, rho_0=0.01417111, gravitational_parameter=42828e9, equatorial_radius=3396200, J2=0.001960454, rotational_rate=7.08824e-5):
@@ -170,7 +173,7 @@ class Motion:
     def forward_euler(self, timestep):
         flight = [self.initial]
         time = [0]
-        self.a_s, self.q_s, self.mach, self.pitch, self.heatflux = [], [], [], [], []
+        self.a_s, self.q_s, self.mach, self.pitch, self.roll, self.heatflux = [], [], [], [], [], []
         Mx = 0
         My = 0
         Mz = 0
@@ -208,20 +211,20 @@ class Motion:
             altitude = r - self.Planet.r
             mach = V/np.sqrt(atm.gamma*atm.R*atm.get_temperature(altitude))
             #postshock_pressure = self.normalshock(r, mach)
-            cl,cd = cl_cd(mach, -np.degrees(self.initial[9]))
+            cl,cd = cl_cd(mach, -np.degrees(alpha))
             
 
             D = q * (cd * self.S + chute_drag_area)
-            L = q * cl * self.S
+            L = q * cl * self.S 
             g = self.gravitational_acceleeration(r, delta)
-
+            '''
             if time[-1] > self.rotation_start:
                 self.pitch_control = False
                 My = -79000 
                 if abs(alpha + gamma) > np.pi:
                     My = 0
                     pitch_rate = 0
-
+            '''
             if time[-1] > self.thrust_start:
                 D = D + self.thrust
 
@@ -237,12 +240,16 @@ class Motion:
             new_state[7] = pitch_rate + timestep * self.dqdt(My, roll_rate, yaw_rate)
             new_state[8] = yaw_rate + timestep * self.drratedt(Mz, roll_rate, pitch_rate)
             new_state[10] = beta + timestep * self.dbetadt(roll_rate, yaw_rate, g, V, gamma, mu, alpha)
-            new_state[11] = mu + timestep * self.dmudt(roll_rate, q, yaw_rate, g, L, V, gamma, mu, alpha, beta)
+            #new_state[11] = mu + timestep * self.dmudt(roll_rate, q, yaw_rate, g, L, V, gamma, mu, alpha, beta)
             
             if self.pitch_control == True:
                 new_state[9] = self.initial[9]
                 pitchrate = (L - self.mass*g*np.cos(gamma)*np.cos(mu))/(self.mass*V*np.cos(beta))
                 pitching_moment = (pitchrate - ((self.Izz-self.Ixx)/self.Iyy * roll_rate * yaw_rate))*self.Iyy
+
+                rollrate = -(- yaw_rate*np.sin(alpha) + np.cos(beta)*(- (L - self.mass*g*np.cos(gamma)*np.cos(mu))/(self.mass*V)*np.tan(beta) + (L*np.sin(mu) + self.S*np.cos(mu))/(self.mass*V)*np.tan(gamma)))/np.cos(alpha)
+                rolling_moment = (pitchrate - ((self.Ixx-self.Iyy)/self.Iyy * roll_rate * yaw_rate))*self.Izz
+                new_state[11] = self.initial[11]
             else:
                 new_state[9] = alpha + timestep * self.dalphadt(roll_rate, pitch_rate, yaw_rate, g, L, V, gamma, mu, alpha, beta)
                 pitching_moment = 0
@@ -251,13 +258,14 @@ class Motion:
             self.q_s.append(q)
             self.mach.append(mach)
             self.pitch.append(pitching_moment)
+            self.roll.append(rolling_moment)
             self.heatflux.append(self.stagnation_heating(10, V, self.Planet.density(r - self.Planet.r)))
 
             flight.append(new_state)
             time.append(time[-1] + timestep)
             state = new_state
 
-        self.a_s.append(a), self.q_s.append(q), self.mach.append(mach), self.pitch.append(pitching_moment), self.heatflux.append(self.stagnation_heating(3.5, V, self.Planet.density(r - self.Planet.r)))
+        self.a_s.append(a), self.q_s.append(q), self.mach.append(mach), self.pitch.append(pitching_moment), self.roll.append(rolling_moment), self.heatflux.append(self.stagnation_heating(3.5, V, self.Planet.density(r - self.Planet.r)))
         return np.array(flight), time
 
 class pc():
@@ -281,14 +289,16 @@ class Montecarlo:
     def trajectories(self, n):
         np.random.seed(n)
         self.Motion.initial[0] = np.random.normal(self.initial[0], 1)                       # 2 m/s
-        self.Motion.initial[1] = np.random.normal(self.initial[1], np.radians(1 / 60))    # 1.5 arcsecs
-        self.Motion.initial[2] = np.random.normal(self.initial[2], np.radians(1 / 60))    # 1.5 arcsecs
+        self.Motion.initial[1] = np.random.normal(self.initial[1], np.radians(1 / 60))      # 1.5 arcsecs
+        self.Motion.initial[2] = np.random.normal(self.initial[2], np.radians(1 / 60))      # 1.5 arcsecs
         self.Motion.initial[3] = np.random.normal(self.initial[3], 20)                      # 50 m
         self.Motion.initial[4] = np.random.normal(self.initial[4], np.radians(0.1 / 60))    # 1.5 arcsecs
-        self.Motion.initial[5] = np.random.normal(self.initial[5], np.radians(0.1 / 60))    # 1.5 arcsecs
-        
+        self.Motion.initial[4] = np.random.normal(self.initial[5], np.radians(0.1 / 60))    # 1.5 arcsecs
+        self.Motion.initial[9] = np.random.normal(self.initial[9], np.radians(1 / 60))      # 1.5 arcsecs
+        self.Motion.initial[10] = np.random.normal(self.initial[10], np.radians(1 / 60))    # 1.5 arcsecs
+        self.Motion.initial[11] = np.random.normal(self.initial[11], np.radians(1 / 60))    # 1.5 arcsecs
         #self.Motion.Planet.hs = np.random.normal(self.scale_height, 50)                    # scale height of atmosphere
-        self.Motion.mu = np.random.normal(0, np.radians(1.5 / 60))  
+        #self.Motion.mu = np.random.normal(0, np.radians(1.5 / 60))  
 
         flight, time = self.Motion.forward_euler(self.dt)
 
@@ -302,6 +312,47 @@ class Montecarlo:
     def get_trajectories_linux(self):
         pool = mp.Pool(mp.cpu_count())
         self.per = pool.map(self.impact_point, range(self.n))
+
+class Aeroheating():
+    def __init__(self, time, velocity, altitude, angle_of_attack):
+        self.velocity = velocity
+        self.altitude = altitude 
+        self.aoa = -np.degrees(angle_of_attack)
+        self.x = np.arange(0.1, 15.9, 0.1)                  #vehicle lenght 
+        self.time = time
+
+    def heattransfer_stagnation(self, Twall, altitude, velocity, alpha):
+        return -1
+    
+    def heattransfer(self, x, Twall, altitude, velocity, alpha):
+        p_inf = atm.get_pressure(altitude)
+        T_inf = atm.get_temperature(altitude)
+        rho = atm.get_density(p_inf, T_inf)
+        gas = thermo.Chemical('carbon dioxide', T=T_inf, P=p_inf)
+        mu = gas.mug
+        Cv = gas.Cvg
+        Hw = Cv * Twall
+        Hr = Cv*T_inf + 0.89*velocity**2/50.103
+        Hstar = Cv*T_inf + 0.5* Cv*(Twall - T_inf) + 0.22*(Hr - Cv*T_inf)
+        T_ref = Hstar/Cv
+        C1 = 0.9
+        C5 = 1.15
+        A1 = 2
+        halpha = A1 * (rho*velocity)**0.8 / x**0.2 * alpha
+        h0 = C1*0.0375 * (rho*velocity)**0.8 * mu**0.2 / x**0.2 * (T_inf/T_ref)**0.65
+        h = C5*(h0 + halpha)
+        q = h*(Hr - Hw)
+        return q
+    
+    def walltemperature(self, time, tolerance=1e-3):
+        idx = 1
+        velocity = self.velocity[idx]
+        altitude = self.altitude[idx]
+        heatflux = []
+        for loc in self.x:
+            q = self.heattransfer(loc, 500, altitude, velocity, 55)
+            heatflux.append(q)
+        return heatflux
 
 
 def plot_single(x_data, y_data, x_label, y_label):
@@ -355,18 +406,87 @@ def scatter(stochastic_data, base_lat, base_lon, Planet):
         x = (lon[-1] - base_lon)*Planet.r
         x_distance.append(x)
         y_distance.append(y)
+    '''
+    x0 = 25.5
+    y0 = 42.5
+
+    # compute radius
+    r = np.sqrt((np.degrees(lon) - x0)**2 + (np.degrees(lat) - y0)**2)
+    t = 95 # percent
+    r0 = np.percentile(r, t)
+    print(r0)
+
+    circle = plt.Circle((x0, y0), r0, color='r', fill=False)
+    plt.gca().add_artist(circle)
 
     plt.scatter(np.degrees(np.array(lon)), np.degrees(np.array(lat)))
     plt.ylabel("latitude [deg]")
     plt.xlabel("longitude [deg]")
     plt.grid()
     plt.show()
+    '''
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.scatter(np.degrees(np.array(lon)), np.degrees(np.array(lat)), s=2)
+    #ax.axvline(c='grey', lw=1)
+    #ax.axhline(c='grey', lw=1)
 
-    plt.scatter(x_distance, y_distance)
-    plt.ylabel("[m]")
-    plt.xlabel("[m]")
-    plt.grid()
+    confidence_ellipse(np.degrees(np.array(lon)), np.degrees(np.array(lat)), ax, edgecolor='red')
+
+    ax.scatter(25.5, 42.5, c='red', s=3)
+    ax.set_title('Impact Points')
     plt.show()
+
+def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', **kwargs):
+    """
+    Create a plot of the covariance confidence ellipse of *x* and *y*.
+
+    Parameters
+    ----------
+    x, y : array-like, shape (n, )
+        Input data.
+
+    ax : matplotlib.axes.Axes
+        The axes object to draw the ellipse into.
+
+    n_std : float
+        The number of standard deviations to determine the ellipse's radiuses.
+
+    **kwargs
+        Forwarded to `~matplotlib.patches.Ellipse`
+
+    Returns
+    -------
+    matplotlib.patches.Ellipse
+    """
+    if x.size != y.size:
+        raise ValueError("x and y must be the same size")
+
+    cov = np.cov(x, y)
+    pearson = cov[0, 1]/np.sqrt(cov[0, 0] * cov[1, 1])
+    # Using a special case to obtain the eigenvalues of this
+    # two-dimensionl dataset.
+    ell_radius_x = np.sqrt(1 + pearson)
+    ell_radius_y = np.sqrt(1 - pearson)
+    ellipse = Ellipse((0, 0), width=ell_radius_x * 2, height=ell_radius_y * 2,
+                      facecolor=facecolor, **kwargs)
+
+    # Calculating the stdandard deviation of x from
+    # the squareroot of the variance and multiplying
+    # with the given number of standard deviations.
+    scale_x = np.sqrt(cov[0, 0]) * n_std
+    mean_x = np.mean(x)
+
+    # calculating the stdandard deviation of y ...
+    scale_y = np.sqrt(cov[1, 1]) * n_std
+    mean_y = np.mean(y)
+
+    transf = transforms.Affine2D() \
+        .rotate_deg(45) \
+        .scale(scale_x, scale_y) \
+        .translate(mean_x, mean_y)
+
+    ellipse.set_transform(transf + ax.transData)
+    return ax.add_patch(ellipse)
 
 
 def surfaceplots(xdata, ydata, zdata, x_label, y_label, z_label):
@@ -396,6 +516,12 @@ alpha_list = np.round(cl_data[0][1:],1)
 mach_list = np.round(cl_data[:,0],1)
 
 def cl_cd(mach,alpha):
+    if mach > 20:
+        mach = 20
+    if alpha < 50:
+        alpha = 55
+    if alpha > 60:
+        alpha = 55
     if mach < 1.1:
         mach = 1.1
     col = np.where(alpha_list == round(alpha,1))[0][0]+1
