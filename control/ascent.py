@@ -19,6 +19,7 @@ Ix = act.Ix
 Iy = act.Iy
 Iz = act.Iz
 cg_orbit = act.z_cg_orbit
+error_angle = 2 * np.pi / 180
 
 #propellant properties
 Isp = act.Isp
@@ -35,10 +36,25 @@ def slew_ascent(slew_angle,slew_duration,I,cg):
     RCS_thrust = act.RCS_torque_to_thrust(RCS_torque,"y",cg,'normal')
     RCS_impulse =  RCS_thrust * (slew_acc_duration + slew_dec_duration)
     Mp = act.RCSpropellant(RCS_impulse,slew_duration,Isp)
-    return RCS_thrust, RCS_impulse, Mp
+    return RCS_torque, RCS_thrust, RCS_impulse, Mp
 
-RCS_thrust, RCS_impulse, Mp = slew_ascent(angle,slew_duration,Iy,cg_orbit)
+RCS_torque, RCS_thrust, RCS_impulse, Mp = slew_ascent(angle,slew_duration,Iy,cg_orbit)
 RCS_thrust_max = np.max(RCS_thrust)
-print('thrust per RCS engine:',RCS_thrust_max)
+
+T_error_z, T_error_y, T_error_x = act.thrust_error(RCS_thrust,cg_orbit,error_angle)
+RCS_error_x  = act.RCS_torque_to_thrust(T_error_x,'y',cg_orbit,'error_bottom')
+RCS_error_y  = act.RCS_torque_to_thrust(T_error_y,'y',cg_orbit,'error_bottom')
+RCS_error_z  = act.RCS_torque_to_thrust(T_error_z,'y',cg_orbit,'error_bottom')
+RCS_error    = max([RCS_error_x,RCS_error_y,RCS_error_z])
+mp_error     = act.RCSpropellant(RCS_error,slew_duration,Isp)
+
+RCS_failure  = act.RCS_torque_to_thrust(RCS_torque,'y',cg_orbit,'failure') - RCS_thrust
+mp_failure   = Mp * (RCS_failure/RCS_thrust)
+
+print('thrust per engine:',RCS_thrust_max)
 print('Impulse per RCS engine:', RCS_impulse)
 print('Total propellant needed:', Mp)
+
+print('Redundancy thrust per engine:', RCS_error + RCS_failure)
+print('Redundancy propellant:', mp_error + mp_failure)
+print('Total propellant needed:', Mp + mp_error + mp_failure)

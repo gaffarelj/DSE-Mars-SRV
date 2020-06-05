@@ -24,22 +24,16 @@ def vac_thrust(DeltaV,Isp,Mbegin,tb,De=0,pe=0):
 #=====================================================================================================================================================================================================================
 #Node properties
 #=====================================================================================================================================================================================================================
-<<<<<<< HEAD
-mu=0.042828*10**6*(10**3)**3    #[m^3/s^2] gravitational parameter
-R=3389.5*10**3                  #[m] volumetric mean radius
-h_node=500*10**3                #[m]
-h_phasing=609.74*10**3
-period =2*np.pi* np.sqrt((R+h_node) ** 3 / mu)
-time_hohmann=np.pi*np.sqrt(((h_node+h_phasing+2*R)/2)**3*1/mu)
-=======
+
 mu     = 0.042828*10**6*(10**3)**3    #[m^3/s^2] gravitational parameter
 R      = 3389.5*10**3                  #[m] volumetric mean radius
 h_node = 500*10**3
+h_phasing=609.74*10**3
 g_earth= 9.81             #[m]
 
 period =  2*np.pi* np.sqrt((R+h_node) ** 3 / mu)
->>>>>>> 96efb5901be3b77f1984cbaf043bf3b6990e77a8
 omega  = (2 * np.pi)/period
+time_hohmann = np.pi*np.sqrt(((h_node+h_phasing+2*R)/2)**3*1/mu)
 
 #=====================================================================================================================================================================================================================
 #Vehicle properties
@@ -117,7 +111,7 @@ def error_z(error_xm,error_zm,error_zdot,omega,t):
 # Switches
 #=====================================================================================================================================================================================================================
 
-plotting=True       #Do you wanna plot? no=False
+plotting=False      #Do you wanna plot? no=False
 
 #=====================================================================================================================================================================================================================
 # Hill equations of motion
@@ -391,20 +385,25 @@ while x >= x0_d-1 and x < x1_d:
 
     t  += dt
 
-#=====================================================================================================================================================================================================================
+#=================================================================================================================================================
+# Total thrust and propellant mass
+#=================================================================================================================================================
+
+#Delta V maneuvers in between phases
+thrust_deltaV = [thrust_deltaV1, thrust_deltaV2, thrust_deltaV3, thrust_deltaV4, thrust_deltaV5]
+mp_deltaV = mp_deltaV1 + mp_deltaV2 + mp_deltaV3 + mp_deltaV4 + mp_deltaV5
+
+#Total
+mp_tot     = np.sum(mp_array)
+
+#RCS thrust per engine
+RCS_thrust_x    = act.RCS_displacement_to_thrust(f_array[:,0],'z','normal')
+RCS_thrust_y    = act.RCS_displacement_to_thrust(f_array[:,1],'y','normal')
+RCS_thrust_z    = act.RCS_displacement_to_thrust(f_array[:,2],'x','normal')
+
+#=================================================================================================================================================
 # Thruster errors
-#=====================================================================================================================================================================================================================
-def thrust_error(f,cg,angle):
-    lx_bottom, lx_top, ly_bottom, ly_top, lz_bottom, lz_top = thruster_arms(cg)
-
-    T_error_x = np.sin(angle*np.pi/180) * lz_bottom * f
-    T_error_y = T_error_x
-    T_error_z = np.sin(angle*np.pi/180) * lx_bottom * f
-
-    return T_error_x, T_error_y, T_error_z
-
-def engine_failure():
-
+#=================================================================================================================================================
 
 #Misalignment
 cg_orbit = act.z_cg_orbit
@@ -417,75 +416,95 @@ T_error_z3, T_error_y3, T_error_x3 = act.thrust_error(f_array[:,2],cg_orbit,angl
 T_error_x_tot = T_error_x1 + T_error_x2 + T_error_x3
 T_error_y_tot = T_error_y1 + T_error_y2 + T_error_y3
 T_error_z_tot = T_error_z1 + T_error_z2 + T_error_z3
-print(T_error_x_tot)
+# print(T_error_x_tot)
 RCS_thrust_error_x = act.RCS_torque_to_thrust(T_error_z_tot,'z',cg_orbit,'error_bottom')
 RCS_thrust_error_y = act.RCS_torque_to_thrust(T_error_y_tot,'y',cg_orbit,'error_bottom')
 RCS_thrust_error_z = act.RCS_torque_to_thrust(T_error_x_tot,'x',cg_orbit,'error_bottom')
-print(RCS_thrust_error_x)
+# print(RCS_thrust_error_x)
 RCS_impulse_error = np.sum(RCS_thrust_error_x*dt) + np.sum(RCS_thrust_error_y*dt) + np.sum(RCS_thrust_error_z*dt)
 mp_error           = RCS_impulse_error / (Isp * g_earth)
 
-f_array[:,0] += RCS_thrust_error_x
-f_array[:,1] += RCS_thrust_error_y
-f_array[:,2] += RCS_thrust_error_z
+# f_array[:,0] += RCS_thrust_error_x
+# f_array[:,1] += RCS_thrust_error_y
+# f_array[:,2] += RCS_thrust_error_z
 
 #Engine failure
+RCS_thrust_failure_x = act.RCS_displacement_to_thrust(f_array[:,0],'z','failure') - RCS_thrust_x
+RCS_thrust_failure_y = act.RCS_displacement_to_thrust(f_array[:,1],'y','failure') - RCS_thrust_y
+RCS_thrust_failure_z = act.RCS_displacement_to_thrust(f_array[:,2],'x','failure') - RCS_thrust_z
 
+mp_engine_failure    = mp_tot * (np.sum(RCS_thrust_failure_x) + np.sum(RCS_thrust_failure_y) + np.sum(RCS_thrust_failure_z)) / (np.sum(RCS_thrust_x) + np.sum(RCS_thrust_y) + np.sum(RCS_thrust_z))
 
-#=====================================================================================================================================================================================================================
+#=================================================================================================================================================
 # Rotations
-#=====================================================================================================================================================================================================================
-def slew(slew_angle,slew_duration,I):
-    slew_acc_duration = 0.05 * slew_duration
-    slew_dec_duration = slew_acc_duration
-    spin_rate =  slew_angle / slew_duration
-    spin_acc  =  spin_rate  / slew_acc_duration
-    spin_dec  = -spin_acc
-    print('acc',spin_acc)
-    RCS_torque = (I * spin_acc)
-    return RCS_torque
+#=================================================================================================================================================
+
 
 angle_transfer      = 180 * np.pi / 180
 angle_rendezvous    = 180 * np.pi / 180
 
-time_transfer       = 20.
-time_rendezvous     = 30.
+time_transfer       = time_hohmann
+time_rendezvous     = 20.
 
-RCS_torque_transfer   = slew(angle_transfer,time_transfer,Iy)
+RCS_torque_transfer   = act.slew(angle_transfer,time_transfer,Iy)
 RCS_thrust_transfer = act.RCS_torque_to_thrust(RCS_torque_transfer,'y',cg_orbit,'normal')
 mp_transfer           = 2 * 2 * act.RCSpropellant(RCS_thrust_transfer,time_transfer,Isp)
 
-RCS_torque_rendezvous = slew(angle_rendezvous,time_rendezvous,Ix)
+T_error_transfer_z, T_error_transfer_y, T_error_transfer_x = act.thrust_error(RCS_thrust_transfer,cg_orbit,angle)
+RCS_error_transfer_x  = act.RCS_torque_to_thrust(T_error_transfer_x,'y',cg_orbit,'error_bottom')
+RCS_error_transfer_y  = act.RCS_torque_to_thrust(T_error_transfer_y,'y',cg_orbit,'error_bottom')
+RCS_error_transfer_z  = act.RCS_torque_to_thrust(T_error_transfer_z,'y',cg_orbit,'error_bottom')
+RCS_error_transfer    = max(RCS_error_transfer_x, RCS_error_transfer_y, RCS_error_transfer_z)
+mp_error_transfer   = act.RCSpropellant(RCS_error_transfer,time_transfer,Isp)
+
+RCS_failure_transfer= act.RCS_torque_to_thrust(RCS_torque_transfer,'y',cg_orbit,'failure') - RCS_thrust_transfer
+mp_failure_transfer = mp_transfer * (RCS_failure_transfer/RCS_thrust_transfer)
+
+
+RCS_torque_rendezvous = act.slew(angle_rendezvous,time_rendezvous,Iy)
 RCS_thrust_rendezvous = act.RCS_torque_to_thrust(RCS_torque_rendezvous,'y',cg_orbit,'normal')
 mp_rendezvous         = 2 * act.RCSpropellant(RCS_thrust_rendezvous,time_rendezvous,Isp)
+
+
+T_error_rendezvous_z, T_error_rendezvous_y, T_error_rendezvous_x = act.thrust_error(RCS_thrust_rendezvous,cg_orbit,angle)
+RCS_error_rendezvous_x  = act.RCS_torque_to_thrust(T_error_rendezvous_x,'y',cg_orbit,'error_bottom')
+RCS_error_rendezvous_y  = act.RCS_torque_to_thrust(T_error_rendezvous_y,'y',cg_orbit,'error_bottom')
+RCS_error_rendezvous_z  = act.RCS_torque_to_thrust(T_error_rendezvous_z,'y',cg_orbit,'error_bottom')
+RCS_error_rendezvous    = max([RCS_error_rendezvous_x, RCS_error_rendezvous_y, RCS_error_rendezvous_z])
+mp_error_rendezvous   = act.RCSpropellant(RCS_error_rendezvous,time_rendezvous,Isp)
+
+RCS_failure_rendezvous= act.RCS_torque_to_thrust(RCS_torque_rendezvous,'y',cg_orbit,'failure') - RCS_thrust_rendezvous
+mp_failure_rendezvous = mp_rendezvous * (RCS_failure_rendezvous/RCS_thrust_rendezvous)
 
 print('rotation',mp_transfer,mp_rendezvous)
 print('rotation',RCS_thrust_transfer,mp_rendezvous)
 
-#=====================================================================================================================================================================================================================
-# Total thrust and propellant mass
-#=====================================================================================================================================================================================================================
+#=================================================================================================================================================
+# Final thrust and propellant values
+#=================================================================================================================================================
 
-#Delta V maneuvers in between phases
-thrust_deltaV = thrust_deltaV1 + thrust_deltaV2 + thrust_deltaV3 + thrust_deltaV4 + thrust_deltaV5
-mp_deltaV = mp_deltaV1 + mp_deltaV2 + mp_deltaV3 + mp_deltaV4 + mp_deltaV5
 
-#Total
-mp_tot     = np.sum(mp) + mp_error
-
-#RCS thrust per engine
-RCS_thrust_x    = act.RCS_displacement_to_thrust(f_array[:,0],'z')
-RCS_thrust_y    = act.RCS_displacement_to_thrust(f_array[:,1],'y')
-RCS_thrust_z    = act.RCS_displacement_to_thrust(f_array[:,2],'x')
-
-print(RCS_thrust_x)
-
+print('==========================================================')
+print('PROPELLANT')
 print('Total propellant used: ', mp_tot)
+print('Redundancy propellant: ', mp_error, mp_engine_failure)
+print('==========================================================')
 print('Thrust for initial and final delta Vs: ', thrust_deltaV)
-print('Max thrust per engine during phases (x,y,z): ', max(RCS_thrust_x), max(RCS_thrust_y), max(RCS_thrust_z))
-print('Max error thrust per engine during phases (x,y,z): ', max(RCS_thrust_error_x), max(RCS_thrust_error_y), max(RCS_thrust_error_z))
+print('==========================================================')
+print('THRUST')
+print('Max thrust per engine (x,y,z): ', max(RCS_thrust_x), max(RCS_thrust_y), max(RCS_thrust_z))
+print('Min thrust per engine (x,y,z): ', min(RCS_thrust_x), min(RCS_thrust_y), min(RCS_thrust_z))
+print('Redundancy thrust (misalignment in x,y,z): ', max(RCS_thrust_error_x), max(RCS_thrust_error_y), max(RCS_thrust_error_z))
+print('Redundancy thrust (engine failure in x,y,z): ', max(RCS_thrust_failure_x), max(RCS_thrust_failure_y), max(RCS_thrust_failure_z))
+print('==========================================================')
+print('ROTATION')
+print('Propellant used (transfer, go-nogo): '      , mp_transfer, mp_rendezvous)
+print('Redundancy propellant (transfer, go-nogo): ', mp_error_transfer + mp_failure_transfer, mp_error_rendezvous + mp_failure_rendezvous)
+print('Thrust (transfer, go-nogo): '               , RCS_thrust_transfer, RCS_thrust_rendezvous)
+print('Redundancy thrust (transfer, go-nogo): '    , RCS_error_transfer + RCS_failure_transfer, RCS_error_rendezvous + RCS_failure_rendezvous)
+print('==========================================================')
+print('Total propellant: '      , mp_tot + mp_error + mp_engine_failure + mp_transfer + mp_rendezvous + mp_error_transfer + mp_failure_transfer + mp_error_rendezvous + mp_failure_rendezvous)
 
-print(t_array.shape,X_array.shape)
 #=====================================================================================================================================================================================================================
 # Plotting
 #=====================================================================================================================================================================================================================

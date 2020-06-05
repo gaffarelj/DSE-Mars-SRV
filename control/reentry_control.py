@@ -12,38 +12,30 @@ from matplotlib import pyplot as plt
 #=====================================================================================================================================================================================================================
 #Vehicle onstants
 #=====================================================================================================================================================================================================================
-
-
 Iy = act.Iy
 cg = act.cg_empty
-length = act.length
-width = act. width
+# length = act.length
+# width = act. width
 Isp = act.Isp
+g   = act.g
 thrust_levels = np.arange(100,1400,200)
-t1 = 978.9
-q  = 800.  #900. #Pa
 
-#Initial slew values
-#Assume spin acceleration/deceleration of 5%, coast time of 90%
-slew_duration = 100 #s
-slew_coast_duration = 0.90 * slew_duration
-slew_acc_duration = 0.05 * slew_duration
-alpha = 45 * np.pi / 180 #radians
-
-#flight profile
-height = flight[:,3]-mean_radius
+#=====================================================================================================================================================================================================================
+#Flight profile
+#=====================================================================================================================================================================================================================
+# height = flight[:,3]-mean_radius
 velocity = flight[:,0]
-gamma = flight[:,1]
-rho = mars.density
-pitch = gamma + alpha
+
 cd = 2.75
-rho = []
-for i in height:
-    rho.append(mars.density(i))
-rho = np.asarray(rho)
+t_end = 738.5 #s
+q  = 800.  #900. #Pa
+alpha = 45 *np.pi / 180
+velocity = 500. #m/s
 
+#=====================================================================================================================================================================================================================
+#Drag disturbance
+#=====================================================================================================================================================================================================================
 
-#drag disturbance
 S, cp = dist.Drag_surface_cp(alpha)
 drag = dist.Drag_force(rho,velocity,cd,S)
 Td = dist.aerodynamic_disturbance(cp,cg,drag,alpha)
@@ -94,28 +86,34 @@ Td = dist.aerodynamic_disturbance(cp,cg,drag,alpha)
 # print('Total propellant needed:', Mp)
 
 
+#=====================================================================================================================================================================================================================
+#Function to calculate total impulse required for slew maneuver
+#=====================================================================================================================================================================================================================
 
 def slew_landing(RCS_thrust,alpha,S,cp,cd,q,Td0,cg,I,t0):
     slew_angle_tot = 180 * np.pi / 180 - alpha
-    max_spin_rate  = 0.10
 
     slew_duration = t1 - t0
-    slew_rate_avg = slew_angle_tot / slew_duration
-    slew_time     = 0
+    spin_rate_avg = slew_angle_tot / slew_duration
+    t             = 0
+    dt            = 0.01
     slew_angle    = 0
     impulse       = 0
-
-    while slew_angle < slew_angle_tot and t < t1:
-        if spin_rate > max_spin_rate:
+    spin_rates    = []
+    spin_rates
+    while t < t1 and slew_angle:
+        if sum(spin_rates)/len(spin_rates) > spin_rate_avg:
             thrust = RCS_thrust * 0
         else:
             thrust = RCS_thrust
 
-        RCS_torque    = act.RCS_thrust_to_torque(thrust,"y",length,width,cg)
+        RCS_torque    = act.RCS_thrust_to_torque(thrust,"y",cg)
+
         S_new, cp_new = dist.Drag_surface_cp(alpha)
         drag_new      = dist.Drag_force(q,cd,S_new)
         Td_new        = dist.aerodynamic_disturbance(cp_new,cg,drag_new,alpha)
         dTd           = Td_new - Td0
+
         net_torque    = RCS_torque - dTd
         spin_acc      = (net_torque) / I
         spin_rate     = spin_acc * dt
@@ -123,15 +121,27 @@ def slew_landing(RCS_thrust,alpha,S,cp,cd,q,Td0,cg,I,t0):
 
         slew_angle   += spin_rate * dt
         alpha        += slew_angle
-        slew_time    += dt
+        t            += dt
         impulse      += thrust * dt
-    return impulse,slew_time
+        spin_rates.append(spin_rate)
+
+    return impulse,t
+
+#=====================================================================================================================================================================================================================
+#All possible rotations with corresponding impulse and time
+#=====================================================================================================================================================================================================================
 
 rotation_values = []
-for t0 in range(t1-100,t1-20):
+
+for t0 in range(t_end-100,t_end-20):
+
     for thrust in thrust_levels:
-            impulse, slew_time = slew_landing(thrust,alpha,S,cp,cd,q,cg,I,t0)
-            rotation_values.append(impulse,thrust,slew_time)
+
+            impulse, slew_time = slew_landing(thrust,alpha,S,cp,cd,q,cg,Iy,t0)
+            mp       = impulse / (Isp * g)
+            rotation_values.append(impulse,thrust,slew_time,mp)
+
+print(rotation_values)
 
 
 # tot_times_and_impulses = []
