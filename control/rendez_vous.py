@@ -27,8 +27,9 @@ def vac_thrust(DeltaV,Isp,Mbegin,tb,De=0,pe=0):
 mu=0.042828*10**6*(10**3)**3    #[m^3/s^2] gravitational parameter
 R=3389.5*10**3                  #[m] volumetric mean radius
 h_node=500*10**3                #[m]
-
+h_phasing=609.74*10**3
 period =2*np.pi* np.sqrt((R+h_node) ** 3 / mu)
+time_hohmann=np.pi*np.sqrt(((h_node+h_phasing+2*R)/2)**3*1/mu)
 omega  = (2 * np.pi)/period
 
 #=====================================================================================================================================================================================================================
