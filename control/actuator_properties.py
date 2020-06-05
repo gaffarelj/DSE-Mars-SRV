@@ -32,7 +32,13 @@ Iz = 306700.3372 #kg/m^2
 Iy = 2875350.278 #kg/m^2
 
 #RCS propellant properties
-Isp = 390 #mono liquid, N2H2
+Isp = 220 #mono liquid, N2H2
+g   = 9.80665
+
+#engines
+nx = 6
+ny = 6
+nz = 4
 
 def thruster_arms(z_cg):
     #vehicle constants
@@ -80,9 +86,13 @@ def RCS_torque_to_thrust(T,axis,cg,scenario):
             n_bottom = 3
             n_top = 3
             thrust = T / (lz_bottom * n_bottom + lz_top * n_top)
-        if scenario == 'error_bottom' or scenario == 'error_top':
+        elif scenario == 'error_bottom' or scenario == 'error_top':
             n = 1
             thrust = T / (lz_bottom * n)
+        elif scenario == 'failure':
+            n_bottom = 1
+            n_top = 1
+            thrust = T / (lz_bottom * n_bottom + lz_top * n_top)
 
     elif axis == "z":
         if scenario == 'normal':
@@ -95,19 +105,34 @@ def RCS_torque_to_thrust(T,axis,cg,scenario):
         elif scenario == 'error_top':
             n = 1
             thrust = T / (lx_top)
+        elif scenario == 'failure':
+            n_bottom = 1
+            n_top = 1
+            thrust = T / (lz_bottom * n_bottom + lz_top * n_top)
 
     return thrust
 
 
-def RCS_displacement_to_thrust(F,axis):
+def RCS_displacement_to_thrust(F,axis,scenario):
     if axis == "x" or axis == 'y':
-        n_bottom = 3
-        n_top    = 3
-        n        = n_bottom + n_top
+        if scenario == 'normal':
+            n_bottom = 3
+            n_top    = 3
+            n        = n_bottom + n_top
+        elif scenario == 'failure':
+            n_bottom = 1
+            n_top    = 1
+            n        = n_bottom + n_top
+
     if axis == "y" or axis == "z":
-        n_bottom = 4
-        n_top    = 0
-        n        = n_bottom + n_top
+        if scenario == 'normal':
+            n_bottom = 4
+            n_top    = 0
+            n        = n_bottom + n_top
+        if scenario == 'failure':
+            n_bottom = 2
+            n_top    = 0
+            n        = n_bottom + n_top
     f = F / n
     return f
 
@@ -126,6 +151,24 @@ def RCS_thrust_to_torque(f,axis,cg):
 
     return T
 
+def slew(slew_angle,slew_duration,I):
+    slew_acc_duration = 0.05 * slew_duration
+    slew_dec_duration = slew_acc_duration
+    spin_rate =  slew_angle / slew_duration
+    spin_acc  =  spin_rate  / slew_acc_duration
+    spin_dec  = -spin_acc
+    RCS_torque = (I * spin_acc)
+
+    return RCS_torque
+
+def thrust_error(f,cg,angle):
+    lx_bottom, lx_top, ly_bottom, ly_top, lz_bottom, lz_top = thruster_arms(cg)
+
+    T_error_x = np.sin(angle*np.pi/180) * lz_bottom * f
+    T_error_y = T_error_x
+    T_error_z = np.sin(angle*np.pi/180) * lx_bottom * f
+
+    return T_error_x, T_error_y, T_error_z
 
 
 def RCSpropellant(f,t,Isp):
