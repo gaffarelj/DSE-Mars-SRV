@@ -135,7 +135,7 @@ def thrust_z(z,zdotdot,xdot,omega,t):
 dt = 1.
 t  = 0.1
 ta = tb = td = 0.1
-tburn = 1.
+tburn = 2.
 mp = 0.
 m = m0
 m_deltaV = [m]
@@ -433,7 +433,7 @@ RCS_thrust_failure_x = act.RCS_displacement_to_thrust(f_array[:,0],'z','failure'
 RCS_thrust_failure_y = act.RCS_displacement_to_thrust(f_array[:,1],'y','failure') - RCS_thrust_y
 RCS_thrust_failure_z = act.RCS_displacement_to_thrust(f_array[:,2],'x','failure') - RCS_thrust_z
 
-mp_engine_failure    = mp_tot * (np.sum(RCS_thrust_failure_x) + np.sum(RCS_thrust_failure_y) + np.sum(RCS_thrust_failure_z)) / (np.sum(RCS_thrust_x) + np.sum(RCS_thrust_y) + np.sum(RCS_thrust_z))
+# mp_engine_failure    = mp_tot * (np.sum(RCS_thrust_failure_x) + np.sum(RCS_thrust_failure_y) + np.sum(RCS_thrust_failure_z)) / (np.sum(RCS_thrust_x) + np.sum(RCS_thrust_y) + np.sum(RCS_thrust_z))
 
 #=================================================================================================================================================
 # Rotations
@@ -448,22 +448,22 @@ time_rendezvous     = 20.
 
 RCS_torque_transfer   = act.slew(angle_transfer,time_transfer,Iy)
 RCS_thrust_transfer = act.RCS_torque_to_thrust(RCS_torque_transfer,'y',cg_orbit,'normal')
-mp_transfer           = 2 * 2 * act.RCSpropellant(RCS_thrust_transfer,time_transfer,Isp)
+mp_transfer           = 6 * 2 * 2 * act.RCSpropellant(RCS_thrust_transfer,time_transfer,Isp)
 
 T_error_transfer_z, T_error_transfer_y, T_error_transfer_x = act.thrust_error(RCS_thrust_transfer,cg_orbit,angle)
 RCS_error_transfer_x  = act.RCS_torque_to_thrust(T_error_transfer_x,'y',cg_orbit,'error_bottom')
 RCS_error_transfer_y  = act.RCS_torque_to_thrust(T_error_transfer_y,'y',cg_orbit,'error_bottom')
 RCS_error_transfer_z  = act.RCS_torque_to_thrust(T_error_transfer_z,'y',cg_orbit,'error_bottom')
 RCS_error_transfer    = max(RCS_error_transfer_x, RCS_error_transfer_y, RCS_error_transfer_z)
-mp_error_transfer   = act.RCSpropellant(RCS_error_transfer,time_transfer,Isp)
+mp_error_transfer     = act.RCSpropellant(RCS_error_transfer,time_transfer,Isp)
 
-RCS_failure_transfer= act.RCS_torque_to_thrust(RCS_torque_transfer,'y',cg_orbit,'failure') - RCS_thrust_transfer
-mp_failure_transfer = mp_transfer * (RCS_failure_transfer/RCS_thrust_transfer)
+RCS_failure_transfer  = act.RCS_torque_to_thrust(RCS_torque_transfer,'y',cg_orbit,'failure') - RCS_thrust_transfer
+# mp_failure_transfer   = mp_transfer * (RCS_failure_transfer/RCS_thrust_transfer)
 
 
 RCS_torque_rendezvous = act.slew(angle_rendezvous,time_rendezvous,Iy)
 RCS_thrust_rendezvous = act.RCS_torque_to_thrust(RCS_torque_rendezvous,'y',cg_orbit,'normal')
-mp_rendezvous         = 2 * act.RCSpropellant(RCS_thrust_rendezvous,time_rendezvous,Isp)
+mp_rendezvous         = 6 * 2 * act.RCSpropellant(RCS_thrust_rendezvous,time_rendezvous,Isp)
 
 
 T_error_rendezvous_z, T_error_rendezvous_y, T_error_rendezvous_x = act.thrust_error(RCS_thrust_rendezvous,cg_orbit,angle)
@@ -474,7 +474,7 @@ RCS_error_rendezvous    = max([RCS_error_rendezvous_x, RCS_error_rendezvous_y, R
 mp_error_rendezvous   = act.RCSpropellant(RCS_error_rendezvous,time_rendezvous,Isp)
 
 RCS_failure_rendezvous= act.RCS_torque_to_thrust(RCS_torque_rendezvous,'y',cg_orbit,'failure') - RCS_thrust_rendezvous
-mp_failure_rendezvous = mp_rendezvous * (RCS_failure_rendezvous/RCS_thrust_rendezvous)
+# mp_failure_rendezvous = mp_rendezvous * (RCS_failure_rendezvous/RCS_thrust_rendezvous)
 
 print('rotation',mp_transfer,mp_rendezvous)
 print('rotation',RCS_thrust_transfer,mp_rendezvous)
@@ -483,11 +483,11 @@ print('rotation',RCS_thrust_transfer,mp_rendezvous)
 # Final thrust and propellant values
 #=================================================================================================================================================
 
-
+mp_total = mp_tot + mp_error + mp_transfer + mp_rendezvous + mp_error_transfer + mp_error_rendezvous
 print('==========================================================')
 print('PROPELLANT')
 print('Total propellant used: ', mp_tot)
-print('Redundancy propellant: ', mp_error, mp_engine_failure)
+print('Redundancy propellant: ', mp_error)
 print('==========================================================')
 print('Thrust for initial and final delta Vs: ', thrust_deltaV)
 print('==========================================================')
@@ -499,11 +499,11 @@ print('Redundancy thrust (engine failure in x,y,z): ', max(RCS_thrust_failure_x)
 print('==========================================================')
 print('ROTATION')
 print('Propellant used (transfer, go-nogo): '      , mp_transfer, mp_rendezvous)
-print('Redundancy propellant (transfer, go-nogo): ', mp_error_transfer + mp_failure_transfer, mp_error_rendezvous + mp_failure_rendezvous)
+print('Redundancy propellant (transfer, go-nogo): ', mp_error_transfer, mp_error_rendezvous)
 print('Thrust (transfer, go-nogo): '               , RCS_thrust_transfer, RCS_thrust_rendezvous)
 print('Redundancy thrust (transfer, go-nogo): '    , RCS_error_transfer + RCS_failure_transfer, RCS_error_rendezvous + RCS_failure_rendezvous)
 print('==========================================================')
-print('Total propellant: '      , mp_tot + mp_error + mp_engine_failure + mp_transfer + mp_rendezvous + mp_error_transfer + mp_failure_transfer + mp_error_rendezvous + mp_failure_rendezvous)
+print('Total propellant: '      , mp_total)
 
 #=====================================================================================================================================================================================================================
 # Plotting
