@@ -1,7 +1,7 @@
 import sys
 sys.path.append('../astrodynamics')
 import mars_standard_atmosphere as MSA
-from reentry_footprint import flight, time, dt, mean_radius, mars
+# from reentry_footprint import flight, time, dt, mean_radius, mars
 import disturbances as dist
 import actuator_properties as act
 
@@ -13,7 +13,7 @@ from matplotlib import pyplot as plt
 #Vehicle onstants
 #=====================================================================================================================================================================================================================
 Iy = act.Iy
-cg = act.cg_empty
+cg = act.z_cg_empty
 # length = act.length
 # width = act. width
 Isp = act.Isp
@@ -24,7 +24,7 @@ thrust_levels = np.arange(100,1400,200)
 #Flight profile
 #=====================================================================================================================================================================================================================
 # height = flight[:,3]-mean_radius
-velocity = flight[:,0]
+# velocity = flight[:,0]
 
 cd = 2.75
 t_end = 738.5 #s
@@ -37,7 +37,7 @@ velocity = 500. #m/s
 #=====================================================================================================================================================================================================================
 
 S, cp = dist.Drag_surface_cp(alpha)
-drag = dist.Drag_force(rho,velocity,cd,S)
+drag = dist.Drag_force(q,cd,S)
 Td = dist.aerodynamic_disturbance(cp,cg,drag,alpha)
 
 # print(Td)
