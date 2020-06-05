@@ -24,11 +24,12 @@ def vac_thrust(DeltaV,Isp,Mbegin,tb,De=0,pe=0):
 #=====================================================================================================================================================================================================================
 #Node properties
 #=====================================================================================================================================================================================================================
-mu=0.042828*10**6*(10**3)**3    #[m^3/s^2] gravitational parameter
-R=3389.5*10**3                  #[m] volumetric mean radius
-h_node=500*10**3                #[m]
+mu     = 0.042828*10**6*(10**3)**3    #[m^3/s^2] gravitational parameter
+R      = 3389.5*10**3                  #[m] volumetric mean radius
+h_node = 500*10**3
+g_earth= 9.81             #[m]
 
-period =2*np.pi* np.sqrt((R+h_node) ** 3 / mu)
+period =  2*np.pi* np.sqrt((R+h_node) ** 3 / mu)
 omega  = (2 * np.pi)/period
 
 #=====================================================================================================================================================================================================================
@@ -38,9 +39,12 @@ omega  = (2 * np.pi)/period
 #Implement Mass of Charon at t0!
 m0   =53248.16053543461         #previous value was: 100000
 Isp  = 221                      #previous value was: 390
+Ix = 2875350.278 #kg/m^2
+Iy = 306700.3372 #kg/m^2
+Iz = 2875350.278 #kg/m^2
 
 #=====================================================================================================================================================================================================================
-#Vbar approach
+#Vbar approach properties
 #=====================================================================================================================================================================================================================
 #Proximity operations A:
 x0_A = -1000         #m
@@ -65,26 +69,6 @@ deltaV_d_0 = deltaV_d_1 = Vx_d
 y0 = z0 = 0
 
 deltaV_tot = deltaV_A_0 + deltaV_A_1 + deltaV_B_0 + deltaV_B_1 + deltaV_d_0 + deltaV_d_1
-
-
-#=====================================================================================================================================================================================================================
-#Rbar approach
-#=====================================================================================================================================================================================================================
-# #Proximity operations A:
-# z0_A = 1000         #m
-# z1_A = 250          #m
-# t_A  = 5 * period   #s
-#
-# #Proximity operations B:
-# z0_B = x1_A         #m
-# z1_B = 30           #m
-# t_B  = 70 * 60      #s
-# #Docking:
-# z0_d = x1_B         #m
-# z1_d = 3            #m
-# t_d  = 5 * 60       #m
-#
-# x0 = y0 = 0
 
 
 #=====================================================================================================================================================================================================================
@@ -177,16 +161,16 @@ X_array   = np.array([[x,y,z]])
 t_array   = np.array(t)
 mp_array  = np.array(mp)
 
-
+#DeltaV maneuver 1
+t += tburn
 thrust_deltaV1, mp_deltaV1 = vac_thrust(deltaV_A_0,Isp,m0,tburn,De=0,pe=0)
 m -= mp_deltaV1
-t += tburn
 f_array = np.append(f_array,[[thrust_deltaV1,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV1)
 t_array  = np.append(t_array,t)
-#Proximity operations A:
 
+#Proximity operations A:
 while x >= x0_A-1 and x < x1_A:
     Vx = Vx_A
     t += dt
@@ -243,24 +227,26 @@ while x >= x0_A-1 and x < x1_A:
     delta_zdot    = delta_zdot_new
     delta_zdotdot = delta_zdotdot_new
 
+#Delta V maneuver 2
+t += tburn
 thrust_deltaV2, mp_deltaV2 = vac_thrust(deltaV_A_1,Isp,m,tburn,De=0,pe=0)
 m -= mp_deltaV2
-t += tburn
 f_array = np.append(f_array,[[thrust_deltaV2,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV2)
 t_array  = np.append(t_array,t)
 
+#Delta V maneuver 3
+t += tburn
 thrust_deltaV3, mp_deltaV3 = vac_thrust(deltaV_B_0,Isp,m0,tburn,De=0,pe=0)
 m -= mp_deltaV3
-t += tburn
 f_array = np.append(f_array,[[thrust_deltaV3,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV3)
 t_array  = np.append(t_array,t)
 
+#Proximity operations B
 while x >= x0_B-1 and x < x1_B:
-    t  += dt
     tb += dt
     Vx = Vx_B
 
@@ -318,18 +304,21 @@ while x >= x0_B-1 and x < x1_B:
     delta_zdot    = delta_zdot_new
     delta_zdotdot = delta_zdotdot_new
 
+    t  += dt
 
+#Delta V maneuver 4
+t += tburn
 thrust_deltaV4, mp_deltaV4 = vac_thrust(deltaV_B_1,Isp,m0,tburn,De=0,pe=0)
 m -= mp_deltaV4
-t += tburn
 f_array = np.append(f_array,[[thrust_deltaV4,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV4)
 t_array  = np.append(t_array,t)
 
+#Delta V maneuver 5
+t += tburn
 thrust_deltaV5, mp_deltaV5 = vac_thrust(deltaV_d_0,Isp,m0,tburn,De=0,pe=0)
 m -= mp_deltaV5
-t += tburn
 f_array = np.append(f_array,[[thrust_deltaV5,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV5)
@@ -337,7 +326,6 @@ t_array  = np.append(t_array,t)
 
 while x >= x0_d-1 and x < x1_d:
     Vx  = Vx_d
-    t  += dt
     td += dt
 
     delta_x_new, delta_xdot_new, delta_xdotdot_new = error_x(error_xm,error_zm,error_xdot,error_zdot,omega,t)
@@ -392,6 +380,79 @@ while x >= x0_d-1 and x < x1_d:
     delta_zdot    = delta_zdot_new
     delta_zdotdot = delta_zdotdot_new
 
+    t  += dt
+
+#=====================================================================================================================================================================================================================
+# Thruster errors
+#=====================================================================================================================================================================================================================
+def thrust_error(f,cg,angle):
+    lx_bottom, lx_top, ly_bottom, ly_top, lz_bottom, lz_top = thruster_arms(cg)
+
+    T_error_x = np.sin(angle*np.pi/180) * lz_bottom * f
+    T_error_y = T_error_x
+    T_error_z = np.sin(angle*np.pi/180) * lx_bottom * f
+
+    return T_error_x, T_error_y, T_error_z
+
+def engine_failure():
+
+
+#Misalignment
+cg_orbit = act.z_cg_orbit
+angle = 2*np.pi/180
+
+T_error_z1, T_error_y1, T_error_x1 = act.thrust_error(f_array[:,0],cg_orbit,angle)
+T_error_z2, T_error_y2, T_error_x2 = act.thrust_error(f_array[:,1],cg_orbit,angle)
+T_error_z3, T_error_y3, T_error_x3 = act.thrust_error(f_array[:,2],cg_orbit,angle)
+
+T_error_x_tot = T_error_x1 + T_error_x2 + T_error_x3
+T_error_y_tot = T_error_y1 + T_error_y2 + T_error_y3
+T_error_z_tot = T_error_z1 + T_error_z2 + T_error_z3
+print(T_error_x_tot)
+RCS_thrust_error_x = act.RCS_torque_to_thrust(T_error_z_tot,'z',cg_orbit,'error_bottom')
+RCS_thrust_error_y = act.RCS_torque_to_thrust(T_error_y_tot,'y',cg_orbit,'error_bottom')
+RCS_thrust_error_z = act.RCS_torque_to_thrust(T_error_x_tot,'x',cg_orbit,'error_bottom')
+print(RCS_thrust_error_x)
+RCS_impulse_error = np.sum(RCS_thrust_error_x*dt) + np.sum(RCS_thrust_error_y*dt) + np.sum(RCS_thrust_error_z*dt)
+mp_error           = RCS_impulse_error / (Isp * g_earth)
+
+f_array[:,0] += RCS_thrust_error_x
+f_array[:,1] += RCS_thrust_error_y
+f_array[:,2] += RCS_thrust_error_z
+
+#Engine failure
+
+
+#=====================================================================================================================================================================================================================
+# Rotations
+#=====================================================================================================================================================================================================================
+def slew(slew_angle,slew_duration,I):
+    slew_acc_duration = 0.05 * slew_duration
+    slew_dec_duration = slew_acc_duration
+    spin_rate =  slew_angle / slew_duration
+    spin_acc  =  spin_rate  / slew_acc_duration
+    spin_dec  = -spin_acc
+    print('acc',spin_acc)
+    RCS_torque = (I * spin_acc)
+    return RCS_torque
+
+angle_transfer      = 180 * np.pi / 180
+angle_rendezvous    = 180 * np.pi / 180
+
+time_transfer       = 20.
+time_rendezvous     = 30.
+
+RCS_torque_transfer   = slew(angle_transfer,time_transfer,Iy)
+RCS_thrust_transfer = act.RCS_torque_to_thrust(RCS_torque_transfer,'y',cg_orbit,'normal')
+mp_transfer           = 2 * 2 * act.RCSpropellant(RCS_thrust_transfer,time_transfer,Isp)
+
+RCS_torque_rendezvous = slew(angle_rendezvous,time_rendezvous,Ix)
+RCS_thrust_rendezvous = act.RCS_torque_to_thrust(RCS_torque_rendezvous,'y',cg_orbit,'normal')
+mp_rendezvous         = 2 * act.RCSpropellant(RCS_thrust_rendezvous,time_rendezvous,Isp)
+
+print('rotation',mp_transfer,mp_rendezvous)
+print('rotation',RCS_thrust_transfer,mp_rendezvous)
+
 #=====================================================================================================================================================================================================================
 # Total thrust and propellant mass
 #=====================================================================================================================================================================================================================
@@ -399,18 +460,22 @@ while x >= x0_d-1 and x < x1_d:
 #Delta V maneuvers in between phases
 thrust_deltaV = thrust_deltaV1 + thrust_deltaV2 + thrust_deltaV3 + thrust_deltaV4 + thrust_deltaV5
 mp_deltaV = mp_deltaV1 + mp_deltaV2 + mp_deltaV3 + mp_deltaV4 + mp_deltaV5
-#During phases
-thrust_phases = np.sum(f_array)
-mp_phases     = np.sum(mp_array)
 
 #Total
-thrust_tot = thrust_deltaV + thrust_phases
-mp_tot     = mp_deltaV + mp_phases
+mp_tot     = np.sum(mp) + mp_error
 
-print('Total propellant used: ', mp_phases, mp_deltaV)
-print('Total thrust from RCS: ', thrust_tot)
+#RCS thrust per engine
+RCS_thrust_x    = act.RCS_displacement_to_thrust(f_array[:,0],'z')
+RCS_thrust_y    = act.RCS_displacement_to_thrust(f_array[:,1],'y')
+RCS_thrust_z    = act.RCS_displacement_to_thrust(f_array[:,2],'x')
+
+print(RCS_thrust_x)
+
+print('Total propellant used: ', mp_tot)
 print('Thrust for initial and final delta Vs: ', thrust_deltaV)
-print('Thrust for phases: ', thrust_phases)
+print('Max thrust per engine during phases (x,y,z): ', max(RCS_thrust_x), max(RCS_thrust_y), max(RCS_thrust_z))
+print('Max error thrust per engine during phases (x,y,z): ', max(RCS_thrust_error_x), max(RCS_thrust_error_y), max(RCS_thrust_error_z))
+
 print(t_array.shape,X_array.shape)
 #=====================================================================================================================================================================================================================
 # Plotting
@@ -441,12 +506,6 @@ if plotting:
     axs[1][0].grid(color="gainsboro")
     axs[1][0].set_xlabel("Time [s]")
     axs[1][0].set_ylabel("Propellant mass [kg]")
-
-    #Vehicle mass
-    axs[1][1].plot(t_array,m0-mp_array,color="navy")
-    axs[1][1].grid(color="gainsboro")
-    axs[1][1].set_xlabel("Time [s]")
-    axs[1][1].set_ylabel("Vehicle mass [kg]")
     plt.show()
 
     fig, axs = plt.subplots(2, 3, constrained_layout=True)
