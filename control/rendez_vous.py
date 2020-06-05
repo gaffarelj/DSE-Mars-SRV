@@ -395,7 +395,7 @@ def thrust_error(f,cg,angle):
     return T_error_x, T_error_y, T_error_z
 
 def engine_failure():
-
+ if axis =='x' or axis =='y'
 
 #Misalignment
 cg_orbit = act.z_cg_orbit
