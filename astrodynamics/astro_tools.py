@@ -3,6 +3,8 @@ import multiprocessing as mp
 from mpl_toolkits import mplot3d
 from matplotlib import pyplot as plt
 from scipy.optimize import fsolve
+from matplotlib.patches import Ellipse
+import matplotlib.transforms as transforms
 import mars_standard_atmosphere as atm
 import thermo
 
@@ -176,7 +178,7 @@ class Motion:
         My = 0
         Mz = 0
 
-        while flight[-1][3] > self.Planet.r + 80000:
+        while flight[-1][3] > self.Planet.r - 3000:
             V          = flight[-1][0]
             gamma      = flight[-1][1]
             xi         = flight[-1][2]
@@ -286,16 +288,15 @@ class Montecarlo:
 
     def trajectories(self, n):
         np.random.seed(n)
-        '''
         self.Motion.initial[0] = np.random.normal(self.initial[0], 1)                       # 2 m/s
-        self.Motion.initial[1] = np.random.normal(self.initial[1], np.radians(1 / 60))    # 1.5 arcsecs
-        self.Motion.initial[2] = np.random.normal(self.initial[2], np.radians(1 / 60))    # 1.5 arcsecs
+        self.Motion.initial[1] = np.random.normal(self.initial[1], np.radians(1 / 60))      # 1.5 arcsecs
+        self.Motion.initial[2] = np.random.normal(self.initial[2], np.radians(1 / 60))      # 1.5 arcsecs
         self.Motion.initial[3] = np.random.normal(self.initial[3], 20)                      # 50 m
         self.Motion.initial[4] = np.random.normal(self.initial[4], np.radians(0.1 / 60))    # 1.5 arcsecs
-        self.Motion.initial[5] = np.random.normal(self.initial[5], np.radians(0.1 / 60))    # 1.5 arcsecs
-        '''
-        self.Motion.initial[11] = np.random.normal(self.initial[11], np.radians(2))    # 1.5 arcsecs
-        self.Motion.initial[9] = np.random.normal(self.initial[9], np.radians(2))    # 1.5 arcsecs
+        self.Motion.initial[4] = np.random.normal(self.initial[5], np.radians(0.1 / 60))    # 1.5 arcsecs
+        self.Motion.initial[9] = np.random.normal(self.initial[9], np.radians(1 / 60))      # 1.5 arcsecs
+        self.Motion.initial[10] = np.random.normal(self.initial[10], np.radians(1 / 60))    # 1.5 arcsecs
+        self.Motion.initial[11] = np.random.normal(self.initial[11], np.radians(1 / 60))    # 1.5 arcsecs
         #self.Motion.Planet.hs = np.random.normal(self.scale_height, 50)                    # scale height of atmosphere
         #self.Motion.mu = np.random.normal(0, np.radians(1.5 / 60))  
 
@@ -405,7 +406,7 @@ def scatter(stochastic_data, base_lat, base_lon, Planet):
         x = (lon[-1] - base_lon)*Planet.r
         x_distance.append(x)
         y_distance.append(y)
-
+    '''
     x0 = 25.5
     y0 = 42.5
 
@@ -423,6 +424,69 @@ def scatter(stochastic_data, base_lat, base_lon, Planet):
     plt.xlabel("longitude [deg]")
     plt.grid()
     plt.show()
+    '''
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.scatter(np.degrees(np.array(lon)), np.degrees(np.array(lat)), s=2)
+    #ax.axvline(c='grey', lw=1)
+    #ax.axhline(c='grey', lw=1)
+
+    confidence_ellipse(np.degrees(np.array(lon)), np.degrees(np.array(lat)), ax, edgecolor='red')
+
+    ax.scatter(25.5, 42.5, c='red', s=3)
+    ax.set_title('Impact Points')
+    plt.show()
+
+def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', **kwargs):
+    """
+    Create a plot of the covariance confidence ellipse of *x* and *y*.
+
+    Parameters
+    ----------
+    x, y : array-like, shape (n, )
+        Input data.
+
+    ax : matplotlib.axes.Axes
+        The axes object to draw the ellipse into.
+
+    n_std : float
+        The number of standard deviations to determine the ellipse's radiuses.
+
+    **kwargs
+        Forwarded to `~matplotlib.patches.Ellipse`
+
+    Returns
+    -------
+    matplotlib.patches.Ellipse
+    """
+    if x.size != y.size:
+        raise ValueError("x and y must be the same size")
+
+    cov = np.cov(x, y)
+    pearson = cov[0, 1]/np.sqrt(cov[0, 0] * cov[1, 1])
+    # Using a special case to obtain the eigenvalues of this
+    # two-dimensionl dataset.
+    ell_radius_x = np.sqrt(1 + pearson)
+    ell_radius_y = np.sqrt(1 - pearson)
+    ellipse = Ellipse((0, 0), width=ell_radius_x * 2, height=ell_radius_y * 2,
+                      facecolor=facecolor, **kwargs)
+
+    # Calculating the stdandard deviation of x from
+    # the squareroot of the variance and multiplying
+    # with the given number of standard deviations.
+    scale_x = np.sqrt(cov[0, 0]) * n_std
+    mean_x = np.mean(x)
+
+    # calculating the stdandard deviation of y ...
+    scale_y = np.sqrt(cov[1, 1]) * n_std
+    mean_y = np.mean(y)
+
+    transf = transforms.Affine2D() \
+        .rotate_deg(45) \
+        .scale(scale_x, scale_y) \
+        .translate(mean_x, mean_y)
+
+    ellipse.set_transform(transf + ax.transData)
+    return ax.add_patch(ellipse)
 
 
 def surfaceplots(xdata, ydata, zdata, x_label, y_label, z_label):
