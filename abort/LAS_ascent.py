@@ -31,7 +31,9 @@ def run_ascent(max_M=7, min_q=100):
 	gamma = ascent["gamma"][-1]
 	print(f"Last abort to surface at t={LAS_T} s, at M={Mach_T} and q={q_T} Pa")
 	print(f"\t- at a velocity of {V_T} m/s and an altitude of {h_T} m")
-	return V_T, gamma, h_T
+	plt.plot(ascent["time"], ascent["q"])
+	plt.show()
+	return V_T, gamma, h_T, LAS_T
 
 def run_motion(V0, gamma, h0, chutes=[], print_deploy=False, prop_reentry=[]):
 	mars = AT.Planet()
@@ -64,9 +66,11 @@ def dV(Isp, m0, mf):
 	return 9.81*Isp*np.log(m0/(m0-mf))
 
 
-#V_T, gamma, h_T = run_ascent()
-#print(V_T, gamma, h_T)
-V_T, gamma, h_T = 1427.87, 48.02, 43497.6
+#V_T, gamma, h_T, LAS_T = run_ascent()
+#print(V_T, gamma, h_T, LAS_T)
+f=1
+V_T, gamma, h_T, t_T = 1427.87/f, 48.02/f, 43497.6/f, 79.91/f
+#V_T, gamma, h_T, t_T = 0, 0, 0, 0
 
 m_fuel_tot = 2000
 m_fuel_abort = 1176.84
@@ -75,6 +79,8 @@ Isp_abort_vac = 259.38
 m = 12500
 vehicle_mass = m - m_fuel_abort
 dV_abort = dV(Isp_abort_opt, m, m_fuel_abort)
+h_T += dV_abort*3
+#print(dV_abort, h_T)
 
 # Dynamic pressures at which the parachutes will be deployed
 q_s = [20, 350]

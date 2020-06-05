@@ -282,15 +282,14 @@ def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7
 	Cd = [Cd0]
 	Fd = [get_Fd(Cd[-1],rho[-1],S,V[-1])]
 	Fl = [get_Fl(Cl[-1],rho[-1],S,V[-1])]
-	mdot = [1 / ceff * (M[-1] * g[-1] * TWratio[-1] - Ae * (pe - p[-1]))]
+	mdot = [1 / ceff * (M[-1] * g[-1] * TWratio[0] - Ae * (pe - p[-1]))]
 	Ft = [get_Ft(mdot[-1],ceff,Ae,pe,p[-1])]
 	ax_array = [dVxdt(Ft[-1],get_Fd(Cd[-1],rho[-1],S,V[-1]),get_Fl(Cl[-1],rho[-1],S,V[-1]),M[-1],Vz[-1],Vx[-1])]
 	az_array = [dVzdt(Ft[-1],get_Fd(Cd[-1],rho[-1],S,V[-1]),get_Fl(Cl[-1],rho[-1],S,V[-1]),M[-1],Vz[-1],Vx[-1],g[-1])]
 	
 	t_array = [t_tot]
-
+	M_prop = [Mp_class2]
 	#TWratio=np.array([Ft[-1]/(M[-1]*g[-1])])
-		
 	i = -1
 	
 	while Z[-1] < h_phasing + abs(h0) and Z[-1] >= 0:
@@ -367,6 +366,7 @@ def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7
 				
 			Ft.append(Ftnew)
 			mdot.append(mdotnew)
+			M_prop.append(M_prop[-1]-mdot[-1]*dt)
 	
 	print()
 	#t_array = np.linspace(0,t_tot,len(Z))
@@ -380,6 +380,8 @@ def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7
 	ascent_DeltaV = ceff * np.log(M[0] / (M[0] - Mprop))
 	q = 0.5 * rho * V **2
 	others = {
+        "Mprop": M_prop,
+		"mdot":mdot,
 		"time": t_array,
 		"Mach": Mach,
 		"Lift": Fl,
