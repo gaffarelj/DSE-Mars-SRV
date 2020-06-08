@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 #Initial slew values
 #Assume spin acceleration/deceleration of 5%, coast time of 90%
 angle = 20 * np.pi / 180
-slew_duration = 20 #s
+slew_duration = 30 #s
 
 #Vehicle constants
 length = act.length_body
@@ -24,7 +24,7 @@ cg_orbit = act.z_cg_orbit
 error_angle = 2 * np.pi / 180
 
 #propellant properties
-Isp = act.Isp
+Isp = 140
 
 
 def slew_ascent(slew_angle,slew_duration,I,cg):

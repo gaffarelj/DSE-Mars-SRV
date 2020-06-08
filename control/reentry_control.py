@@ -19,7 +19,7 @@ cg = act.z_cg_empty
 # width = act. width
 Isp = act.Isp
 g   = act.g
-thrust_levels = np.arange(10000,12000,50)
+thrust_levels = np.arange(1,50,1)
 
 #=====================================================================================================================================================================================================================
 #Flight profile
@@ -58,7 +58,7 @@ def slew_landing(thrust,alpha0,S,cp,cd,q,Td0,cg,I,t0,t_end):
     impulse       = 0
     spin_rates    = [0]
 
-    while slew_angle < slew_angle_tot and t < (t_end-t0):
+    while slew_angle < slew_angle_tot/2 and t < (t_end-t0)/2:
         alpha         = alpha0 + slew_angle
         # if sum(spin_rates)/len(spin_rates) > spin_rate_avg:
         #     thrust = RCS_thrust * 0
@@ -70,7 +70,7 @@ def slew_landing(thrust,alpha0,S,cp,cd,q,Td0,cg,I,t0,t_end):
         drag_new      = dist.Drag_force(q,cd,S_new)
         Td_new        = dist.aerodynamic_disturbance(cp_new,cg,drag_new,alpha)
         dTd           = Td_new - Td0
-        net_torque    = RCS_torque + dTd
+        net_torque    = RCS_torque
         spin_acc      = (net_torque) / I
         spin_rate    += spin_acc * dt
 
@@ -80,7 +80,7 @@ def slew_landing(thrust,alpha0,S,cp,cd,q,Td0,cg,I,t0,t_end):
         spin_rates.append(spin_rate)
     #Rotation successfully completed or not
 
-    if slew_angle >= slew_angle_tot:
+    if slew_angle >= slew_angle_tot/2:
         success = 'yes'
     else:
         success = 'no'
@@ -92,16 +92,15 @@ def slew_landing(thrust,alpha0,S,cp,cd,q,Td0,cg,I,t0,t_end):
 #=====================================================================================================================================================================================================================
 
 rotation_values = []
-for t0 in range(int(t_end-100),int(t_end-50)):
+for t0 in range(int(t_end-200),int(t_end-50)):
 
     for thrust in thrust_levels:
 
             impulse, slew_time, success = slew_landing(thrust,alpha,S,cp,cd,q,Td,cg,Iy,t0,t_end)
             mp                          = 6 * impulse / (Isp * g)
-
+            print(thrust,mp,success,slew_time)
             if success == 'yes':
                 if thrust < 11250.:
-                # print(thrust,mp,success,slew_time)
                     rotation_values.append([thrust,impulse,slew_time,mp])
 
 
