@@ -28,7 +28,7 @@ i_mars=25.19*np.pi/180          #[rad] inlination of Mars' equator
 omega_mars=0.7088218*10**(-4)   #[rad/s] Martian angular velocity
 M_atm=43.34                     #[g/mol] Mean molecular weight
 Rgas=8314.4621/M_atm            #[J/(kg*K)] Martian air gas constant
-gamma_gas=1.37                      #[-] heat capacity of Martian air
+gamma_gas=1.37                  #[-] heat capacity of Martian air
 #=====================================================================================================================================================================================================================
 # Node's properties & phasing orbit & Mars base
 #=====================================================================================================================================================================================================================
@@ -117,7 +117,7 @@ Mach=np.array([get_Mach(V[0],get_a(gamma_gas,Rgas, T[0]))])
 #TWratio=np.array([get_TWprofile(mode,0,g[0],1.5,4,tb,i0,Z[0])])
 tb=ceff/(TW0*9.80665/g0_mars*9.80665)*np.log(M[0]/(M[0]-Mp[0]))+41
 TWratio=np.linspace(TW0*9.80665/g0_mars,TWe*9.80665/g0_mars,round(tb/dt))
-Cl0,Cd0=H_aerodynamics_coefficients(Mach,0)
+Cl0,Cd0=SS_aerodynamics_coefficients(Mach,0)
 Cl=np.array([Cl0])
 Cd=np.array([Cd0])
 Fd=np.array([get_Fd(Cd[0],rho[0],S,V[0])])
