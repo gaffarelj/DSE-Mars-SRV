@@ -32,7 +32,8 @@ Iz = 306700.3372 #kg/m^2
 Iy = 2875350.278 #kg/m^2
 
 #RCS propellant properties
-Isp = 220 #mono liquid, N2H2
+Isp = 317 #bi liquid, LCH4
+Isp_mono = 140 #mono liquid H2O2
 g   = 9.80665
 
 #engines
