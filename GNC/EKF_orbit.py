@@ -5,7 +5,7 @@ import EKF_class as EKF
 from mpl_toolkits.mplot3d import Axes3D
 import math
 from csv_orbit import *
-def dev(plot=false):
+def dev(plot=False):
     data = dataset()
 
     dt = 0.1
@@ -117,5 +117,6 @@ def dev(plot=false):
         ax.set_ylabel("deviation velocity [m/s]")
         ax.set_xlabel("aproach time [s]")
         plt.show()
+    return (l_ref[-1]-l_out[-1])[:6]*10**3
 
-return (l_ref[-1]-l_out[-1])[:6]*10**3
+#dev(True)
