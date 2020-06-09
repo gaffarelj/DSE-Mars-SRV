@@ -41,7 +41,9 @@ time_hohmann = np.pi*np.sqrt(((h_node+h_phasing+2*R)/2)**3*1/mu)
 
 #Implement Mass of Charon at t0!
 m0   =53248.16053543461         #previous value was: 100000
-Isp  = 221                      #previous value was: 390
+Isp  = act.Isp
+Isp_mono = act.Isp         #previous value was: 390
+OF_ratio = 3.8
 Ix = 2875350.278 #kg/m^2
 Iy = 306700.3372 #kg/m^2
 Iz = 2875350.278 #kg/m^2
@@ -49,25 +51,27 @@ Iz = 2875350.278 #kg/m^2
 #=====================================================================================================================================================================================================================
 #Vbar approach properties
 #=====================================================================================================================================================================================================================
+margin = 2.
+
 #Proximity operations A:
 x0_A = -1000         #m
 x1_A = -250          #m
 t_A  =  period   #s
 Vx_A   = (x1_A - x0_A) / t_A #m/s
-deltaV_A_0 = deltaV_A_1 = Vx_A
+deltaV_A_0 = deltaV_A_1 = Vx_A * margin
 
 #Proximity operations B:
 x0_B = x1_A         #m
 x1_B = -30           #m
 t_B  = 60 * 60      #s
 Vx_B  = (x1_B - x0_B) / t_B #m/s
-deltaV_B_0 = deltaV_B_1 = Vx_B
+deltaV_B_0 = deltaV_B_1 = Vx_B * margin
 #Docking:
 x0_d = x1_B         #m
 x1_d = -3            #m
 t_d  = (5*((x1_d - x0_d)/10)) * 60       #m
 Vx_d  = (x1_d - x0_d) / t_d #m/s
-deltaV_d_0 = deltaV_d_1 = Vx_d
+deltaV_d_0 = deltaV_d_1 = Vx_d * margin
 
 y0 = z0 = 0
 
@@ -111,7 +115,7 @@ def error_z(error_xm,error_zm,error_zdot,omega,t):
 # Switches
 #=====================================================================================================================================================================================================================
 
-plotting=False      #Do you wanna plot? no=False
+plotting=True      #Do you wanna plot? no=False
 
 #=====================================================================================================================================================================================================================
 # Hill equations of motion
@@ -135,7 +139,7 @@ def thrust_z(z,zdotdot,xdot,omega,t):
 dt = 1.
 t  = 0.1
 ta = tb = td = 0.1
-tburn = 1.
+tburn = 2.
 mp = 0.
 m = m0
 m_deltaV = [m]
@@ -163,6 +167,7 @@ f_array   = np.array([[fx0,fy0,fz0]])
 X_array   = np.array([[x,y,z]])
 t_array   = np.array(t)
 mp_array  = np.array(mp)
+mp_biprop_array = np.array(mp)
 
 #DeltaV maneuver 1
 t += tburn
@@ -171,6 +176,7 @@ m -= mp_deltaV1
 f_array = np.append(f_array,[[thrust_deltaV1,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV1)
+mp_biprop_array = np.append(mp_biprop_array,mp_deltaV1)
 t_array  = np.append(t_array,t)
 
 #Proximity operations A:
@@ -206,11 +212,11 @@ while x >= x0_A-1 and x < x1_A:
     zdot    = delta_zdot_rel
     zdotdot = delta_zdotdot_rel
 
-    fx = m * thrust_x(x,zdot,xdotdot,omega,t)
-    fy = m * thrust_y(y,ydotdot,omega,t)
-    fz = m * thrust_z(z,zdotdot,xdot,omega,t)
+    fx = m * thrust_x(x,zdot,xdotdot,omega,t) * margin
+    fy = m * thrust_y(y,ydotdot,omega,t) * margin
+    fz = m * thrust_z(z,zdotdot,xdot,omega,t) * margin
     ftot = abs(fx + fy + fz)
-    mp = act.RCSpropellant(ftot,dt,Isp)
+    mp = act.RCSpropellant(ftot,dt,Isp_mono)
     m -= mp
 
     f_array  = np.append(f_array,[[fx,fy,fz]],axis=0)
@@ -237,6 +243,7 @@ m -= mp_deltaV2
 f_array = np.append(f_array,[[thrust_deltaV2,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV2)
+mp_biprop_array = np.append(mp_biprop_array,mp_deltaV2)
 t_array  = np.append(t_array,t)
 
 #Delta V maneuver 3
@@ -246,6 +253,7 @@ m -= mp_deltaV3
 f_array = np.append(f_array,[[thrust_deltaV3,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV3)
+mp_biprop_array = np.append(mp_biprop_array,mp_deltaV3)
 t_array  = np.append(t_array,t)
 
 #Proximity operations B
@@ -282,11 +290,11 @@ while x >= x0_B-1 and x < x1_B:
     zdot    = delta_zdot_rel
     zdotdot = delta_zdotdot_rel
 
-    fx = m * thrust_x(x,zdot,xdotdot,omega,t)
-    fy = m * thrust_y(y,ydotdot,omega,t)
-    fz = m * thrust_z(z,zdotdot,xdot,omega,t)
+    fx = m * thrust_x(x,zdot,xdotdot,omega,t) * margin
+    fy = m * thrust_y(y,ydotdot,omega,t) * margin
+    fz = m * thrust_z(z,zdotdot,xdot,omega,t) * margin
     ftot = abs(fx + fy + fz)
-    mp = act.RCSpropellant(ftot,dt,Isp)
+    mp = act.RCSpropellant(ftot,dt,Isp_mono)
     m -= mp
 
 
@@ -316,6 +324,7 @@ m -= mp_deltaV4
 f_array = np.append(f_array,[[thrust_deltaV4,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV4)
+mp_biprop_array = np.append(mp_biprop_array,mp_deltaV4)
 t_array  = np.append(t_array,t)
 
 #Delta V maneuver 5
@@ -325,6 +334,7 @@ m -= mp_deltaV5
 f_array = np.append(f_array,[[thrust_deltaV5,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV5)
+mp_biprop_array = np.append(mp_biprop_array,mp_deltaV5)
 t_array  = np.append(t_array,t)
 
 while x >= x0_d-1 and x < x1_d:
@@ -359,11 +369,11 @@ while x >= x0_d-1 and x < x1_d:
     zdot    = delta_zdot_rel
     zdotdot = delta_zdotdot_rel
 
-    fx = m * thrust_x(x,zdot,xdotdot,omega,t)
-    fy = m * thrust_y(y,ydotdot,omega,t)
-    fz = m * thrust_z(z,zdotdot,xdot,omega,t)
+    fx = m * thrust_x(x,zdot,xdotdot,omega,t) * margin
+    fy = m * thrust_y(y,ydotdot,omega,t) * margin
+    fz = m * thrust_z(z,zdotdot,xdot,omega,t) * margin
     ftot = abs(fx + fy + fz)
-    mp = act.RCSpropellant(ftot,dt,Isp)
+    mp = act.RCSpropellant(ftot,dt,Isp_mono)
     m -= mp
 
     f_array = np.append(f_array,[[fx,fy,fz]],axis=0)
@@ -421,8 +431,8 @@ RCS_thrust_error_x = act.RCS_torque_to_thrust(T_error_z_tot,'z',cg_orbit,'error_
 RCS_thrust_error_y = act.RCS_torque_to_thrust(T_error_y_tot,'y',cg_orbit,'error_bottom')
 RCS_thrust_error_z = act.RCS_torque_to_thrust(T_error_x_tot,'x',cg_orbit,'error_bottom')
 # print(RCS_thrust_error_x)
-RCS_impulse_error = np.sum(RCS_thrust_error_x*dt) + np.sum(RCS_thrust_error_y*dt) + np.sum(RCS_thrust_error_z*dt)
-mp_error           = RCS_impulse_error / (Isp * g_earth)
+RCS_impulse_error = margin * (np.sum(RCS_thrust_error_x*dt) + np.sum(RCS_thrust_error_y*dt) + np.sum(RCS_thrust_error_z*dt))
+mp_error           = RCS_impulse_error / (Isp_mono * g_earth)
 
 # f_array[:,0] += RCS_thrust_error_x
 # f_array[:,1] += RCS_thrust_error_y
@@ -432,8 +442,7 @@ mp_error           = RCS_impulse_error / (Isp * g_earth)
 RCS_thrust_failure_x = act.RCS_displacement_to_thrust(f_array[:,0],'z','failure') - RCS_thrust_x
 RCS_thrust_failure_y = act.RCS_displacement_to_thrust(f_array[:,1],'y','failure') - RCS_thrust_y
 RCS_thrust_failure_z = act.RCS_displacement_to_thrust(f_array[:,2],'x','failure') - RCS_thrust_z
-
-mp_engine_failure    = mp_tot * (np.sum(RCS_thrust_failure_x) + np.sum(RCS_thrust_failure_y) + np.sum(RCS_thrust_failure_z)) / (np.sum(RCS_thrust_x) + np.sum(RCS_thrust_y) + np.sum(RCS_thrust_z))
+# mp_engine_failure    = mp_tot * (np.sum(RCS_thrust_failure_x) + np.sum(RCS_thrust_failure_y) + np.sum(RCS_thrust_failure_z)) / (np.sum(RCS_thrust_x) + np.sum(RCS_thrust_y) + np.sum(RCS_thrust_z))
 
 #=================================================================================================================================================
 # Rotations
@@ -444,37 +453,37 @@ angle_transfer      = 180 * np.pi / 180
 angle_rendezvous    = 180 * np.pi / 180
 
 time_transfer       = time_hohmann
-time_rendezvous     = 20.
+time_rendezvous     = 100.
 
 RCS_torque_transfer   = act.slew(angle_transfer,time_transfer,Iy)
-RCS_thrust_transfer = act.RCS_torque_to_thrust(RCS_torque_transfer,'y',cg_orbit,'normal')
-mp_transfer           = 2 * 2 * act.RCSpropellant(RCS_thrust_transfer,time_transfer,Isp)
+RCS_thrust_transfer   = margin * act.RCS_torque_to_thrust(RCS_torque_transfer,'y',cg_orbit,'normal')
+mp_transfer           = 6 * 2 * 2 * act.RCSpropellant(RCS_thrust_transfer,time_transfer,Isp_mono)
 
 T_error_transfer_z, T_error_transfer_y, T_error_transfer_x = act.thrust_error(RCS_thrust_transfer,cg_orbit,angle)
 RCS_error_transfer_x  = act.RCS_torque_to_thrust(T_error_transfer_x,'y',cg_orbit,'error_bottom')
 RCS_error_transfer_y  = act.RCS_torque_to_thrust(T_error_transfer_y,'y',cg_orbit,'error_bottom')
 RCS_error_transfer_z  = act.RCS_torque_to_thrust(T_error_transfer_z,'y',cg_orbit,'error_bottom')
-RCS_error_transfer    = max(RCS_error_transfer_x, RCS_error_transfer_y, RCS_error_transfer_z)
-mp_error_transfer   = act.RCSpropellant(RCS_error_transfer,time_transfer,Isp)
+RCS_error_transfer    = margin * max(RCS_error_transfer_x, RCS_error_transfer_y, RCS_error_transfer_z)
+mp_error_transfer     = act.RCSpropellant(RCS_error_transfer,time_transfer,Isp_mono)
 
-RCS_failure_transfer= act.RCS_torque_to_thrust(RCS_torque_transfer,'y',cg_orbit,'failure') - RCS_thrust_transfer
-mp_failure_transfer = mp_transfer * (RCS_failure_transfer/RCS_thrust_transfer)
+RCS_failure_transfer  = act.RCS_torque_to_thrust(RCS_torque_transfer,'y',cg_orbit,'failure') - RCS_thrust_transfer
+# mp_failure_transfer   = mp_transfer * (RCS_failure_transfer/RCS_thrust_transfer)
 
 
 RCS_torque_rendezvous = act.slew(angle_rendezvous,time_rendezvous,Iy)
-RCS_thrust_rendezvous = act.RCS_torque_to_thrust(RCS_torque_rendezvous,'y',cg_orbit,'normal')
-mp_rendezvous         = 2 * act.RCSpropellant(RCS_thrust_rendezvous,time_rendezvous,Isp)
+RCS_thrust_rendezvous = margin * act.RCS_torque_to_thrust(RCS_torque_rendezvous,'y',cg_orbit,'normal')
+mp_rendezvous         = 6 * 2 * act.RCSpropellant(RCS_thrust_rendezvous,time_rendezvous,Isp_mono)
 
 
 T_error_rendezvous_z, T_error_rendezvous_y, T_error_rendezvous_x = act.thrust_error(RCS_thrust_rendezvous,cg_orbit,angle)
 RCS_error_rendezvous_x  = act.RCS_torque_to_thrust(T_error_rendezvous_x,'y',cg_orbit,'error_bottom')
 RCS_error_rendezvous_y  = act.RCS_torque_to_thrust(T_error_rendezvous_y,'y',cg_orbit,'error_bottom')
 RCS_error_rendezvous_z  = act.RCS_torque_to_thrust(T_error_rendezvous_z,'y',cg_orbit,'error_bottom')
-RCS_error_rendezvous    = max([RCS_error_rendezvous_x, RCS_error_rendezvous_y, RCS_error_rendezvous_z])
-mp_error_rendezvous   = act.RCSpropellant(RCS_error_rendezvous,time_rendezvous,Isp)
+RCS_error_rendezvous    = margin * max([RCS_error_rendezvous_x, RCS_error_rendezvous_y, RCS_error_rendezvous_z])
+mp_error_rendezvous   = act.RCSpropellant(RCS_error_rendezvous,time_rendezvous,Isp_mono)
 
 RCS_failure_rendezvous= act.RCS_torque_to_thrust(RCS_torque_rendezvous,'y',cg_orbit,'failure') - RCS_thrust_rendezvous
-mp_failure_rendezvous = mp_rendezvous * (RCS_failure_rendezvous/RCS_thrust_rendezvous)
+# mp_failure_rendezvous = mp_rendezvous * (RCS_failure_rendezvous/RCS_thrust_rendezvous)
 
 print('rotation',mp_transfer,mp_rendezvous)
 print('rotation',RCS_thrust_transfer,mp_rendezvous)
@@ -482,12 +491,16 @@ print('rotation',RCS_thrust_transfer,mp_rendezvous)
 #=================================================================================================================================================
 # Final thrust and propellant values
 #=================================================================================================================================================
+mp_biprop_fuel= np.sum(mp_biprop_array)
+mp_biprop_ox  = np.sum(mp_biprop_array) * OF_ratio
+mp_total = mp_tot + mp_error + mp_transfer + mp_rendezvous + mp_error_transfer + mp_error_rendezvous + mp_biprop_ox
 
 
 print('==========================================================')
 print('PROPELLANT')
-print('Total propellant used: ', mp_tot)
-print('Redundancy propellant: ', mp_error, mp_engine_failure)
+print('Total propellant used: ', mp_total)
+print('Biprop used (Fuel, Oxidizer): ' , mp_biprop_fuel, mp_biprop_ox)
+print('Redundancy propellant: ', mp_error)
 print('==========================================================')
 print('Thrust for initial and final delta Vs: ', thrust_deltaV)
 print('==========================================================')
@@ -499,17 +512,16 @@ print('Redundancy thrust (engine failure in x,y,z): ', max(RCS_thrust_failure_x)
 print('==========================================================')
 print('ROTATION')
 print('Propellant used (transfer, go-nogo): '      , mp_transfer, mp_rendezvous)
-print('Redundancy propellant (transfer, go-nogo): ', mp_error_transfer + mp_failure_transfer, mp_error_rendezvous + mp_failure_rendezvous)
+print('Redundancy propellant (transfer, go-nogo): ', mp_error_transfer, mp_error_rendezvous)
 print('Thrust (transfer, go-nogo): '               , RCS_thrust_transfer, RCS_thrust_rendezvous)
 print('Redundancy thrust (transfer, go-nogo): '    , RCS_error_transfer + RCS_failure_transfer, RCS_error_rendezvous + RCS_failure_rendezvous)
 print('==========================================================')
-print('Total propellant: '      , mp_tot + mp_error + mp_engine_failure + mp_transfer + mp_rendezvous + mp_error_transfer + mp_failure_transfer + mp_error_rendezvous + mp_failure_rendezvous)
 
 #=====================================================================================================================================================================================================================
 # Plotting
 #=====================================================================================================================================================================================================================
 if plotting:
-    fig, axs = plt.subplots(2, 3, constrained_layout=True)
+    fig, axs = plt.subplots(2, 2, constrained_layout=True)
     fig.suptitle('Relative position wrt target',fontsize=16)
     #Fx vs time
     axs[0][0].plot(t_array,X_array[:,0],color="navy")
@@ -524,16 +536,16 @@ if plotting:
     axs[0][1].set_ylabel("Y position [m]")
 
     #Fx vs time
-    axs[0][2].plot(t_array,X_array[:,2],color="navy")
-    axs[0][2].grid(color="gainsboro")
-    axs[0][2].set_xlabel("Time [s]")
-    axs[0][2].set_ylabel("Z postion [m]")
-
-    #Propellant mass
-    axs[1][0].plot(t_array,mp_array,color="navy")
+    axs[1][0].plot(t_array,X_array[:,2],color="navy")
     axs[1][0].grid(color="gainsboro")
     axs[1][0].set_xlabel("Time [s]")
-    axs[1][0].set_ylabel("Propellant mass [kg]")
+    axs[1][0].set_ylabel("Z postion [m]")
+
+    #Propellant mass
+    axs[1][1].plot(t_array,mp_array,color="navy")
+    axs[1][1].grid(color="gainsboro")
+    axs[1][1].set_xlabel("Time [s]")
+    axs[1][1].set_ylabel("Propellant mass [kg]")
     plt.show()
 
     fig, axs = plt.subplots(2, 3, constrained_layout=True)

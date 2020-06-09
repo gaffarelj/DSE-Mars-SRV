@@ -3,14 +3,18 @@ sys.path.append('../astrodynamics')
 import mars_standard_atmosphere as MSA
 import disturbances as dist
 import actuator_properties as act
+import reentry_control as rty
+import rendez_vous as rvs
 
 import numpy as np
 from matplotlib import pyplot as plt
 
+margin = 2.
+
 #Initial slew values
 #Assume spin acceleration/deceleration of 5%, coast time of 90%
 angle = 20 * np.pi / 180
-slew_duration = 20 #s
+slew_duration = 30 #s
 
 #Vehicle constants
 length = act.length_body
@@ -22,7 +26,7 @@ cg_orbit = act.z_cg_orbit
 error_angle = 2 * np.pi / 180
 
 #propellant properties
-Isp = act.Isp
+Isp = 140
 
 
 def slew_ascent(slew_angle,slew_duration,I,cg):
@@ -33,9 +37,9 @@ def slew_ascent(slew_angle,slew_duration,I,cg):
     spin_dec  = -spin_acc
 
     RCS_torque = (I * spin_acc)
-    RCS_thrust = act.RCS_torque_to_thrust(RCS_torque,"y",cg,'normal')
+    RCS_thrust = margin * act.RCS_torque_to_thrust(RCS_torque,"y",cg,'normal')
     RCS_impulse =  RCS_thrust * (slew_acc_duration + slew_dec_duration)
-    Mp = act.RCSpropellant(RCS_impulse,slew_duration,Isp)
+    Mp = RCS_impulse / (act.Isp * 9.80665)
     return RCS_torque, RCS_thrust, RCS_impulse, Mp
 
 RCS_torque, RCS_thrust, RCS_impulse, Mp = slew_ascent(angle,slew_duration,Iy,cg_orbit)
@@ -49,12 +53,16 @@ RCS_error    = max([RCS_error_x,RCS_error_y,RCS_error_z])
 mp_error     = act.RCSpropellant(RCS_error,slew_duration,Isp)
 
 RCS_failure  = act.RCS_torque_to_thrust(RCS_torque,'y',cg_orbit,'failure') - RCS_thrust
-mp_failure   = Mp * (RCS_failure/RCS_thrust)
+# mp_failure   = Mp * (RCS_failure/RCS_thrust)
 
 print('thrust per engine:',RCS_thrust_max)
 print('Impulse per RCS engine:', RCS_impulse)
 print('Total propellant needed:', Mp)
 
 print('Redundancy thrust per engine:', RCS_error + RCS_failure)
-print('Redundancy propellant:', mp_error + mp_failure)
-print('Total propellant needed:', Mp + mp_error + mp_failure)
+print('Redundancy propellant:', mp_error)
+print('Total redundant propellant needed:', Mp + mp_error)
+
+
+Mpropellant_total = rvs.mp_total + Mp + mp_error + rty.mp
+print(Mpropellant_total)
