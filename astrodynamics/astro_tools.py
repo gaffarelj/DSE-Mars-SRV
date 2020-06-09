@@ -193,7 +193,7 @@ class Motion:
     def forward_euler(self, timestep):
         flight = [self.initial]
         time = [0]
-        self.a_s, self.q_s, self.mach, self.pitch, self.roll, self.heatflux, self.temperature, self.density = [], [], [], [], [], [], [], []
+        self.a_s, self.q_s, self.mach, self.pitch, self.roll, self.heatflux, self.temperature, self.density, self.p2 = [], [], [], [], [], [], [], [], []
         Mx = 0
         My = 0
         Mz = 0
@@ -230,7 +230,7 @@ class Motion:
             q = self.dynamicpressure(V, r)
             altitude = r - self.Planet.r
             mach = V/np.sqrt(atm.gamma*atm.R*atm.get_temperature(altitude))
-            #postshock_pressure = self.normalshock(r, mach)
+            postshock_pressure = self.normalshock(r, mach)[0]
             cl,cd = cl_cd(mach, -np.degrees(alpha))
             
 
@@ -283,12 +283,13 @@ class Motion:
             self.heatflux.append(q_in)
             self.temperature.append(t2)
             self.density.append(rho2)
+            self.p2.append(postshock_pressure)
 
             flight.append(new_state)
             time.append(time[-1] + timestep)
             state = new_state
 
-        self.a_s.append(a), self.q_s.append(q), self.mach.append(mach), self.pitch.append(pitching_moment), self.roll.append(rolling_moment), self.heatflux.append(q_in), self.temperature.append(t2), self.density.append(rho2)
+        self.a_s.append(a), self.q_s.append(q), self.mach.append(mach), self.pitch.append(pitching_moment), self.roll.append(rolling_moment), self.heatflux.append(q_in), self.temperature.append(t2), self.density.append(rho2), self.p2.append(postshock_pressure)
         return np.array(flight), time
 
 class pc():
@@ -561,10 +562,10 @@ f_cd = interpolate.interp2d(alpha_list, mach_list, cd_data[:, 1:], kind='cubic')
 def cl_cd(mach,alpha):
     if mach > 20:
         mach = 20
-    if alpha < 50:
-        alpha = 55
+    if alpha < 40:
+        alpha = 40
     if alpha > 60:
-        alpha = 55
+        alpha = 60
     if mach < 1.1:
         mach = 1.1
     col = np.where(alpha_list == round(alpha,1))[0][0]+1
