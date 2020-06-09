@@ -90,34 +90,37 @@ class vector_func:
         return np.array([eq(*x) for eq in self.main])
             
 class EKF:
-    def __init__(self,f,h,Q,R,x0,comp = "an", h_val=0,n = 1):
+    def __init__(self,f,h,Q,R,x0,fcomp = "an",hcomp = "an", h_val=0,n = 1):
         self.f = f
         self.n = n
-        self.comp = comp
-        if comp == "an":
+        self.fcomp = fcomp
+        self.hcomp = hcomp
+        if self.fcomp == "an":
             self.x_var = f.var
             self.f.lamb()
             self.n = len(f.sym)
-        self.J = Jacobian(f,comp,h_val,n)
+        self.Jf = Jacobian(f,self.fcomp,h_val,n)
         self.x = x0
         self.h = h
-        self.h.lamb()
+        if self.hcomp == "an":
+            self.h.lamb()
+        self.Jh = Jacobian(h,self.hcomp,h_val,n)
         self.P = R
         self.Q = Q
         self.R = R
 
 
     def step(self,ig=0):
-        Jn  = self.J.eval(self.x,ig)
-        if self.comp == "an":
+        Jn  = self.Jf.eval(self.x,ig)
+        if self.fcomp == "an":
             self.x = self.f.eval(self.x)
-        elif self.comp == "num":
+        elif self.fcomp == "num":
             self.x = self.f(self.x,ig)
         self.P = Jn*self.P*np.transpose(Jn) + self.Q
 
 
     def corr(self,z,ig=0):
-        Jn  = self.J.eval(self.x, ig)
+        Jn  = self.Jh.eval(self.x, ig)
         self.K = self.P*Jn*npl.inv(Jn*self.P*np.transpose(Jn)+self.R)
 
         self.Pn = (np.eye(self.n)-self.K*Jn)*self.P

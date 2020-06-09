@@ -119,4 +119,4 @@ def dev(plot=False):
         plt.show()
     return (l_ref[-1]-l_out[-1])[:6]*10**3
 
-#dev(True)
+dev(True)
