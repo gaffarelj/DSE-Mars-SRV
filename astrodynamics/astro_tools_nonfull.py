@@ -43,7 +43,7 @@ class Planet:
 		return - np.arctan(dydx)
 
 class Motion:
-	def __init__(self, inital_conditions, roll_angle, alpha, S, mass, cl, cd, Planet, parachutes=[], print_deploy=False, prop_reentry=[], end_t=float("Inf")):
+	def __init__(self, inital_conditions, roll_angle, alpha, S, mass, cl, cd, Planet, parachutes=[], print_deploy=False, prop_reentry=[], end_t=float("Inf"), back_orbit=[]):
 		self.initial = inital_conditions
 		self.mu = roll_angle
 		self.alpha = alpha
@@ -58,6 +58,7 @@ class Motion:
 		self.print_deploy = print_deploy
 		self.prop_reentry = prop_reentry
 		self.end_time = end_t
+		self.back_orbit = back_orbit
 
 	def dynamicpressure(self, V, r):
 		altitude = r - self.Planet.r
@@ -105,7 +106,7 @@ class Motion:
 		flight = [self.initial]
 		time = [0]
 		self.a_s, self.q_s = [], []
-		apogee, entry_burn = False, True
+		apogee, entry_burn, next_burn_back, all_burn_back, anti_pogee = False, True, False, False, False
 		state = np.zeros(6)
 		while flight[-1][3] > self.Planet.r and self.end_time > time[-1]:
 			if self.end_time != float("Inf"):
@@ -117,11 +118,19 @@ class Motion:
 			r = flight[-1][3]
 			tau = flight[-1][4]
 			delta = flight[-1][5]
+			f = 0.8
 			# Entry burn
-			if apogee and len(self.prop_reentry) == 2 and q > self.prop_reentry[1] and entry_burn:
+			if apogee and len(self.prop_reentry) == 2 and (q > self.prop_reentry[1] and self.prop_reentry[1] != 0) and entry_burn:
 				V -= self.prop_reentry[0]
 				entry_burn = False
-
+			elif apogee and len(self.back_orbit) == 2 and  (state[3]-self.Planet.r <= self.back_orbit[1] and self.back_orbit[1] != 0) and not next_burn_back:
+				V += self.back_orbit[0]*f
+				next_burn_back = True
+				apogee = False
+				t1 = time[-1]
+			if next_burn_back and not all_burn_back and anti_pogee and time[-1] > t1+3600:
+				V += self.back_orbit[0]*(1-f)
+				all_burn_back = True
 			# Parachute deployment
 			chute_drag_area = 0
 			if len(self.chutes) > 0:
@@ -155,7 +164,8 @@ class Motion:
 			new_state[5] = delta + timestep * self.ddeltadt(V, r, gamma, xi)
 			if not apogee and new_state[3] < state[3]:
 				apogee = True
-
+			if not anti_pogee and new_state[3] < state[3] and next_burn_back:
+				anti_pogee = True
 			self.a_s.append(a)
 			self.q_s.append(q)
 			flight.append(new_state)

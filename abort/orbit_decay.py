@@ -11,6 +11,7 @@ def get_h(planet, V):
 def get_V(planet, h):
 	return np.sqrt(planet.mu / (planet.r + h))
 
+
 mars = AT.Planet()
 # 175 km --> 108.1 hrs (4.4 days) --> 4 days
 h0 = 175*1e3
