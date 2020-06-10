@@ -219,10 +219,10 @@ V_phasing=3272.466             #[m/s]
 ################################
 # related to the vehicle 	   #
 ################################
-tb=148.7274456555216		   #[s] burn time of the engines
-initial_tilt=3.2*np.pi/180     #[rad] initial tilt off the vertical axis
+tb=489.5180709799191		   #[s] burn time of the engines
+initial_tilt=0.51*np.pi/180     #[rad] initial tilt off the vertical axis
 #Propulsive Parameters
-Isp= 489.518071                #[s] LOX-LCH4 ##CAN BE UPDATED##
+Isp= 383.250565907662          #[s] LOX-LCH4 ##CAN BE UPDATED##
 ceff=get_ceff(Isp)             #[m/s]
 n=9                            #[-] number of engines             ##CAN BE UPDATED##
 De=1.35049466031671            #[m] Diameter of an engine         ##CAN BE UPDATED##
@@ -234,14 +234,14 @@ lcap=5.16	                   #[m] length of the capsule          ##CAN BE UPDATE
 Acap=22.144                    #[m^2] lateral cross-sectional area of capsule (Assuming parabolic form) ##CAN BE UPDATED##
 LDratio=3.2                    #[-] Length-over-Diameter ratio     ##CAN BE UPDATED##
 ltot=LDratio*d                 #[m] overall length of the vehicle 
-leng=2.7	                   #[m] lenght of engine               ##CAN BE UPDATED##
+leng=3  	                   #[m] lenght of engine               ##CAN BE UPDATED##
 lcyl=ltot-lcap-leng            #[m] length of everything below the capsule
 Acyl=lcyl*d                    #[m^2] lateral cross-sectional area of cylyinder below capsule
 xcg0=5.359280965 			   #[m] c.g. position on ground from base of the cylinder ##CAN BE UPDATED##
-t_xcg0=0
+t_xcg0=0                       #[s] time at which xcg0 happens
 xcgm=5.593899812               #[m] c.g. position at mdot max point ##CAN BE UPDATED##
 # print this to get the time at which mdot happens others["time"][list(others["mdot"]).index(np.max(others["mdot"]))]
-t_xcgm=52.399999999998144
+t_xcgm=131.78999999991152      #[s] time at which xcg of max fuel flow happens
 xcge=5.631312434               #[m] c.g. position at end of ascent from base of the cylinder ##CAN BE UPDATED##
 t_xcge=tb
 Iy0=9459701.874                #[kg*m^2] MMOI x on ground
@@ -309,6 +309,7 @@ TW0=1.5
 TWe=4
 mdot_list=[]
 ac=[]
+Fthrust=[]
 xcp=[get_xcp(lcap,lcyl,ltot,xcg0,Acap,Acyl,delta_cg(t[-1],xcg0,t_xcg0,xcgm,t_xcgm,xcge,t_xcge,tb))]          #[m] x-location of center of pressure from the c.g. (i.e. the origin)
 #========================================================================================================================================================================================================================================================
 #   Simulation
@@ -325,6 +326,9 @@ while Rnorm[-1]<Rmars+h_phasing:
 	Cl,Cd=SS_aerodynamics_coefficients(Mach,0)
 	q=0.5*rho*Vnorm[-1]*Vnorm[-1]
 	g=get_g(mu,Req,Rmars,Rnorm[-1]-Rmars,delta,J2)
+	print()
+	print("Mach is: ",Mach)
+	print("time is: ",t[-1])
 	#magnitude of the thrust force
 	if t[-1]>=tb:
 		Ftmag=0
@@ -333,6 +337,7 @@ while Rnorm[-1]<Rmars+h_phasing:
 		TWratio=TWlinear(t[-1],0,tb,TW0,TWe)
 		Ftmag=(TWratio*M[-1]*g)
 		mdot=(TWratio*M[-1]*g-Ae*(pe-p))/ceff
+	Fthrust.append(Ftmag)
 	mdot_list.append(mdot)
     ########################################
 	# Compute external Forces              #
@@ -432,21 +437,26 @@ Mp=np.sum(np.array(mdot_list)*dt)
 DeltaV = ceff * np.log( M[0] / ( M[0] - Mp ) )
 ac=np.array(ac)
 am=[]
+
 #Aerodynamic moment to be counteracted
 for i in range(len(Rnorm)):
 	ami=0.5*Vnorm[i]*Vnorm[i]*get_rho(get_p(Rnorm[i]-Rmars),get_T(Rnorm[i]-Rmars),Rgas)*S*0.05
 	am.append(ami)
+
 	
-	
-am=np.array(am)								 
+am=np.array(am)				 
 t=np.array(t)	
 ac=np.array(ac)	
 Rnorm=np.array(Rnorm)	
-Vnorm=np.array(Vnorm)					 
+Vnorm=np.array(Vnorm)	
+Ft=np.array(Fthrust)				 
 #correctly format R to plot it together with mars
 X=[item[0] for item in R]
 Y=[item[1] for item in R]
 Z=[item[2] for item in R]
+
+
+
 #========================================================================================================================================================================================================================================================
 #   Plotting
 #========================================================================================================================================================================================================================================================
@@ -488,6 +498,16 @@ if plotting:
     plt.ylabel("Velocity [km/s]")
     plt.show()
 		
+    #t vs Thrust
+    plt.figure()
+    plt.plot(t[:-1],Ft/10**3,color="maroon") 
+    plt.grid(color="gainsboro")
+    plt.title("Time vs Thrust")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Thrust [kN]")
+    plt.show()
+	
+
 	
 	#Plot for visualizing how MMOI and cg shift along flight. Also, the parabolic fit is added.
     fig, ax1 = plt.subplots()
