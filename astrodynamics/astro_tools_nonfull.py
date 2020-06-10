@@ -160,8 +160,8 @@ class Motion:
 			new_state[1] = gamma + timestep * self.dgammadt(g, D, L, V, r, gamma, delta, xi)
 			new_state[2] = xi + timestep * self.dxidt(g, L, V, r, gamma, delta, xi)
 			new_state[3] = r + timestep * self.drdt(V, gamma)
-			new_state[4] = tau + timestep * self.dtaudt(V, r, gamma, delta, xi)
-			new_state[5] = delta + timestep * self.ddeltadt(V, r, gamma, xi)
+			new_state[4] = tau + timestep * self.dtaudt(V, r, gamma, delta, xi)	# long
+			new_state[5] = delta + timestep * self.ddeltadt(V, r, gamma, xi)	# lat
 			if not apogee and new_state[3] < state[3]:
 				apogee = True
 			if not anti_pogee and new_state[3] < state[3] and next_burn_back:

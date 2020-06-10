@@ -9,6 +9,7 @@ import mars_standard_atmosphere as atm
 import thermo
 import csv
 from scipy import interpolate
+import sys, os
 
 
 class Planet:
@@ -551,8 +552,8 @@ def plot_from_csv(file, x, y):
     plt.show()
 
 
-cl_data = np.genfromtxt('cl_standard_config.csv', delimiter=";", dtype=None)
-cd_data = np.genfromtxt('cd_standard_config.csv', delimiter=";", dtype=None)
+cl_data = np.genfromtxt(os.path.dirname(__file__)+'\cl_standard_config.csv', delimiter=";", dtype=None)
+cd_data = np.genfromtxt(os.path.dirname(__file__)+'\cd_standard_config.csv', delimiter=";", dtype=None)
 alpha_list = np.round(cl_data[0][1:],1) 
 mach_list = np.round(cl_data[:,0],1)
 f_cl = interpolate.interp2d(alpha_list, mach_list, cl_data[:, 1:], kind='cubic')
