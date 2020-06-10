@@ -35,18 +35,17 @@ def run_ascent(max_M=7, min_q=100):
 	plt.show()
 	return V_T, gamma, h_T, LAS_T
 
-def run_motion(V0, gamma, h0, chutes=[], print_deploy=False, prop_reentry=[]):
+def run_motion(V0, gamma, h0, chutes=[], print_deploy=False, prop_reentry=[], aoa=np.radians(-5), vehicle_mass=14200):
 	mars = AT.Planet()
 	state = np.zeros(6)
 	state[0] = V0						# velocity
 	state[1] = np.radians(gamma)		# flight path angle
 	state[2] = np.radians(gamma)		# heading angle
-	state[3] = mars.r + h0				# radius 
+	state[3] = mars.r + h0				# radius
 	state[4] = np.radians(-27.088)      # longitude 25.5
 	state[5] = np.radians(4.51)         # latitude 42.5
 
 	roll_angle = np.radians(0)
-	aoa = np.radians(-5)
 
 	cd = 1.2
 	cl = 0.23
@@ -54,7 +53,7 @@ def run_motion(V0, gamma, h0, chutes=[], print_deploy=False, prop_reentry=[]):
 
 	motion = AT.Motion(state, roll_angle, aoa, S, vehicle_mass, cl, cd, mars, chutes, print_deploy, prop_reentry)
 	flight, time = motion.forward_euler(0.1)
-	downrange = (np.fabs(flight[4][-1])-np.fabs(state[4]))*mars.r, (np.fabs(flight[5][-1])-np.fabs(state[5]))*mars.r
+	downrange = (np.fabs(flight[4][-1]) - np.fabs(state[4])) * mars.r, (np.fabs(flight[5][-1]) - np.fabs(state[5])) * mars.r
 	if print_deploy:
 		print(downrange)
 	return time, np.array(motion.a_s), flight[:,0], np.array(motion.q_s), flight[:,3] - mars.r, flight[:,1], motion.mass
@@ -66,47 +65,47 @@ def def_chutes(times):
 	return [drogue, main]
 
 def dV(Isp, m0, mf):
-	return 9.81*Isp*np.log(m0/(m0-mf))
+	return 9.81 * Isp * np.log(m0 / (m0 - mf))
 
+if __name__ == "__main__":
+	#V_T, gamma, h_T, LAS_T = run_ascent()
+	#print(V_T, gamma, h_T, LAS_T)
+	f = 1
+	V_T, gamma, h_T, t_T = 1427.87 / f, 48.02 / f, 43497.6 / f, 79.91 / f
+	#V_T, gamma, h_T, t_T = 0, 0, 0, 0
 
-#V_T, gamma, h_T, LAS_T = run_ascent()
-#print(V_T, gamma, h_T, LAS_T)
-f=1
-V_T, gamma, h_T, t_T = 1427.87/f, 48.02/f, 43497.6/f, 79.91/f
-#V_T, gamma, h_T, t_T = 0, 0, 0, 0
+	m_fuel_tot = 2336
+	m_fuel_abort = 1338.66
+	Isp_abort_opt = 22100
+	Isp_abort_vac = 259.16
+	m = 14200
+	vehicle_mass = m - m_fuel_abort
+	dV_abort = dV(Isp_abort_opt, m, m_fuel_abort)
+	h_T += dV_abort * 3
+	#print(dV_abort, h_T)
 
-m_fuel_tot = 2000
-m_fuel_abort = 1176.84
-Isp_abort_opt = 221.2
-Isp_abort_vac = 259.38
-m = 12500
-vehicle_mass = m - m_fuel_abort
-dV_abort = dV(Isp_abort_opt, m, m_fuel_abort)
-h_T += dV_abort*3
-#print(dV_abort, h_T)
-
-# Dynamic pressures at which the parachutes will be deployed
-q_s = [20, 350]
-chute_ts = [9999, 9999]
-for i, q_chute in enumerate(q_s):
-	print(f"Finding deploy time for parachute {i+1} (at q={q_chute} Pa).")
-	chutes = def_chutes(chute_ts)
-	t, a, v, q, h, angle, m = run_motion(V_T + dV_abort, gamma, h_T, chutes)
-	Vy = v*np.sin(angle)
-	# Index for which Vy = 0
-	v_0_i = np.where(Vy <= 0)[0][0]
-	# Time at which q = q_chute
-	chute_ts[i] = t[np.where(q[v_0_i:] >= q_chute)[0][0] + v_0_i]
+	# Dynamic pressures at which the parachutes will be deployed
+	q_s = [20, 350]
+	chute_ts = [9999, 9999]
+	for i, q_chute in enumerate(q_s):
+		print(f"Finding deploy time for parachute {i+1} (at q={q_chute} Pa).")
+		chutes = def_chutes(chute_ts)
+		t, a, v, q, h, angle, m = run_motion(V_T + dV_abort, gamma, h_T, chutes, vehicle_mass=vehicle_mass)
+		Vy = v * np.sin(angle)
+		# Index for which Vy = 0
+		v_0_i = np.where(Vy <= 0)[0][0]
+		# Time at which q = q_chute
+		chute_ts[i] = t[np.where(q[v_0_i:] >= q_chute)[0][0] + v_0_i]
 	
-chutes = def_chutes(chute_ts)
-print("Parachutes deployment times are at ", ", ".join([str(round(t, 2)) for t in chute_ts]), "[s]")
-t, a, v, q, h, angle, final_m = run_motion(V_T + dV_abort, gamma, h_T, chutes, print_deploy=True)
+	chutes = def_chutes(chute_ts)
+	print("Parachutes deployment times are at ", ", ".join([str(round(t, 2)) for t in chute_ts]), "[s]")
+	t, a, v, q, h, angle, final_m = run_motion(V_T + dV_abort, gamma, h_T, chutes, print_deploy=True, vehicle_mass=vehicle_mass)
 
-dV_land = dV(Isp_abort_vac, final_m, m_fuel_tot-m_fuel_abort)
+	dV_land = dV(Isp_abort_vac, final_m, m_fuel_tot - m_fuel_abort)
 
-print(f"Maximum acceleration was {round(min(a)/9.81, 2)} g0.")
-print(f"Landing with velocity of {round(v[-1], 2)} m/s, with {round(dV_land, 2)} m/s for propulsive landing.")
+	print(f"Maximum acceleration was {round(min(a)/9.81, 2)} g0.")
+	print(f"Landing with velocity of {round(v[-1], 2)} m/s, with {round(dV_land, 2)} m/s for propulsive landing.")
 
-#AT.plot_dual(t, q, v, 'Time [s]', 'Dyn. Pressure [Pa]', 'Velocity [m/s]')
-AT.plot_dual(t, q, [ht/1000 for ht in h], 'Time [s]', 'Dyn. Pressure [Pa]', 'Altitude [km]')
-AT.plot_dual(t, [at/9.81 for at in a], v, 'Time [s]', 'Acceleration [g0]', 'Velocity [m/s]')
+	#AT.plot_dual(t, q, v, 'Time [s]', 'Dyn.  Pressure [Pa]', 'Velocity [m/s]')
+	AT.plot_dual(t, q, [ht / 1000 for ht in h], 'Time [s]', 'Dyn. Pressure [Pa]', 'Altitude [km]')
+	AT.plot_dual(t, [at / 9.81 for at in a], v, 'Time [s]', 'Acceleration [g0]', 'Velocity [m/s]')
