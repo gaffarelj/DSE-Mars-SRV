@@ -313,7 +313,6 @@ xcp=[get_xcp(lcap,lcyl,ltot,xcg0,Acap,Acyl,delta_cg(t[-1],xcg0,t_xcg0,xcgm,t_xcg
 #========================================================================================================================================================================================================================================================
 #   Simulation
 #========================================================================================================================================================================================================================================================
-
 while Rnorm[-1]<Rmars+h_phasing:
 	########################################
 	# Compute atmospheric properties at i  #
@@ -374,7 +373,7 @@ while Rnorm[-1]<Rmars+h_phasing:
 	Rnew= np.array(R[-1]).reshape(3,1) + 0.5 * dt * (np.array(V[-1]).reshape(3,1)+np.array(V[-2]).reshape(3,1))
 	R.append([ float(Rnew[0]), float(Rnew[1]), float(Rnew[2]) ])
 	Rnorm.append(np.linalg.norm(R[-1])) 
-	print(Rnorm[-1]-Rmars)
+	#print(Rnorm[-1]-Rmars)
 	#print(Rnorm[-1]-Rmars)
 	#print(Rnorm[-1])
     ########################################
@@ -435,13 +434,15 @@ ac=np.array(ac)
 am=[]
 #Aerodynamic moment to be counteracted
 for i in range(len(Rnorm)):
-	ami=0.5*Vnorm[i]*Vnorm[i]*get_rho(get_p(Rnorm[i]),get_T(Rnorm[i]),Rgas)*S*0.05
+	ami=0.5*Vnorm[i]*Vnorm[i]*get_rho(get_p(Rnorm[i]-Rmars),get_T(Rnorm[i]-Rmars),Rgas)*S*0.05
 	am.append(ami)
+	
 	
 am=np.array(am)								 
 t=np.array(t)	
 ac=np.array(ac)	
-Rnorm=np.array(Rnorm)						 
+Rnorm=np.array(Rnorm)	
+Vnorm=np.array(Vnorm)					 
 #correctly format R to plot it together with mars
 X=[item[0] for item in R]
 Y=[item[1] for item in R]
@@ -467,7 +468,7 @@ if plotting:
     #t vs Ft
     ac_max=np.ones((len(ac),1))*4
     plt.figure()
-    plt.plot(t[:-1],ac*3.71/9.81,color="lime")
+    plt.plot(t[:-1],ac*3.71/9.81,color="hotpink")
     plt.plot(t[:-1],ac_max,linestyle=":",color="firebrick")    
     plt.grid(color="gainsboro")
     plt.title("Time vs Acceleration")
@@ -479,12 +480,12 @@ if plotting:
     #t vs V
     Vreq=np.ones((len(Vnorm),1))*V_phasing
     plt.figure()
-    plt.plot(t[:-1],ac*3.71/9.81,color="lime")
-    plt.plot(t[:-1],Vreq,linestyle=":",color="firebrick")    
+    plt.plot(t,Vnorm/10**3,color="blue")
+    plt.plot(t,Vreq/10**3,linestyle=":",color="firebrick")    
     plt.grid(color="gainsboro")
-    plt.title("Time vs Acceleration")
+    plt.title("Time vs Velocity")
     plt.xlabel("Time [s]")
-    plt.ylabel("Acceleration [g_earth's]")
+    plt.ylabel("Velocity [km/s]")
     plt.show()
 		
 	
