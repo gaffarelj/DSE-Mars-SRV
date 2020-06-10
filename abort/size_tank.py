@@ -62,17 +62,17 @@ class tank():
 #r, L, t, m = O2_tank.select(m=0.825)
 #print(r, L, t, m)
 
-He_tank = tank(0.01, 1, 0.348, 30e6)
+He_tank = tank(0.01, 1, 0.421, 30e6)
 He_tank.plot()
 r, L, t, m = He_tank.select(L_r=4.25)
 print(r, L, t, m)
 
-#Hydrazine_tank = tank(0.01, 1, 0.627, 8.75e6)
+#Hydrazine_tank = tank(0.01, 1, 0.82974, 8.75e6)
 #Hydrazine_tank.plot()
 #r, L, t, m = Hydrazine_tank.select(L_r=4.25)
 #print(r, L, t, m)
 
-#H2O2_tank = tank(0.01, 1, 0.9498, 8.75e6)
+#H2O2_tank = tank(0.01, 1, 1.0793, 8.75e6)
 #H2O2_tank.plot()
 #r, L, t, m = H2O2_tank.select(L_r=4.25)
 #print(r, L, t, m)

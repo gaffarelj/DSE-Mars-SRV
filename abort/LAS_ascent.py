@@ -54,6 +54,9 @@ def run_motion(V0, gamma, h0, chutes=[], print_deploy=False, prop_reentry=[]):
 
 	motion = AT.Motion(state, roll_angle, aoa, S, vehicle_mass, cl, cd, mars, chutes, print_deploy, prop_reentry)
 	flight, time = motion.forward_euler(0.1)
+	downrange = (np.fabs(flight[4][-1])-np.fabs(state[4]))*mars.r, (np.fabs(flight[5][-1])-np.fabs(state[5]))*mars.r
+	if print_deploy:
+		print(downrange)
 	return time, np.array(motion.a_s), flight[:,0], np.array(motion.q_s), flight[:,3] - mars.r, flight[:,1], motion.mass
 
 def def_chutes(times):
