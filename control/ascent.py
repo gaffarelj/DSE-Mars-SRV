@@ -1,7 +1,7 @@
 import sys
 sys.path.append('../astrodynamics')
 import mars_standard_atmosphere as MSA
-from DYNAS import am,t_array
+import DYNAS as dns
 import disturbances as dist
 import actuator_properties as act
 # import reentry_control as rty
@@ -90,7 +90,9 @@ RCS_torque, RCS_thrust, RCS_impulse, Mp = slew_ascent(angle,slew_duration,Iy,cg_
 #========================================================================
 # Aerodynamic pitch control
 #========================================================================
-
+am = dns.am
+tm = dns.t
+print('moment',max(am),am,'time',tm)
 
 #=====================================================================================================================================================================================================================
 #Errors
@@ -125,16 +127,17 @@ mp_error     = act.RCSpropellant(RCS_error,slew_duration,Isp)
 
 # RCS_failure  = act.RCS_torque_to_thrust(RCS_torque,'y',cg_orbit,'failure') - RCS_thrust
 # mp_failure   = Mp * (RCS_failure/RCS_thrust)
-print('thrust per engine:',RCS_torque)
-print('thrust per engine:',RCS_thrust)
-print('Impulse per RCS engine:', RCS_impulse)
-print('Total propellant needed:', Mp + mp_error)
-print('REDUNDANCY')
-print('Misalignment torque: ', T_error_x-Tgx-Tsp-Tm,T_error_y-Tgy,T_error_z)
-print('Disturbance torque: ', Tgx+Tsp+Tm,Tgy,0)
-print('Redundancy thrust per engine:', RCS_error)
-print('Redundancy propellant:', mp_error)
-print('Total redundant propellant needed:', mp_error)
+
+# print('thrust per engine:',RCS_torque)
+# print('thrust per engine:',RCS_thrust)
+# print('Impulse per RCS engine:', RCS_impulse)
+# print('Total propellant needed:', Mp + mp_error)
+# print('REDUNDANCY')
+# print('Misalignment torque: ', T_error_x-Tgx-Tsp-Tm,T_error_y-Tgy,T_error_z)
+# print('Disturbance torque: ', Tgx+Tsp+Tm,Tgy,0)
+# print('Redundancy thrust per engine:', RCS_error)
+# print('Redundancy propellant:', mp_error)
+# print('Total redundant propellant needed:', mp_error)
 
 
 # Mpropellant_total = rvs.mp_total + Mp + mp_error + rty.mp
