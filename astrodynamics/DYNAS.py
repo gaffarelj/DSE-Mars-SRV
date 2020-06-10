@@ -215,6 +215,7 @@ delta=41*np.pi/180             #[rad] latitude of the Martian base
 tau=23.5*np.pi/180             #[rad] east longitude of the Martian base
 h0=-3*10**3					   #[m] altitude wrt R of Mars base
 h_phasing=609.74*10**3         #[m] altitude of the phasing orbit
+V_phasing=3272.466             #[m/s]
 ################################
 # related to the vehicle 	   #
 ################################
@@ -228,7 +229,7 @@ De=1.35049466031671            #[m] Diameter of an engine         ##CAN BE UPDAT
 Ae=np.pi/4*De*De               #[m] Exit area of engine
 pe=6077.910186177842           #[Pa] exit pressure of exhaust gasses ##CAN BE UPDATED##
 #Structural Parameters
-d=6                          #[m] diameter of the vehicle assuming cylinder ##CAN BE UPDATED##
+d=6                            #[m] diameter of the vehicle assuming cylinder ##CAN BE UPDATED##
 lcap=5.16	                   #[m] length of the capsule          ##CAN BE UPDATED##
 Acap=22.144                    #[m^2] lateral cross-sectional area of capsule (Assuming parabolic form) ##CAN BE UPDATED##
 LDratio=3.2                    #[-] Length-over-Diameter ratio     ##CAN BE UPDATED##
@@ -272,7 +273,7 @@ if updateMOI:
 #   Initial Conditions  
 #========================================================================================================================================================================================================================================================
 t=[0]					       #[s] time of flight 
-dt=0.01					       #[s] step size
+dt=0.1					       #[s] step size
 #Mass
 M=[202413.4011]
 
@@ -281,7 +282,7 @@ r0=Rmars+h0+100                    #[m] initial radial distance
 R=[[ r0*np.cos(delta)*np.cos(tau), r0*np.cos(delta)*np.sin(tau), r0*np.sin(delta)]]
 Rnorm=[np.linalg.norm(R[-1])]
 #initial attitude
-angles=[[-np.pi/2, np.pi/2-initial_tilt, 0]]        #Euler angles. In order of appearance in the list: psi(yaw angle), theta(pitch angle), phi(roll angle)
+angles=[[-np.pi/2, np.pi/2-initial_tilt, -np.pi/2]]        #Euler angles. In order of appearance in the list: psi(yaw angle), theta(pitch angle), phi(roll angle)
 
 #Velocities [in Fc]: vehicle has initial velocity due to rotation of Mars
 #free velocities from Mars rotation
@@ -307,7 +308,7 @@ gamma0=(90-initial_tilt)*np.pi/180
 TW0=1.5
 TWe=4
 mdot_list=[]
-
+ac=[]
 xcp=[get_xcp(lcap,lcyl,ltot,xcg0,Acap,Acyl,delta_cg(t[-1],xcg0,t_xcg0,xcgm,t_xcgm,xcge,t_xcge,tb))]          #[m] x-location of center of pressure from the c.g. (i.e. the origin)
 #========================================================================================================================================================================================================================================================
 #   Simulation
@@ -360,6 +361,7 @@ while Rnorm[-1]<Rmars+h_phasing:
 	# Compute Accelerations                #
 	########################################	
 	acc=accel(M[-1],Fext,Omega[-1],V[-1],R[-1])
+	ac.append(float(np.linalg.norm(acc)))
     ########################################
 	# Compute Velocities                   #
 	########################################
@@ -429,15 +431,17 @@ while Rnorm[-1]<Rmars+h_phasing:
 Mp=np.sum(np.array(mdot_list)*dt)
 #delta V needed
 DeltaV = ceff * np.log( M[0] / ( M[0] - Mp ) )
-
+ac=np.array(ac)
 am=[]
 #Aerodynamic moment to be counteracted
 for i in range(len(Rnorm)):
-	ami=0.5*Vnorm*Vnorm*get_rho(get_p(Rnorm[i]),get_T(Rnorm[i]),Rgas)*S*0.05
+	ami=0.5*Vnorm[i]*Vnorm[i]*get_rho(get_p(Rnorm[i]),get_T(Rnorm[i]),Rgas)*S*0.05
 	am.append(ami)
 	
 am=np.array(am)								 
-								 
+t=np.array(t)	
+ac=np.array(ac)	
+Rnorm=np.array(Rnorm)						 
 #correctly format R to plot it together with mars
 X=[item[0] for item in R]
 Y=[item[1] for item in R]
@@ -448,68 +452,95 @@ Z=[item[2] for item in R]
 
 if plotting:
 	
-	plt.plot(t,np.array(Rnorm)-Rmars)
-	plt.show()
-	
-	
-	fig = plt.figure()
-	ax = fig.add_subplot(111, projection='3d')
-	
-	# Make data
-	r = Rmars
-	pi = np.pi
-	cos = np.cos
-	sin = np.sin
-	phi, theta = np.mgrid[0.0:pi:100j, 0.0:2.0*pi:100j]
-	x1 = r*sin(phi)*cos(theta)
-	y1 = r*sin(phi)*sin(theta)
-	z1 = r*cos(phi)
-	
-	#phasing orbit
-	"""
-	rph=Rmars+h_phasing
-	xph=rph*np.cos(theta)
-	yph=rph*np.sin(theta)*np.cos(-delta)
-	zph=-rph*np.sin(theta)*np.sin(-delta)
-    """
-	
-	# Plot the surface
-	plt.gca().patch.set_facecolor('white')
-	ax.w_xaxis.set_pane_color((0.8, 0.8, 0.8, 1.0))
-	ax.w_yaxis.set_pane_color((0.8, 0.8, 0.8, 1.0))
-	ax.w_zaxis.set_pane_color((0.8, 0.8, 0.8, 1.0))
-	ax.plot_surface(x1, y1, z1, color='coral')
-	#ax.scatter(xph,yph,zph, color="lime")
-	ax.scatter(R[0][0],R[0][1],R[0][2],color="lime")
-	
-	
-	
-	#Plot of trajectory X,Y,Z
-	ax.plot(X,Y,Z)
-	plt.show()
+	########################################
+	# 2D plots                             #
+	########################################
+	#t vs R
+    plt.figure()
+    plt.plot(t,(Rnorm-Rmars)/10**3,color="navy")    
+    plt.grid(color="gainsboro")
+    plt.title("Time vs Altitude")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Altitude [km]")
+    plt.show()
+
+    #t vs Ft
+    ac_max=np.ones((len(ac),1))*4
+    plt.figure()
+    plt.plot(t[:-1],ac*3.71/9.81,color="lime")
+    plt.plot(t[:-1],ac_max,linestyle=":",color="firebrick")    
+    plt.grid(color="gainsboro")
+    plt.title("Time vs Acceleration")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Acceleration [g_earth's]")
+    plt.show()
+
+
+    #t vs V
+    Vreq=np.ones((len(Vnorm),1))*V_phasing
+    plt.figure()
+    plt.plot(t[:-1],ac*3.71/9.81,color="lime")
+    plt.plot(t[:-1],Vreq,linestyle=":",color="firebrick")    
+    plt.grid(color="gainsboro")
+    plt.title("Time vs Acceleration")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Acceleration [g_earth's]")
+    plt.show()
+		
 	
 	#Plot for visualizing how MMOI and cg shift along flight. Also, the parabolic fit is added.
-	fig, ax1 = plt.subplots()
+    fig, ax1 = plt.subplots()
 
-	ax1.set_xlabel('time [s]')
-	ax1.set_ylabel('MMOI [kg*m^2]', color="tab:red")
-	ax1.plot([0,52.4,tb], [Ix0,Ixm,Ixe], color="orange", label="I_x")
-	ax1.plot([0,52.4,tb], [Iy0,Iym,Iye], color="tab:red", label="I_y")
-	ax1.plot([0,52.4,tb], [Iz0,Izm,Ize], color="tab:red", label="I_z")
-	ax1.tick_params(axis='y', labelcolor="tab:red")
-	plt.legend(loc="upper left")
-	ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+    ax1.set_xlabel('time [s]')
+    ax1.set_ylabel('MMOI [kg*m^2]', color="tab:red")
+    ax1.plot([0,52.4,tb], [Ix0,Ixm,Ixe], color="orange", label="I_x")
+    ax1.plot([0,52.4,tb], [Iy0,Iym,Iye], color="tab:red", label="I_y")
+    ax1.plot([0,52.4,tb], [Iz0,Izm,Ize], color="tab:red", label="I_z")
+    ax1.tick_params(axis='y', labelcolor="tab:red")
+    plt.legend(loc="upper left")
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 	
 	
-	ax2.set_ylabel('X_c.g. [m]', color="tab:blue")
-	ax2.plot([0,52.4,tb], [xcg0,xcgm,xcge], color="tab:blue", label="X_c.g.")
-	ax2.plot(np.linspace(0,tb,100), xcg(np.linspace(0,tb,100),xcg0,t_xcg0,xcgm,t_xcgm,xcge,t_xcge,tb), linestyle=":" , color="tab:blue", label="X_c.g.: parabolic fit")
-	ax2.tick_params(axis='y', labelcolor="tab:blue")
-	plt.grid(color="gainsboro")
-	plt.title("MMOI and X_c.g. variation in time")
-	fig.tight_layout()  # otherwise the right y-label is slightly clipped
-	plt.legend(loc="upper right")
-	plt.show()
+    ax2.set_ylabel('X_c.g. [m]', color="tab:blue")
+    ax2.plot([0,52.4,tb], [xcg0,xcgm,xcge], color="tab:blue", label="X_c.g.")
+    ax2.plot(np.linspace(0,tb,100), xcg(np.linspace(0,tb,100),xcg0,t_xcg0,xcgm,t_xcgm,xcge,t_xcge,tb), linestyle=":" , color="tab:blue", label="X_c.g.: parabolic fit")
+    ax2.tick_params(axis='y', labelcolor="tab:blue")
+    plt.grid(color="gainsboro")
+    plt.title("MMOI and X_c.g. variation in time")
+    fig.tight_layout()  # otherwise the right y-label is slightly clipped
+    plt.legend(loc="upper right")
+    plt.show()
     
+    ########################################
+    # 3D plots                             #
+    ########################################
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Make data
+    r = Rmars
+    pi = np.pi
+    cos = np.cos
+    sin = np.sin
+    phi, theta = np.mgrid[0.0:pi:100j, 0.0:2.0*pi:100j]
+    x1 = r*sin(phi)*cos(theta)
+    y1 = r*sin(phi)*sin(theta)
+    z1 = r*cos(phi)
+
+
+    # Plot the surface
+    plt.gca().patch.set_facecolor('white')
+    ax.w_xaxis.set_pane_color((0.8, 0.8, 0.8, 1.0))
+    ax.w_yaxis.set_pane_color((0.8, 0.8, 0.8, 1.0))
+    ax.w_zaxis.set_pane_color((0.8, 0.8, 0.8, 1.0))
+    ax.plot_surface(x1, y1, z1, color='coral')    
+    ax.scatter(R[0][0],R[0][1],R[0][2],color="lime")
+
+
+    #Plot of trajectory X,Y,Z
+    ax.plot(X,Y,Z,color="dodgerblue")
+    plt.show()
+
+
 
 print("[---", (time.time() - start_time) ,"seconds ---]" )
