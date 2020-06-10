@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../astrodynamics')
-import mars_standard_atmosphere as MSA
+# import mars_standard_atmosphere as MSA
 # from reentry_footprint import flight, time, dt, mean_radius, mars
 import disturbances as dist
 import actuator_properties as act
