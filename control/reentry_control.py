@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../astrodynamics')
-import mars_standard_atmosphere as MSA
+# import mars_standard_atmosphere as MSA
 # from reentry_footprint import flight, time, dt, mean_radius, mars
 import disturbances as dist
 import actuator_properties as act
@@ -13,14 +13,15 @@ margin = 2.
 #=====================================================================================================================================================================================================================
 #Vehicle onstants
 #=====================================================================================================================================================================================================================
-Iy = act.Iy
-Iz = act.Iz
+Ix = 4105933.742
+Iy = 424855.3372
+Iz = 4105933.742
 cg = act.z_cg_empty
 # length = act.length
 # width = act. width
 Isp = act.Isp_mono
 g   = act.g
-thrust_levels = np.arange(1,50,1)
+thrust_levels = np.arange(1,12,1)
 
 #=====================================================================================================================================================================================================================
 #Flight profile
@@ -33,23 +34,29 @@ t_end = 738.5 #s
 q  = 800.  #900. #Pa
 alpha = 45 *np.pi / 180
 velocity = 500. #m/s
+R_mars   = 3389.5*10**3
 
 #=====================================================================================================================================================================================================================
-#Drag disturbance
+#Disturbance
 #=====================================================================================================================================================================================================================
-
-S, cp = dist.Drag_surface_cp(alpha)
+angle = 2. * np.pi /180
+omega = velocity / R_mars
+S, cp = dist.Drag_surface_cp(angle)
 drag = dist.Drag_force(q,cd,S)
-Td = dist.aerodynamic_disturbance(cp,cg,drag,alpha)
-
+Td = dist.aerodynamic_disturbance(cp,cg,drag,angle)
+Tgx = dist.gravitygradient_disturbance(Iy,Iz,omega,angle)
+Tgy = dist.gravitygradient_disturbance(Ix,Iz,omega,angle)
+Tsp= dist.solarpressure_disturbance(angle,cg)
+Tm = dist.magnetic_disturbance(R_mars)
+T_dist = Tgx + Tsp + Tm
 
 
 #=====================================================================================================================================================================================================================
 #Function to calculate total impulse required for slew maneuver
 #=====================================================================================================================================================================================================================
-def slew_landing(thrust,alpha0,S,cp,cd,q,Td0,cg,I,t0,t_end,Isp,g,margin):
+def slew_landing(thrust,alpha0,S,cp,cd,q,T_dist,cg,I,t0,t_end,Isp,g,margin):
     slew_angle_tot = 180 * np.pi / 180 - alpha0
-    thrust = thrust * margin * 6
+    thrust = thrust * 6
     slew_duration = t_end - t0
     spin_rate_avg = slew_angle_tot / slew_duration
     t             = 0
@@ -66,13 +73,10 @@ def slew_landing(thrust,alpha0,S,cp,cd,q,Td0,cg,I,t0,t_end,Isp,g,margin):
         #     thrust = RCS_thrust * 0
         # else:
         #     thrust = RCS_thrust
-        RCS_torque    = act.RCS_thrust_to_torque(thrust,"y",cg)
+        RCS_torque    = act.RCS_thrust_to_torque(thrust,"z",cg)
 
-        S_new, cp_new = dist.Drag_surface_cp(alpha)
-        drag_new      = dist.Drag_force(q,cd,S_new)
-        Td_new        = dist.aerodynamic_disturbance(cp_new,cg,drag_new,alpha)
-        dTd           = Td_new - Td0
-        net_torque    = RCS_torque
+        net_torque    = RCS_torque - T_dist
+        # print(T_dist,RCS_torque)
         spin_acc      = (net_torque) / I
         spin_rate    += spin_acc * dt
 
@@ -99,7 +103,7 @@ for t0 in range(int(t_end-100),int(t_end-10)):
 
     for thrust in thrust_levels:
 
-            impulse, slew_time, mp, success = slew_landing(thrust,alpha,S,cp,cd,q,Td,cg,Iy,t0,t_end,Isp,g,margin)
+            impulse, slew_time, mp, success = slew_landing(thrust,alpha,S,cp,cd,q,T_dist,cg,Iy,t0,t_end,Isp,g,margin)
             # mp                          = 6 * impulse / (Isp * g)
             thrust = thrust * margin
             mp     = mp * margin
@@ -109,15 +113,40 @@ for t0 in range(int(t_end-100),int(t_end-10)):
 
 
 rotation_values = np.array(rotation_values)
+mp = rotation_values[-1,-1]
+thrust = rotation_values[-1,0]
+t  = rotation_values[-1,2]
 
-mp = min(rotation_values[:,-1]) * margin
 #=====================================================================================================================================================================================================================
-#Redundancy roll
+#Errors
 #=====================================================================================================================================================================================================================
-# angle = 90 * np.pi / 180.
-# time_roll = 5.
-#
-# RCS_roll_torque = act.slew(angle,time_roll,Iz)
-# RCS_roll_thrust = act.RCS_torque_to_thrust(RCS_roll_torque,'z',cg,'normal')
-# mp_roll         = act.RCSpropellant(RCS_roll_thrust*4,time_roll,Isp)
-# print(mp_roll,RCS_roll_thrust)
+#========================================================================
+# Thruster misalignment
+#========================================================================
+error_angle = 2 * np.pi / 180
+
+T_error_y, T_error_x, T_error_z = act.thrust_error(thrust,cg,error_angle)
+
+RCS_error_x  = act.RCS_torque_to_thrust(T_error_x,'y',cg,'error_bottom')
+RCS_error_y  = act.RCS_torque_to_thrust(T_error_y,'x',cg,'error_bottom')
+RCS_error_z  = act.RCS_torque_to_thrust(T_error_z,'z',cg,'error_bottom')
+
+RCS_error    = max([RCS_error_x,RCS_error_y,RCS_error_z])
+mp_error     = act.RCSpropellant(RCS_error,t,Isp)
+
+print('==========================================================')
+print('THRUST')
+print('Thrust per engine (x,y,z): ', 0., 0., thrust)
+print('propellant needed: '    , mp)
+print('REDUNDANCY')
+print('Misalignment torque: ', T_error_x-Tgx-Tsp-Tm,T_error_y-Tgy,T_error_z)
+print('Disturbance torque: ', Tgx+Tsp+Tm,Tgy,0)
+print('redundancy thrust per engine: ', RCS_error)
+print('redundacy propellant per engine: ', mp_error)
+
+#=====================================================================================================================================================================================================================
+#Pitch control
+#=====================================================================================================================================================================================================================
+pitch_moment = 12000
+pitch_thrust = act.RCS_torque_to_thrust(pitch_moment,'z',cg,'normal')
+print(pitch_thrust)
