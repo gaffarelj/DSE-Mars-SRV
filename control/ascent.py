@@ -1,10 +1,11 @@
 import sys
 sys.path.append('../astrodynamics')
 import mars_standard_atmosphere as MSA
+from DYNAS import am,t_array
 import disturbances as dist
 import actuator_properties as act
-import reentry_control as rty
-import rendez_vous as rvs
+# import reentry_control as rty
+# import rendez_vous as rvs
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -86,6 +87,10 @@ def vac_thrust(DeltaV,Isp,Mbegin,tb,De=0,pe=0):
 #========================================================================
 RCS_torque, RCS_thrust, RCS_impulse, Mp = slew_ascent(angle,slew_duration,Iy,cg_orbit,Isp_mono)
 
+#========================================================================
+# Aerodynamic pitch control
+#========================================================================
+
 
 #=====================================================================================================================================================================================================================
 #Errors
@@ -132,5 +137,5 @@ print('Redundancy propellant:', mp_error)
 print('Total redundant propellant needed:', mp_error)
 
 
-Mpropellant_total = rvs.mp_total + Mp + mp_error + rty.mp
-print(Mpropellant_total)
+# Mpropellant_total = rvs.mp_total + Mp + mp_error + rty.mp
+# print(Mpropellant_total)
