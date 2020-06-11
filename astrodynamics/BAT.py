@@ -182,7 +182,7 @@ def dVzdt(T,D,L,M,Vz,Vx,g):
 	return dVzdt
 
 #point mass ascent simulation
-def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7.67,M_initial=198948.0,Mp_class2=140235.07208472778,Isp=350,n=6,De=2,pe=5066.25):
+def ascent_sim(tb,initial_tilt,i_base,h0,d,M_initial,Mp_class2,Isp,n,De,pe):
 	"""
 	Function that simulates the gravity turn ascent profile constrained by a linear variation of the T/W_ratio (T/W_0=1.5, T/W_final=4).
 	It simulates it for a point mass in 2D accounting for aerodynamic forces. 
@@ -302,7 +302,7 @@ def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7
 			i+=1
 			t_array.append(t_tot)
 			
-			a = get_a(gamma_gas,Rgas, T[-1])
+			a = get_a(gamma_gas,Rgas, T[-1]) 
 			#######################################################
 			#   Solve for ax, az, Vx, Vz, X, Z #
 			#######################################################
@@ -382,6 +382,8 @@ def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7
 	others = {
         "Mprop": M_prop,
 		"mdot":mdot,
+		"Mp_class3": np.sum(mdot*dt),
+		"DeltaV_class3":ceff*np.log(M[0]/(M[0]-Mprop)),
 		"time": t_array,
 		"Mach": Mach,
 		"Lift": Fl,
@@ -399,3 +401,23 @@ def ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=42.5,h0=-3*10**3,d=7
 	
 	return V, Vxfree, ascent_DeltaV, q, others
 
+
+def Mpvertical(ceff,M0,TW,Ve):
+    """ computse propellant mass needed for verical ascent without aero forces
+    """
+
+    Mp=M0*(1-np.exp(((-Ve)/(TW-1)-Ve)/(ceff)))
+    return Mp
+
+
+
+x=False
+if x:
+	V, Vxfree, ascent_DeltaV, q, others = ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=41,h0=-3*10**3,d=6.4,M_initial=187851.5265,Mp_class2=155171.0789,Isp=383.250565907662,n=9,De=1.35049466031671,pe=6077.910186177842)
+	print()
+	print("~~~ Attained percentage of phasing velocity: ", (V[-1]+Vxfree)/3272.466*100," % ~~~") #accounts for Rotatio of Mars
+	print("~~~ Attained final flight path angle: ",others["gamma"][-1]," deg ~~~")
+	print()
+	print("~~~ Propellant mass needed: ", others["Mp_class3"]," kg ~~~")
+	print()
+	print("~~~ DeltaV needed: ", ascent_DeltaV," m/s ~~~")
