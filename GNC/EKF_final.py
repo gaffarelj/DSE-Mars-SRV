@@ -11,7 +11,9 @@ import math
 p_l = [np.array([0.500,25,25]),
        np.array([0.1,-25,25]),
        np.array([0.1,25,-25]),
-       np.array([0,-25,-25])]
+       np.array([0,-25,-25]),
+       np.array([0,-35,0]),
+       np.array([0,35,0])]
 
 r_l = smp.symbols('r0:%d'%len(p_l))
 e_l = smp.symbols('e0:%d'%len(p_l))
@@ -38,7 +40,7 @@ dt = 1
 T = data.t[-1]
 x0 = np.concatenate([data.r_p[0], data.v0, data.a0,np.array([0])])
 
-sig = [3/20*10**-3 for r in r_l]+[0.05*np.pi/180 for e in e_l]+[0.05*np.pi/180  for b in b_l]+[1/90*10**-3 for v in v_l]+[(3.5e-6)*9.81 for a in av]+[1e-9]
+sig = [3/60*10**-3 for r in r_l]+[1e-4 for e in e_l]+[1e-5*np.pi/180  for b in b_l]+[1/90*10**-3 for v in v_l]+[(3.5e-6)*9.81 for a in av]+[1e-9]
 sigq = [dt for r in r_l]+[0.001 for e in e_l]+[0.001 for b in b_l]+[0.0001 for v in v_l]+[0 for a in av]+[0]
 h_val = 1e-3
 
@@ -88,7 +90,7 @@ R = np.diag(sig)
 r0 = r.eval(x0)
 
 
-filter = EKF.EKF(ri1,h,Q,R,r0,comp = "num",h_val=h_val,n=len(r_l))
+filter = EKF.EKF(ri1,h,Q,R,r0,fcomp = "num",h_val=h_val,n=len(r_l))
 
 l_ref = np.ndarray([int(T/dt),dim])
 l_out = np.ndarray([int(T/dt),dim])
@@ -128,12 +130,14 @@ xp = r*sin(phi)*cos(theta)
 yp = r*sin(phi)*sin(theta)
 zp = r*cos(phi)
 
+print("final distance error")
+print(np.linalg.norm(l_ref[-1][:3]-l_out[-1][:3]))
 
 plt.figure("trajectory")
 ax = plt.axes(projection='3d')
-ax.scatter3D(np.transpose(l_ref)[0],np.transpose(l_ref)[1],np.transpose(l_ref)[2])
-ax.scatter3D(np.transpose(data.r_p)[0],np.transpose(data.r_p)[1],np.transpose(data.r_p)[2])
-ax.scatter3D(np.transpose(l_out)[0],np.transpose(l_out)[1],np.transpose(l_out)[2])
+ax.plot(np.transpose(l_ref)[0],np.transpose(l_ref)[1],np.transpose(l_ref)[2])
+ax.plot(np.transpose(data.r_p)[0],np.transpose(data.r_p)[1],np.transpose(data.r_p)[2])
+ax.plot(np.transpose(l_out)[0],np.transpose(l_out)[1],np.transpose(l_out)[2])
 ax.plot_surface(xp, yp, zp,  rstride=1, cstride=1, color='c', alpha=0.6, linewidth=0)
 ax.scatter3D(np.transpose(p_l)[0],np.transpose(p_l)[1],np.transpose(p_l)[2])
 ax.scatter3D(data.mars_r[0],data.mars_r[1],data.mars_r[0])
@@ -143,8 +147,18 @@ ax.set_zlim([0,4000])
 
 
 plt.figure("deviation")
-ax = plt.axes()
-ax.plot(np.abs(np.transpose(l_ref)[0]-np.transpose(l_out)[0]))
-ax.plot(np.abs(np.transpose(l_ref)[1]-np.transpose(l_out)[1]))
-ax.plot(np.abs(np.transpose(l_ref)[2]-np.transpose(l_out)[2]))
+ax = plt.subplot(121)
+ax.plot(np.arange(0,T-dt,dt),np.abs(np.transpose(l_ref)[0]-np.transpose(l_out)[0])*10**3,label="Downrange position deviation")
+ax.plot(np.arange(0,T-dt,dt),np.abs(np.transpose(l_ref)[1]-np.transpose(l_out)[1])*10**3,label="Crossrange position deviation")
+ax.plot(np.arange(0,T-dt,dt),np.abs(np.transpose(l_ref)[2]-np.transpose(l_out)[2])*10**3,label="Altitude position deviation")
+ax.legend()
+ax.set_ylabel("deviation position[m]")
+ax.set_xlabel("aproach time [s]")
+ax = plt.subplot(122)
+ax.plot(np.arange(0,T-dt,dt),np.abs(np.transpose(l_ref)[3]-np.transpose(l_out)[3])*10**3,label="Downrange velocity deviation")
+ax.plot(np.arange(0,T-dt,dt),np.abs(np.transpose(l_ref)[4]-np.transpose(l_out)[4])*10**3,label="Crossrange velocity deviation")
+ax.plot(np.arange(0,T-dt,dt),np.abs(np.transpose(l_ref)[5]-np.transpose(l_out)[5])*10**3,label="Altitude velocity deviation")
+ax.legend()
+ax.set_ylabel("deviation velocity [m/s]")
+ax.set_xlabel("aproach time [s]")
 plt.show()
