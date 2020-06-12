@@ -37,4 +37,6 @@ state[11] = 0																									# bank angle
 
 motion = astro_tools.Motion(state, MOI, S, vehicle_mass, ac.H_aerodynamics_coefficients, mars)
 flight, time = motion.forward_euler(dt)
+print(motion.heatflux)
+print(time)
 astro_tools.plot_single(time , motion.heatflux, 'Time [s]', 'heat flux [W/m^2]')

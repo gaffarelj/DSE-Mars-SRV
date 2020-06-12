@@ -88,7 +88,7 @@ class tradeoff:
 			self.total += param.val_out*param.weight
 		
 	
-	def get_output(self, language = "python", color_list=[], width=10):
+	def get_output(self, language = "python", color_list=[], width=10,rot="hor",caption=""):
 		def val_s(number):
 			#print("i", number)
 			res = "" if number >= 0 else "-"
@@ -130,10 +130,12 @@ class tradeoff:
 			print()
 			print("\\begin{table}[H]")
 			print("\centering")
-			print("\caption{}")
+			print("\caption{" +caption+ "}")
 			print("\label{tab:tradeoff-x}")
-			print("\\begin{adjustbox}{width=0.825\paperheight, angle=-90}")
-
+			if rot == "ver":
+				print("\\begin{adjustbox}{width=0.825\paperheight, angle=-90}")
+			else:
+				print("\\begin{adjustbox}{width=\\textwidth, angle=0}")
 			output = "\\begin{tabular}{|c|l|"
 			for param in self.param_list:
 				w = width * param.weight if param.weight > 0.15 else width * 0.15
