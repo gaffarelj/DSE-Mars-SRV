@@ -88,12 +88,9 @@ def H_aerodynamics_coefficients(mach,alpha):
 
 
 if __name__ == '__main__':
-    plt.plot(SS_alpha_spacing,SS_Cd_M_0500)
-    plt.show()
-    plt.plot(SS_alpha_spacing,SS_Cl_M_0500)
-    plt.show()
-
+    plt.plot(SS_alpha_spacing,SS_Cd_M_0025)
     plt.plot(H_alpha_spacing,H_Cd_M_0500)
     plt.show()
+    plt.plot(SS_alpha_spacing,SS_Cl_M_0025)
     plt.plot(H_alpha_spacing,H_Cl_M_0500)
     plt.show()

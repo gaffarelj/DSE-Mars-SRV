@@ -141,7 +141,7 @@ def thrust_z(z,zdotdot,xdot,omega,t):
 dt = 1.
 t  = 0.1
 ta = tb = td = 0.1
-tburn = 2.
+tburn = 6.
 mp = 0.
 m = m0
 m_deltaV = [m]
@@ -432,12 +432,6 @@ T_error_y = T_error_y1 + T_error_y2 + T_error_y3
 T_error_z = T_error_z1 + T_error_z2 + T_error_z3
 
 
-# #Engine failure
-# RCS_thrust_failure_x = act.RCS_displacement_to_thrust(f_array[:,0],'y','failure') - RCS_thrust_x
-# RCS_thrust_failure_y = act.RCS_displacement_to_thrust(f_array[:,1],'x','failure') - RCS_thrust_y
-# RCS_thrust_failure_z = act.RCS_displacement_to_thrust(f_array[:,2],'z','failure') - RCS_thrust_z
-# mp_engine_failure    = mp_tot * (np.sum(RCS_thrust_failure_x) + np.sum(RCS_thrust_failure_y) + np.sum(RCS_thrust_failure_z)) / (np.sum(RCS_thrust_x) + np.sum(RCS_thrust_y) + np.sum(RCS_thrust_z))
-
 #========================================================================
 # Disturbances
 #========================================================================
@@ -455,11 +449,11 @@ T_error_x_tot = T_error_x + Tgx + Tsp + Tm
 T_error_y_tot = T_error_y + Tgy
 T_error_z_tot = T_error_z
 
-RCS_thrust_error_x = act.RCS_torque_to_thrust(T_error_z_tot,'y',cg_orbit,'error_bottom') * margin
-RCS_thrust_error_y = act.RCS_torque_to_thrust(T_error_y_tot,'x',cg_orbit,'error_bottom') * margin
-RCS_thrust_error_z = act.RCS_torque_to_thrust(T_error_x_tot,'z',cg_orbit,'error_bottom') * margin
+RCS_thrust_error_x = act.RCS_torque_to_thrust(T_error_y_tot,'y',cg_orbit,'error_bottom') * margin
+RCS_thrust_error_y = act.RCS_torque_to_thrust(T_error_x_tot,'x',cg_orbit,'error_bottom') * margin
+RCS_thrust_error_z = act.RCS_torque_to_thrust(T_error_z_tot,'z',cg_orbit,'error_bottom') * margin
 
-RCS_impulse_error = (np.sum(RCS_thrust_error_x*dt) + np.sum(RCS_thrust_error_y*dt) + np.sum(RCS_thrust_error_z*dt))
+RCS_impulse_error = (np.sum(RCS_thrust_error_x*t) + np.sum(RCS_thrust_error_y*t) + np.sum(RCS_thrust_error_z*t))
 mp_error           = RCS_impulse_error / (Isp_mono * g_earth)
 
 #=================================================================================================================================================
@@ -473,81 +467,59 @@ angle_rendezvous    = 180 * np.pi / 180
 time_transfer       = time_hohmann
 time_rendezvous     = time_hohmann
 
-#========================================================================
-# Transfer
-#========================================================================
-RCS_torque_transfer   = act.slew(angle_transfer,time_transfer,Iy)
-RCS_thrust_transfer   = margin * act.RCS_torque_to_thrust(RCS_torque_transfer,'y',cg_orbit,'normal')
-mp_transfer           = 6 * 2 * 2 * act.RCSpropellant(RCS_thrust_transfer,time_transfer,Isp_mono)
-
-T_error_transfer_y, T_error_transfer_x, T_error_transfer_z = act.thrust_error(RCS_thrust_transfer,cg_orbit,angle)
-T_error_transfer_x += Tgx + Tsp + Tm
-RCS_error_transfer_x  = act.RCS_torque_to_thrust(T_error_transfer_x,'z',cg_orbit,'error_bottom')
-RCS_error_transfer_y  = act.RCS_torque_to_thrust(T_error_transfer_y,'z',cg_orbit,'error_bottom')
-RCS_error_transfer_z  = act.RCS_torque_to_thrust(T_error_transfer_z,'z',cg_orbit,'error_bottom')
-RCS_error_transfer    = margin * max(RCS_error_transfer_x, RCS_error_transfer_y, RCS_error_transfer_z)
-mp_error_transfer     = act.RCSpropellant(RCS_error_transfer,time_transfer,Isp_mono)
-
-RCS_failure_transfer  = act.RCS_torque_to_thrust(RCS_torque_transfer,'z',cg_orbit,'failure') - RCS_thrust_transfer
-# mp_failure_transfer   = mp_transfer * (RCS_failure_transfer/RCS_thrust_transfer)
-
-#========================================================================
-# Rendez-vous
-#========================================================================
-RCS_torque_rendezvous = act.slew(angle_rendezvous,time_rendezvous,Iy)
-RCS_thrust_rendezvous = margin * act.RCS_torque_to_thrust(RCS_torque_rendezvous,'y',cg_orbit,'normal')
-mp_rendezvous         = 6 * 2 * act.RCSpropellant(RCS_thrust_rendezvous,time_rendezvous,Isp_mono)
+RCS_thrust_rotations  = 451.85155228408263
+tburn                 = 1.
 
 
-T_error_rendezvous_y, T_error_rendezvous_x, T_error_rendezvous_z = act.thrust_error(RCS_thrust_rendezvous,cg_orbit,angle)
-T_error_rendezvous_x += Tgx + Tsp + Tm
-RCS_error_rendezvous_x  = act.RCS_torque_to_thrust(T_error_rendezvous_x,'z',cg_orbit,'error_bottom')
-RCS_error_rendezvous_y  = act.RCS_torque_to_thrust(T_error_rendezvous_y,'z',cg_orbit,'error_bottom')
-RCS_error_rendezvous_z  = act.RCS_torque_to_thrust(T_error_rendezvous_z,'z',cg_orbit,'error_bottom')
-RCS_error_rendezvous    = margin * max([RCS_error_rendezvous_x, RCS_error_rendezvous_y, RCS_error_rendezvous_z])
-mp_error_rendezvous   = act.RCSpropellant(RCS_error_rendezvous,time_rendezvous,Isp_mono)
+transfer_time         = act.slew(RCS_thrust_rotations,tburn,angle_transfer,Iy)
+mp_rotations          = 4 * 3 * act.RCSpropellant(RCS_thrust_rotations,tburn,Isp_mono)
+print('Rotation time limit: ', time_hohmann)
+print('Rotation duration  :',transfer_time)
+T_error_rot_y, T_error_rot_x, T_error_rot_z = act.thrust_error(RCS_thrust_rotations,cg_orbit,angle)
+T_error_rot_x += Tgx + Tsp + Tm
+RCS_error_rot_x  = act.RCS_torque_to_thrust(T_error_rot_x,'z',cg_orbit,'error_bottom')
+RCS_error_rot_y  = act.RCS_torque_to_thrust(T_error_rot_y,'z',cg_orbit,'error_bottom')
+RCS_error_rot_z  = act.RCS_torque_to_thrust(T_error_rot_z,'z',cg_orbit,'error_bottom')
+RCS_error_rot    = margin * max(RCS_error_rot_x, RCS_error_rot_y, RCS_error_rot_z)
+mp_error_rot     = 18 * act.RCSpropellant(RCS_error_rot,tburn,Isp_mono)
 
-RCS_failure_rendezvous= act.RCS_torque_to_thrust(RCS_torque_rendezvous,'z',cg_orbit,'failure') - RCS_thrust_rendezvous
-# mp_failure_rendezvous = mp_rendezvous * (RCS_failure_rendezvous/RCS_thrust_rendezvous)
-
-# print('rotation',mp_transfer,mp_rendezvous)
-# print('rotation',RCS_thrust_transfer,mp_rendezvous)
 
 #=================================================================================================================================================
 # Final thrust and propellant values
 #=================================================================================================================================================
 mp_biprop_fuel= np.sum(mp_biprop_array)
 mp_biprop_ox  = np.sum(mp_biprop_array) * OF_ratio
-mp_total = mp_tot + mp_error + mp_transfer + mp_rendezvous + mp_error_transfer + mp_error_rendezvous + mp_biprop_ox
+mp_total = mp_tot + mp_error + mp_rotations + mp_error_rot
 print('==========================================================')
 print('==========================================================')
 print('APPROACH PHASE')
 print('==========================================================')
 print('PROPELLANT')
 print('Total propellant used: ', mp_total)
-print('Biprop used (Fuel, Oxidizer): ' , mp_biprop_fuel, mp_biprop_ox)
 print('Redundancy propellant: ', mp_error)
 print('==========================================================')
 print('Thrust for initial and final delta Vs: ', thrust_deltaV)
 print('==========================================================')
 print('THRUST')
+print('Max thrust total      (x,y,z): ', 4*max(RCS_thrust_x), 2*max(RCS_thrust_y), 2*max(RCS_thrust_z))
 print('Max thrust per engine (x,y,z): ', max(RCS_thrust_x), max(RCS_thrust_y), max(RCS_thrust_z))
+print('Min thrust total      (x,y,z): ', 4*min(RCS_thrust_x), 2*min(RCS_thrust_y), 2*min(RCS_thrust_z))
 print('Min thrust per engine (x,y,z): ', min(RCS_thrust_x), min(RCS_thrust_y), min(RCS_thrust_z))
-print('REDUNDANCY')
+print('MISALIGNMENT REDUNDANCY')
 print('Misalignment torque (x,y,z): '              , T_error_x, T_error_y, T_error_z)
 print('Disturbance torque  (x,y,z): '              , Tgx+Tsp+Tm, Tgy, 0.)
 print('Redundancy thrust (misalignment in x,y,z): ', RCS_thrust_error_x, RCS_thrust_error_y, RCS_thrust_error_z)
 # print('Redundancy thrust (engine failure in x,y,z): ', max(RCS_thrust_failure_x), max(RCS_thrust_failure_y), max(RCS_thrust_failure_z))
 print('==========================================================')
 print('==========================================================')
-print('ROTATION')
-print('Propellant used (transfer, go-nogo): '      , mp_transfer, mp_rendezvous)
-print('Thrust (transfer, go-nogo): '               , RCS_thrust_transfer, RCS_thrust_rendezvous)
-print('REDUNDANCY')
-print('Misalignment torque (x,y,z): '              , T_error_transfer_x+T_error_rendezvous_x+2*(Tgx+Tsp+Tm), T_error_transfer_y+T_error_rendezvous_y, T_error_transfer_z+T_error_rendezvous_z)
+print('ROTATIONS')
+print('Propellant used (transfer, go-nogo): '      , mp_rotations)
+print('Thrust                             : '      , RCS_thrust_rotations)
+print('MISALIGNMENT REDUNDANCY')
+print('Misalignment torque (x,y,z): '              , T_error_rot_x+2*(Tgx+Tsp+Tm), T_error_rot_y, T_error_rot_z)
 print('Disturbance torque  (x,y,z): '              , Tgx+Tsp+Tm, Tgy, 0.)
-print('Redundancy thrust (transfer, go-nogo): '    , RCS_error_transfer + RCS_failure_transfer, RCS_error_rendezvous + RCS_failure_rendezvous)
-print('Redundancy propellant (transfer, go-nogo): ', mp_error_transfer, mp_error_rendezvous)
+print('Redundancy thrust (transfer, go-nogo): '    , RCS_error_rot_x + RCS_error_rot_y, RCS_error_rot_z)
+print('Redundancy propellant (transfer, go-nogo): ', mp_error_rot)
 print('==========================================================')
 print('==========================================================')
 

@@ -6,35 +6,46 @@ import matplotlib.cm as cmx
 import pickle
 import astrodynamics.mars_standard_atmosphere as MSA
 import csv
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
-mesh_elements = pd.read_csv("001_surfacemesh.csv",sep=";")
+def mesh_elements_with_vector(input_filename,output_filename,gamma):
+    mesh_elements = pd.read_csv(input_filename, sep=";")
+    gamma = gamma*np.pi/180
+    mesh_elements = pd.DataFrame(mesh_elements).to_numpy()
 
-mesh_elements = pd.DataFrame(mesh_elements).to_numpy()
-
-def mesh_elements_with_vector(mesh_elements):
-    uber_uber_list = []
     for i in range(len(mesh_elements)):
+        mesh_elements[i][3] = mesh_elements[i][3]+8.344#
+        mesh_elements[i][2] = mesh_elements[i][2] + np.sin(gamma) * mesh_elements[i][3]
+        mesh_elements[i][3] = mesh_elements[i][3] - np.sin(gamma) * mesh_elements[i][3]
+
+    uber_uber_list = []
+    areasum = 0
+    for i in range(len(mesh_elements)):
+
         xloc = mesh_elements[i][1]
-        yloc = mesh_elements[i][2]
-        zloc = mesh_elements[i][3]
+        yloc = mesh_elements[i][2]#+np.sin(gamma)*mesh_elements[i][3]
+        zloc = mesh_elements[i][3]#+8.476#-np.sin(gamma)*mesh_elements[i][3]
 
         distancedict = {}
         for j in range(len(mesh_elements)):
-            elementnumber = mesh_elements[j][0]
+
+            elementnumber = j #mesh_elements[j][0]
             xloc2 = mesh_elements[j][1]
-            yloc2 = mesh_elements[j][2]
-            zloc2 = mesh_elements[j][3]
+            yloc2 = mesh_elements[j][2]#+np.sin(gamma)*mesh_elements[j][3]
+            zloc2 = mesh_elements[j][3]#+8.476#-np.sin(gamma)*mesh_elements[j][3]
             distance = ((xloc-xloc2)**2+(yloc-yloc2)**2+(zloc-zloc2)**2)**0.5
 
             distancedict[elementnumber] = distance
 
         sorted_tuple = sorted(distancedict.items(), key = operator.itemgetter(1))
 
-
         uber_list = [mesh_elements[i][0],xloc,yloc,zloc]
         vector_list = []
+        area = 0
         for i in range(3):
             node_number = list(sorted_tuple[i+1])[0]
+            area = area + (list(sorted_tuple[i+1])[1]/2*list(sorted_tuple[i+1])[1]/2)
             vector_list.append((mesh_elements[int(node_number)-1][-3:]))
 
         p1 = vector_list[0]
@@ -47,37 +58,23 @@ def mesh_elements_with_vector(mesh_elements):
 
         zerovector = np.array([xloc,yloc,zloc])
         if np.dot(cp,zerovector) > 0:
-            #print("Does this even work?")
             cp = -cp
 
-        cp = cp / np.linalg.norm(cp)
-
-
-        uber_list.append(cp)
+        if np.linalg.norm is not  0:
+            cp = cp / np.linalg.norm(cp)
+        #print([cp,area])
+        uber_list.append([cp,area])
+        #areasum = areasum + area
         uber_uber_list.append(uber_list)
+        #print(cp)
 
-    with open("001_mesh_with_vectors.txt", "wb") as f:
+    with open(output_filename, "wb") as f:
         pickle.dump(uber_uber_list,f)
-    return uber_uber_list
 
-#some_list = mesh_elements_with_vector(mesh_elements)
-
-with open("001_mesh_with_vectors.txt", "rb") as f:
-  new_list = pickle.load(f)
-
-#print(new_list)
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-#fig = plt.figure()
-#ax = fig.add_subplot(111, projection='3d')
-
-#for i in new_list:
-    #print(i[1],i[2],i[3],i[4][0],i[4][1],i[4][2])
-#    ax.quiver(i[1],i[2],i[3],i[4][0],i[4][1],i[4][2], length=0.8,arrow_length_ratio=0.6)
-
+    #print("Succesfully converted mesh to txt!")
+    return
 
 def aero_angles(alpha, mesh_list):
-
     '''
     Takes in alpha in deg, and mesh_list as it is set in mesh_elements_with_vectors().
     '''
@@ -89,18 +86,17 @@ def aero_angles(alpha, mesh_list):
     uptream_mesh_list = []
     downstream_mesh_list = []
     for i in range(len(mesh_list)):
-        mesh_vector = mesh_list[i][4]
-        #mesh_vector[0] = 0
+        mesh_vector = mesh_list[i][4][0]
 
         dotprod = np.dot(aero_vector,mesh_vector)
         mesh_item = mesh_list[i]
-        if dotprod > 0.05 and mesh_vector[2] is not 0:
+        if dotprod > 0.01 and mesh_vector[2] is not 0:
             angle1 = np.arctan(aero_vector[1]/aero_vector[2])
             angle2 = np.arctan(mesh_vector[1]/mesh_vector[2])
             angle = angle1-angle2
             mesh_item.append(angle)
             uptream_mesh_list.append(mesh_item)
-        if dotprod <= 0.05:
+        if dotprod <= 0.01:
             downstream_mesh_list.append(mesh_item)
 
     #for i in uptream_mesh_list:
@@ -120,19 +116,28 @@ def aero_cp_calcs(upstream_mesh,downstream_mesh, p_inf, p_02,M_inf,alpha):
 
     pressure_list = []
     areasum = 0
+
     for i in range(len(upstream_mesh)):
-        mesh_vector = upstream_mesh[i][4]
+        areasum = areasum+upstream_mesh[i][4][1]
+    for i in range(len(downstream_mesh)):
+        areasum = areasum+downstream_mesh[i][4][1]
+    print(areasum)
+    for i in range(len(upstream_mesh)):
+        mesh_vector = upstream_mesh[i][4][0]
         mesh_vector = mesh_vector/np.linalg.norm(mesh_vector)
-        area = abs(np.dot(aero_vector,mesh_vector))/(len(upstream_mesh))
-        area = area * (len(upstream_mesh)+len(downstream_mesh))/len(upstream_mesh)
+        area = abs(np.dot(aero_vector,mesh_vector))*upstream_mesh[i][4][1]/areasum
+        #print(area)
+        #area = abs(np.dot(aero_vector,mesh_vector))/(len(upstream_mesh))
+        #area = area * (len(upstream_mesh)+len(downstream_mesh))/len(upstream_mesh)
         angle = upstream_mesh[i][5]
         Cp = Cp_max*(np.cos(angle)**2)
         Cp = Cp*area
-        areasum = areasum + area
+        #print(mesh_vector)
         mesh_vector = mesh_vector * Cp
+
         pressure_list_item = [upstream_mesh[i][1],upstream_mesh[i][2],upstream_mesh[i][3],Cp, mesh_vector]
         pressure_list.append(pressure_list_item)
-        #print(Cp)
+        #print(pressure_list_item)
     for i in range(len(downstream_mesh)):
         mesh_vector = np.array([0,0,0])
         pressure_list_item = [downstream_mesh[i][1],downstream_mesh[i][2],downstream_mesh[i][3],0, mesh_vector]
@@ -140,6 +145,7 @@ def aero_cp_calcs(upstream_mesh,downstream_mesh, p_inf, p_02,M_inf,alpha):
     #print("AREA", areasum)
     #fig = plt.figure()
     #ax = fig.add_subplot(111, projection='3d')
+
 
     vectorsum = np.array([0,0,0])
     for i in pressure_list:
@@ -150,15 +156,17 @@ def aero_cp_calcs(upstream_mesh,downstream_mesh, p_inf, p_02,M_inf,alpha):
         i[4][2] = i[4][2]
         #ax.quiver(i[0], i[1], i[2], i[4][0], i[4][1], i[4][2], arrow_length_ratio=0.6)
 
+
+
     vectorsum = vectorsum
     aero_vector = aero_vector
-    #print("Cp:")
-    #print(np.linalg.norm(vectorsum))
 
     perp_aero_vector = perp_aero_vector
 
     projected_vector = aero_vector * np.dot(vectorsum,aero_vector)/np.dot(aero_vector,aero_vector)
     projected_vector_perp = perp_aero_vector * np.dot(vectorsum,perp_aero_vector)/np.dot(perp_aero_vector,perp_aero_vector)
+
+
     #print("Cd,Cl:")
     cd = np.linalg.norm(projected_vector)
     cl = np.linalg.norm(projected_vector_perp)
@@ -169,21 +177,43 @@ def aero_cp_calcs(upstream_mesh,downstream_mesh, p_inf, p_02,M_inf,alpha):
     ylist = [16,-16,-16,16]
     #ax.scatter(xlist,ylist)
 
-    #ax.quiver(0,0,0,aero_vector[0],aero_vector[1],aero_vector[2], color = 'g')
-    #ax.quiver(0,0,7,vectorsum[0],vectorsum[1],vectorsum[2])
+    cplist = []
+    plist = []
+
+    for i in pressure_list:
+        #print(i)
+        cplist.append(i[2]*i[3])
+        plist.append(i[3])
+
+    #print(sum(plist))
+    cp = sum(cplist)/sum(plist)
+    print("Cp:", cp)
+
+    #ax.quiver(0,0,cp,aero_vector[0],aero_vector[1],aero_vector[2], color = 'g')
+    #ax.quiver(0,0,cp,vectorsum[0],vectorsum[1],vectorsum[2])
     #ax.quiver(0,0,7,projected_vector[0],projected_vector[1],projected_vector[2],color = 'r')
     #ax.quiver(0,0,7,projected_vector_perp[0],projected_vector_perp[1],projected_vector_perp[2],color = 'r')
-    #ax.quiver(0,0,0,perp_aero_vector[0],perp_aero_vector[1],perp_aero_vector[2],color = 'g')
+    #ax.quiver(0,0,cp,perp_aero_vector[0],perp_aero_vector[1],perp_aero_vector[2],color = 'g')
 
     #plt.show()
 
+
     #print(vectorsum)
 
+    cgpos = 9.24
+    clmoment = cl*np.cos(alpha)*(cgpos-cp)
+    cdmoment = cd*np.sin(alpha)*(cgpos-cp)
+
+    rho = 0.00555
+
+    aeromoment = (clmoment+cdmoment)*0.5*rho*553**2 * 350
+
+    #print("Aerodynamic moment:", aeromoment)
 
     return cl, cd, pressure_list
 
-def ultimate_aero_functions(p_inf, p_02, M_inf, alpha):
-    with open("001_mesh_with_vectors.txt", "rb") as f:
+def ultimate_aero_functions(filename, p_inf, p_02, M_inf, alpha):
+    with open(filename, "rb") as f:
         new_list = pickle.load(f)
 
     upstream_mesh, downstream_mesh = aero_angles(alpha, new_list)
@@ -192,6 +222,20 @@ def ultimate_aero_functions(p_inf, p_02, M_inf, alpha):
 
     return cl, cd, pressures
 
+def pitching_control_functions(filename,filename_BF, p_inf, p_02, M_inf, alpha,gamma):
+    with open(filename, "rb") as f:
+        new_list = pickle.load(f)
+    with open(filename_BF, "rb") as f:
+        BF_list = pickle.load(f)
+
+    #for i in range(len(BF_list)):
+    #    new_list.append(BF_list[i])
+
+    upstream_mesh, downstream_mesh = aero_angles(alpha, new_list)
+
+    cl, cd, pressures = aero_cp_calcs(upstream_mesh, downstream_mesh, p_inf, p_02, M_inf, alpha)
+
+    return cl, cd, pressures
 
 def aero_normalshock(altitude, mach_initial):
     altitude = altitude
@@ -210,20 +254,7 @@ def aero_normalshock(altitude, mach_initial):
     dyn_pressure = 0.5 * density * V * V
     return pressure, dyn_pressure
 
-#altitude_list = [10000,20000,50000,100000]
-#for i in range(len(altitude_list)):
-#    p_inf = MSA.get_pressure(altitude_list[i])
-#    #print(p_inf)
-#    M_inf = 3
-#    p_inf, p_02 = aero_normalshock(altitude_list[i],M_inf)
-#    #print(p_inf, p_02)
-#    alpha = 50
-#    cl, cd, pressures = ultimate_aero_functions(p_inf, p_02, M_inf, alpha)
-
-#    print("Cl, Cd:", cl, cd, "at altitude,", altitude_list[i])
-
-
-def write_aero_to_csv():
+def write_aero_to_csv(filename):
     alphalist = np.arange(30,60.1,0.1)
     machlist = np.arange(0.1,20.1,0.1)
     cl_matrix = np.zeros((len(machlist)+1,len(alphalist)+1))
@@ -239,7 +270,7 @@ def write_aero_to_csv():
             cd_matrix[0][i+1] = alphalist[i]
             p_inf = MSA.get_pressure(10000)
             p_02, irrelevant = aero_normalshock(10000, machlist[j])
-            cl,cd,pressures = ultimate_aero_functions(p_inf,p_02,machlist[j],alphalist[i])
+            cl,cd,pressures = ultimate_aero_functions(filename,p_inf,p_02,machlist[j],alphalist[i])
             cl_matrix[j+1][i+1] = cl
             cd_matrix[j+1][i+1] = cd
 
@@ -258,9 +289,6 @@ def write_aero_to_csv():
             csv_writer.writerow(cd_matrix[i])
 
     return
-
-
-write_aero_to_csv()
 
 '''
 alphalist = np.arange(10,70,10)
@@ -290,42 +318,109 @@ print(cd_matrix)'''
 
 #pressures = aero_cp_calcs(upstream_mesh,downstream_mesh,p_inf,p_02,M_inf,alpha)
 
+#Vel = 533m/s
+#Altitude = 8.6km
+#
 
 
 
-#cl, cd, pressures = ultimate_aero_functions(p_inf,p_02, M_inf, alpha)
+M_inf = 3
+alpha = 50
+p_inf = MSA.get_pressure(8600)
+p_02, irrelevant = aero_normalshock(8600,M_inf)
 
 
-#print(cl, cd)
+p_02 = 1642.8
+p_inf = 103.86
+M_inf = 3.316
+vel = 553.2
+
+#74585.8 Nm
+
+#mesh_elements_with_vector("016_surface_mesh.csv","016_aeroshell_mesh.txt",0)
+#print("One down")
+#mesh_elements_with_vector("013_surface_mesh.csv","013_aeroshell_mesh.txt",0)
+#print("That's two")
+#mesh_elements_with_vector("012_surface_mesh.csv","012_aeroshell_mesh.txt",0)
+#print("We got this boss")
+
+gamma= 10
+gammalist = [0]
+for i in range(len(gammalist)):
+    gamma = gammalist[i]
+    print("Gamma:",gamma)
+#mesh_elements_with_vector("008_surface_mesh.csv","008_aeroshell_mesh.txt",0)
+    #mesh_elements_with_vector("011_flap_mesh.csv","011_flap_mesh.txt",gamma)
+    cl, cd, pressures = pitching_control_functions("016_aeroshell_mesh.txt","011_flap_mesh.txt",p_inf,p_02, M_inf, alpha,gamma)
+    #cl, cd, pressures = pitching_control_functions("013_aeroshell_mesh.txt", "011_flap_mesh.txt", p_inf, p_02, M_inf,
+    #                                               alpha, gamma)
+    pressuresum =0
+    for i in pressures:
+        pressuresum = pressuresum+i[3]
+
+    print("PRESS SUM",pressuresum)
+    print("Cl,cd:")
+    print(cl, cd)
+    #cl, cd, pressures = pitching_control_functions("014_aeroshell_mesh.txt", "011_flap_mesh.txt", p_inf, p_02, M_inf,
+    #                                               alpha, gamma)
+    #pressuresum =0
+    #for i in pressures:
+    #    pressuresum = pressuresum+i[3]
+    #print("PRESS SUM",pressuresum)
+    #print("Cl,cd:")
+    #print(cl, cd)
+
+cplist = []
+plist = []
+
+for i in pressures:
+    #print(i)
+    cplist.append(i[2])
+    plist.append(i[3])
+
+cp = sum(cplist)/len(pressures)
+#print("Cp z-loc: ", cp)
+
+#print(len(pressures))
 
 
 xlist = []
 ylist = []
 zlist = []
 cplist = []
-#for i in pressures:
-#    xlist.append(i[0])
-#    ylist.append(i[1])
-#    zlist.append(i[2])
-#    cplist.append(i[3])
+for i in pressures:
+    if i[3]>0:
+        xlist.append(i[0])
+        ylist.append(i[1])
+        zlist.append(i[2])
+        cplist.append(i[3])
 
 xlist = np.array(xlist)
 ylist = np.array(ylist)
 zlist = np.array(zlist)
 cplist = np.array(cplist)
 
-
 def scatter3d(x,y,z, cs, colorsMap='jet'):
     cm = plt.get_cmap(colorsMap)
-    cNorm = matplotlib.colors.Normalize(vmin=min(cs), vmax=max(cs))
+    cNorm = matplotlib.colors.Normalize(vmin=0, vmax=max(cs))
     scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cm)
     fig = plt.figure()
     ax = Axes3D(fig)
     #z = np.array([z.T,z])
-    ax.plot_wireframe(x,y,z)
-    #ax.scatter(x, y, z, c=scalarMap.to_rgba(cs))
+    #ax.plot_wireframe(x,y,z)
+    ax.scatter(x, y, z, c=scalarMap.to_rgba(cs))
+
+    xlist2 = np.array([-8,-8,8,8])
+    ylist2 = np.array([8, -8, -8, 8])
+    #zlist2 , zlist3 = np.meshgrid(zlist, zlist)
+    #print(xlist2)
+    #print(ylist2)
+    #print(zlist2)
+    #print(zlist3)
+    #ax.plot_surface(xlist2,ylist2,zlist2,rstride=1,cstride= 1, cmap = cm)
+    ax.scatter(xlist2,ylist2)
     scalarMap.set_array(cs)
     fig.colorbar(scalarMap)
     plt.show()
 
-#scatter3d(xlist,ylist,zlist,cplist)
+scatter3d(xlist,ylist,zlist,cplist)

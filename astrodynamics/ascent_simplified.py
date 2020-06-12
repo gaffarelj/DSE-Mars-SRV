@@ -59,7 +59,7 @@ pe=6077.910186177842                     #[Pa] exit pressure of exhaust gasses
 #=====================================================================================================================================================================================================================
 
 plotting=True       #Do you wanna plot? no=False
-
+updateMOI=True
 #=====================================================================================================================================================================================================================
 # Simplified 2D point-mass model: gravity turn
 #=====================================================================================================================================================================================================================
@@ -111,8 +111,8 @@ Vz0=V0*np.sin(gamma0)
 #=====================================================================================================================================================================================================================
 Mp, Mwet=massfractions(ceff,202413.4011,4495.16936199617+91.66666666666633,45.842,289.485,88,30,391.492,373.65,487.238)  #old Mwet:198948 kg, old DV_ascent: 4188.466 m/s
 M=np.array([Mwet[0]])
+print(M)
 
-tb=ceff/(TW0*9.80665)*np.log(M[0]/(M[0]-Mp[0]))+177.7
     
 Vx=np.array([Vx0])
 Vz=np.array([Vz0])
@@ -126,6 +126,8 @@ X=np.array([0])
 
 TW0=1.5
 TWe=4
+
+tb=ceff/(TW0*9.80665)*np.log(M[0]/(M[0]-Mp[0]))+177.7
 
 Mpver=Mpvertical(ceff,Mwet[0],TW0,V0)
 DeltaVver=ceff*np.log(Mwet[0]/(Mwet[0]-Mpver))
@@ -190,7 +192,7 @@ while Z[-1]<h_phasing+abs(h0) and Z[-1]>=0:
         deltaZ=dt/2*(Vz[-1]+Vznew)
         Znew=Z[-1]+deltaZ
         Z=np.append(Z,Znew)
-        print(Znew)
+        #print(Znew)
         #update velocities
         Vx=np.append(Vx,Vxnew)
         Vz=np.append(Vz,Vznew)
@@ -349,8 +351,20 @@ print("[---", (time.time() - start_time) ,"seconds ---]" )
 
 
 
-
-
+if updateMOI:
+	i=list(mdot).index(np.max(mdot))
+	Mp1=np.sum(mdot[:i]*dt)
+	Mpremain1=M[0]-Mp1
+	#final mass flow point
+	j=list(mdot).index(mdot[mdot!=0][-1])
+	Mp2=np.sum(mdot[:j]*dt)
+	Mpremain2=M[0]-Mp2
+	
+	print()
+	print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+	print("Point of mdot max.: ",Mpremain1)
+	print("Point of mdot final: ",Mpremain2)
+	print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
 
 
