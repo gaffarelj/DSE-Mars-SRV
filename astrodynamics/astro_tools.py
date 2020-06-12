@@ -85,15 +85,18 @@ class Motion:
         altitude = r - self.Planet.r
         t_static = atm.get_temperature(altitude)
         p_static = atm.get_pressure(altitude)
-        p2, rho2, t2, m2 = self.normalshock(r, mach)
-        gas_wall = thermo.Chemical('carbon dioxide', T=t_wall, P=p2)
-        gas_post = thermo.Chemical('carbon dioxide', T=t_wall, P=p2)
-        rho_wall = p2/atm.R/t_wall
-        mu_wall = gas_wall.mug
-        mu_post = gas_post.mug
-        t_total = t2*(1+0.5*(atm.gamma - 1)*m2**2)
-        dudx = 1/nose_radius * np.sqrt(2*(p2 - p_static)/rho2)
-        q = 0.94*(rho2*mu_post)**0.4 * (rho_wall*mu_wall)**0.1 * np.sqrt(dudx) * gas_post.Cpg*(t_total-t_wall)
+        if p_static == 0:
+            q, t2, rho2 = 0, t_static, 0
+        else:
+            p2, rho2, t2, m2 = self.normalshock(r, mach)
+            gas_wall = thermo.Chemical('carbon dioxide', T=t_wall, P=p2)
+            gas_post = thermo.Chemical('carbon dioxide', T=t_wall, P=p2)
+            rho_wall = p2/atm.R/t_wall
+            mu_wall = gas_wall.mug
+            mu_post = gas_post.mug
+            t_total = t2*(1+0.5*(atm.gamma - 1)*m2**2)
+            dudx = 1/nose_radius * np.sqrt(2*(p2 - p_static)/rho2)
+            q = 0.94*(rho2*mu_post)**0.4 * (rho_wall*mu_wall)**0.1 * np.sqrt(dudx) * gas_post.Cpg*(t_total-t_wall)
     
         return q, t2, rho2
 
@@ -197,7 +200,12 @@ class Motion:
         Mx = 0
         My = 0
         Mz = 0
-
+        i = 0
+        data = np.genfromtxt('spirit_flightpath.csv', delimiter='', dtype=None)
+        ca =abs(data[:,32])
+        cn =abs(data[:,34])
+        rho = data[:,42]
+        aoa = np.radians(data[:,36])
         while flight[-1][3] > self.Planet.r - 3000:
             V          = flight[-1][0]
             gamma      = flight[-1][1]
@@ -211,7 +219,15 @@ class Motion:
             alpha      = flight[-1][9]
             beta       = flight[-1][10]
             mu         = flight[-1][11]
-      
+
+            #if rho[i] < 0:
+                #rho[i] = 0
+            q = self.dynamicpressure(V, r)
+            altitude = r - self.Planet.r
+            mach = V/np.sqrt(atm.gamma*atm.R*atm.get_temperature(altitude))
+            postshock_pressure = self.normalshock(r, mach)[0]
+            g = self.gravitational_acceleeration(r, delta)
+
             # Parachute deployment
             chute_drag_area = 0
             if len(self.chutes) > 0:
@@ -227,24 +243,19 @@ class Motion:
                 if self.i_chute >= 0:
                     chute_drag_area = self.chutes[self.i_chute].drag_area
 
-            q = self.dynamicpressure(V, r)
-            altitude = r - self.Planet.r
-            mach = V/np.sqrt(atm.gamma*atm.R*atm.get_temperature(altitude))
-            postshock_pressure = self.normalshock(r, mach)[0]
-            cl,cd = cl_cd(mach, -np.degrees(alpha))
             
+            #cl = cn[i]*np.cos(aoa[i]) + ca[i]*np.sin(aoa[i])
+            #cd = cn[i]*np.sin(aoa[i]) + ca[i]*np.cos(aoa[i])
+            cl,cd = cl_cd(mach, -np.degrees(alpha))
+
+            #if cn[i] == -1:
+                #cl = 0
+                #cd = 1.8
 
             D = q * (cd * self.S + chute_drag_area)
             L = q * cl * self.S 
-            g = self.gravitational_acceleeration(r, delta)
-            '''
-            if time[-1] > self.rotation_start:
-                self.pitch_control = False
-                My = -79000 
-                if abs(alpha + gamma) > np.pi:
-                    My = 0
-                    pitch_rate = 0
-            '''
+            My = -(L*np.cos(alpha) + D*np.sin(alpha))*0.1
+            #i+=1
             if time[-1] > self.thrust_start:
                 D = D + self.thrust
 
@@ -259,20 +270,20 @@ class Motion:
             new_state[6] = roll_rate + timestep * self.dpdt(Mx, pitch_rate, yaw_rate)
             new_state[7] = pitch_rate + timestep * self.dqdt(My, roll_rate, yaw_rate)
             new_state[8] = yaw_rate + timestep * self.drratedt(Mz, roll_rate, pitch_rate)
+            new_state[9] = alpha + timestep * self.dalphadt(roll_rate, pitch_rate, yaw_rate, g, L, V, gamma, mu, alpha, beta)
             new_state[10] = beta + timestep * self.dbetadt(roll_rate, yaw_rate, g, V, gamma, mu, alpha)
-            #new_state[11] = mu + timestep * self.dmudt(roll_rate, q, yaw_rate, g, L, V, gamma, mu, alpha, beta)
+            new_state[11] = mu + timestep * self.dmudt(roll_rate, q, yaw_rate, g, L, V, gamma, mu, alpha, beta)
             
             if self.pitch_control == True:
+                q_dot = (pitch_rate + (roll_rate*np.cos(alpha) + yaw_rate*np.sin(alpha))*np.tan(beta) + (L - self.mass*g*np.cos(gamma)*np.cos(mu))/(self.mass*V*np.cos(beta)) - 
+                        new_state[7] - (new_state[6]*np.cos(new_state[9]) + new_state[8]*np.sin(new_state[9]))*np.tan(new_state[10]) - (L - self.mass*g*np.cos(new_state[1])*np.cos(new_state[11]))/(self.mass*V*np.cos(new_state[10]))) / timestep
+                p_dot = (-(- yaw_rate*np.sin(alpha) + np.cos(beta)*(- (L - self.mass*g*np.cos(gamma)*np.cos(mu))/(self.mass*V)*np.tan(beta) + (L*np.sin(mu) + self.S*np.cos(mu))/(self.mass*V)*np.tan(gamma)))/np.cos(alpha) + 
+                        (- yaw_rate*np.sin(new_state[9]) + np.cos(new_state[10])*(- (L - self.mass*g*np.cos(new_state[1])*np.cos(new_state[11]))/(self.mass*V)*np.tan(new_state[10]) + (L*np.sin(new_state[11]) + self.S*np.cos(new_state[11]))/(self.mass*V)*np.tan(new_state[1])))/np.cos(new_state[9]))
+                pitching_moment = q_dot * self.Iyy 
+                rolling_moment =  p_dot * self.Izz
                 new_state[9] = self.initial[9]
-                pitchrate = (L - self.mass*g*np.cos(gamma)*np.cos(mu))/(self.mass*V*np.cos(beta))
-                pitching_moment = (pitchrate - ((self.Izz-self.Ixx)/self.Iyy * roll_rate * yaw_rate))*self.Iyy
-
-                rollrate = -(- yaw_rate*np.sin(alpha) + np.cos(beta)*(- (L - self.mass*g*np.cos(gamma)*np.cos(mu))/(self.mass*V)*np.tan(beta) + (L*np.sin(mu) + self.S*np.cos(mu))/(self.mass*V)*np.tan(gamma)))/np.cos(alpha)
-                rolling_moment = (rollrate - ((self.Ixx-self.Iyy)/self.Iyy * roll_rate * yaw_rate))*self.Izz
                 new_state[11] = self.initial[11]
-            else:
-                new_state[9] = alpha + timestep * self.dalphadt(roll_rate, pitch_rate, yaw_rate, g, L, V, gamma, mu, alpha, beta)
-                pitching_moment = 0
+
 
             self.a_s.append(a)
             self.q_s.append(q)
@@ -289,7 +300,7 @@ class Motion:
             time.append(time[-1] + timestep)
             state = new_state
 
-        self.a_s.append(a), self.q_s.append(q), self.mach.append(mach), self.pitch.append(pitching_moment), self.roll.append(rolling_moment), self.heatflux.append(q_in), self.temperature.append(t2), self.density.append(rho2), self.p2.append(postshock_pressure)
+        self.a_s.append(a), self.q_s.append(q), self.mach.append(mach), self.pitch.append(pitching_moment), self.roll.append(rolling_moment), self.heatflux.append(q_in), self.temperature.append(t2), self.density.append(rho2)#, self.p2.append(postshock_pressure)
         return np.array(flight), time
 
 class pc():
@@ -336,47 +347,6 @@ class Montecarlo:
     def get_trajectories_linux(self):
         pool = mp.Pool(mp.cpu_count())
         self.per = pool.map(self.impact_point, range(self.n))
-
-class Aeroheating():
-    def __init__(self, time, velocity, altitude, angle_of_attack):
-        self.velocity = velocity
-        self.altitude = altitude 
-        self.aoa = -np.degrees(angle_of_attack)
-        self.x = np.arange(0.1, 15.9, 0.1)                  #vehicle lenght 
-        self.time = time
-
-    def heattransfer_stagnation(self, Twall, altitude, velocity, alpha):
-        return -1
-    
-    def heattransfer(self, x, Twall, altitude, velocity, alpha):
-        p_inf = atm.get_pressure(altitude)
-        T_inf = atm.get_temperature(altitude)
-        rho = atm.get_density(p_inf, T_inf)
-        gas = thermo.Chemical('carbon dioxide', T=T_inf, P=p_inf)
-        mu = gas.mug
-        Cv = gas.Cvg
-        Hw = Cv * Twall
-        Hr = Cv*T_inf + 0.89*velocity**2/50.103
-        Hstar = Cv*T_inf + 0.5* Cv*(Twall - T_inf) + 0.22*(Hr - Cv*T_inf)
-        T_ref = Hstar/Cv
-        C1 = 0.9
-        C5 = 1.15
-        A1 = 2
-        halpha = A1 * (rho*velocity)**0.8 / x**0.2 * alpha
-        h0 = C1*0.0375 * (rho*velocity)**0.8 * mu**0.2 / x**0.2 * (T_inf/T_ref)**0.65
-        h = C5*(h0 + halpha)
-        q = h*(Hr - Hw)
-        return q
-    
-    def walltemperature(self, time, tolerance=1e-3):
-        idx = 1
-        velocity = self.velocity[idx]
-        altitude = self.altitude[idx]
-        heatflux = []
-        for loc in self.x:
-            q = self.heattransfer(loc, 500, altitude, velocity, 55)
-            heatflux.append(q)
-        return heatflux
 
 
 def plot_single(x_data, y_data, x_label, y_label):
@@ -509,6 +479,7 @@ def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', **kwargs):
         .translate(mean_x, mean_y)
 
     ellipse.set_transform(transf + ax.transData)
+    print(transf)
     return ax.add_patch(ellipse)
 
 
