@@ -221,7 +221,7 @@ class Montecarlo:
 
 
 def plot_single(x_data, y_data, x_label, y_label):
-	plt.rcParams.update({"font.size": 12})
+	plt.rcParams.update({"font.size": 13})
 	fig, ax1 = plt.subplots()
 
 	color = "tab:blue"
@@ -237,7 +237,7 @@ def plot_single(x_data, y_data, x_label, y_label):
 
 
 def plot_dual(x_data, y_data_1, y_data_2, x_label, y_label_1, y_label_2):
-	plt.rcParams.update({"font.size": 12})
+	plt.rcParams.update({"font.size": 13})
 	fig, ax1 = plt.subplots()
 
 	color = "tab:red"
