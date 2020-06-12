@@ -134,75 +134,61 @@ z_12 = 1.2
 z_13 = 1.7
 z_14 = 2.6225
 
+dz = 0.01
 
-p_zf = [0]
-for z in np.arange(0, 17.83, 0.01):
-    
+z_l = np.arange(0, 17.83, dz)
+
+p_zf = []
+for z in z_l:
     if z >= 0 and z< 2.5:
-        al = 3*(z-CG)      
-        p_zf.append((pz_1*(z-CG)*al*g*0.01))
+        p_zf.append(pz_1)
     if z >= 2.5 and z< 3:
-        al = 3*(z-CG)
-        p_zf.append((pz_2*(z-CG)*al*g*0.01))
+        p_zf.append(pz_2)
     if z >= 3 and z< 3.3:
-        al = 3*(z-CG)
-        p_zf.append((pz_3*(z-CG)*al*g*0.01))
+        p_zf.append(pz_3)
     if z >= 3.3 and z< 5.5:
-        al = 3*(z-CG)
-        p_zf.append(((pz_4+p_13)*al*g*(z-CG))*0.01)
-    if z >=5.5 and z < CG:
-        al = 3*(z-CG)
-        p_zf.append(((pz_5+p_14)*al*g*(z-CG))*0.01)
-    if z >= CG and z< 8.5:
-        al = 3*(z-CG)
-        p_zf.append(((pz_5+p_14)*al*g*(z-CG))*0.01)
+        p_zf.append(pz_4+p_13)
+    if z >=5.5 and z < 8.5:
+        p_zf.append(pz_5+p_14)
     if z >=8.5 and z < 9.1:
-        al = 3*(z-CG)
-        p_zf.append(((pz_6+p_14)*al*g*(z-CG))*0.01)
+        p_zf.append(pz_6+p_14)
     if z >= 9.1 and z< 11.3:
-        al = 3*(z-CG)
-        p_zf.append(((pz_7+p_14)*al*g*(z-CG))*0.01)
+        p_zf.append(pz_7+p_14)
     if z >= 11.3 and z< 11.8:
-        al = 3*(z-CG)
-        p_zf.append((pz_8*al*g*(z-CG))*0.01)
+        p_zf.append(pz_8)
     if z >= 11.8 and z < 12.1:
-        al = 3*(z-CG)
-        p_zf.append((pz_9*al*g*(z-CG))*0.01)
+        p_zf.append(pz_9)
     if z>= 12.1 and z < 12.3:
-        al = 3*(z-CG)
-        p_zf.append((pz_10*al*g*(z-CG))*0.01)
+        p_zf.append(pz_10)
     if z>= 12.3 and z < 13.5:
-        al = 3*(z-CG)
-        p_zf.append((p_15*al*g*(z-CG))*0.01)
+        p_zf.append(p_15)
     if z>= 13.5 and z < 15.2:
-        al = 3*(z-CG)
-        p_zf.append((p_16*al*g*(z-CG))*0.01)
+        p_zf.append(p_16)
     if z>= 15.2 and z < 17.8225:
-        al = 3*(z-CG)
-        p_zf.append((p_17*al*g*(z-CG))*0.01)
-        
+        p_zf.append(p_17)
 
+alpha = 3
+print(np.shape(z_1))   
+V = [0]*len(p_zf)
 
+for i in range(len(V)):
+    V[i] = alpha*p_zf[i]*(z_l[i]-CG)*dz+V[i-1]
 
-
-
-# Data for plotting
-z = np.arange(0, 17.84, 0.01)
 
 
 
 fig, ax = plt.subplots()
 
-ax.plot(z, p_zf)
+ax.plot(z_l, [alpha*p_zf[i]*(z_l[i]-CG) for i in range(len(z_l))])
 
 ax.set(xlabel='z [m]', ylabel='Force [kg/m]',
        title='Moment distribution in Charon')
 ax.grid()
-
+"""
 V = []
 Z = []
-for i in range(1,(len(z)-1)):
-    dm_dz = (p_zf[i+1]-p_zf[i-1])/(2*0.01)
+for i in range(1,(len(tau)-1)):
+    dm_dz = (tau[i+1]-tau[i-1])/(2*0.01)
     V.append(dm_dz)
     Z.append(z[i])
     
@@ -214,5 +200,6 @@ ax.plot(Z, V)
 ax.set(xlabel='z [m]', ylabel='Force [kg/m]',
        title='Shear distribution in Charon')
 ax.grid()
-
+"""
+plt.show()
 
