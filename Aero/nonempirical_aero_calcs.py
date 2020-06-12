@@ -212,7 +212,6 @@ def aero_cp_calcs(upstream_mesh,downstream_mesh, p_inf, p_02,M_inf,alpha):
 
     return cl, cd, pressure_list
 
-
 def ultimate_aero_functions(filename, p_inf, p_02, M_inf, alpha):
     with open(filename, "rb") as f:
         new_list = pickle.load(f)
@@ -222,7 +221,6 @@ def ultimate_aero_functions(filename, p_inf, p_02, M_inf, alpha):
     cl, cd, pressures = aero_cp_calcs(upstream_mesh, downstream_mesh, p_inf, p_02, M_inf, alpha)
 
     return cl, cd, pressures
-
 
 def pitching_control_functions(filename,filename_BF, p_inf, p_02, M_inf, alpha,gamma):
     with open(filename, "rb") as f:
@@ -238,7 +236,6 @@ def pitching_control_functions(filename,filename_BF, p_inf, p_02, M_inf, alpha,g
     cl, cd, pressures = aero_cp_calcs(upstream_mesh, downstream_mesh, p_inf, p_02, M_inf, alpha)
 
     return cl, cd, pressures
-
 
 def aero_normalshock(altitude, mach_initial):
     altitude = altitude
@@ -293,7 +290,6 @@ def write_aero_to_csv(filename):
 
     return
 
-
 '''
 alphalist = np.arange(10,70,10)
 machlist = np.arange(5,25,5)
@@ -341,7 +337,7 @@ vel = 553.2
 
 #74585.8 Nm
 
-#mesh_elements_with_vector("015_surface_mesh.csv","015_aeroshell_mesh.txt",0)
+#mesh_elements_with_vector("016_surface_mesh.csv","016_aeroshell_mesh.txt",0)
 #print("One down")
 #mesh_elements_with_vector("013_surface_mesh.csv","013_aeroshell_mesh.txt",0)
 #print("That's two")
@@ -355,7 +351,7 @@ for i in range(len(gammalist)):
     print("Gamma:",gamma)
 #mesh_elements_with_vector("008_surface_mesh.csv","008_aeroshell_mesh.txt",0)
     #mesh_elements_with_vector("011_flap_mesh.csv","011_flap_mesh.txt",gamma)
-    cl, cd, pressures = pitching_control_functions("015_aeroshell_mesh.txt","011_flap_mesh.txt",p_inf,p_02, M_inf, alpha,gamma)
+    cl, cd, pressures = pitching_control_functions("016_aeroshell_mesh.txt","011_flap_mesh.txt",p_inf,p_02, M_inf, alpha,gamma)
     #cl, cd, pressures = pitching_control_functions("013_aeroshell_mesh.txt", "011_flap_mesh.txt", p_inf, p_02, M_inf,
     #                                               alpha, gamma)
     pressuresum =0
