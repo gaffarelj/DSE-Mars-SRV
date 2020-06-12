@@ -1,5 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt 
+import astro_tools
 
 # Constants 
 R = 8314.4621/44.1
@@ -66,8 +67,11 @@ if __name__=="__main__":
     alt = np.arange(0,100000,1)
     pressure = [get_pressure(h) for h in alt]
     temp = [get_temperature(h) for h in alt]
+    density = [get_density(get_pressure(h),get_temperature(h)) for h in alt]
+    mars = astro_tools.Planet()
+    rho = [mars.density(h) for h in alt]
         
-    plt.rcParams.update({'font.size': 14})
+    plt.rcParams.update({'font.size': 12})
 
     fig, ax1 = plt.subplots()
 
@@ -86,4 +90,12 @@ if __name__=="__main__":
     ax2.tick_params(axis='y', labelcolor=color)
 
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
+    plt.show()
+
+    plt.plot(alt, density, label = 'Density from Viking I entry data')
+    plt.plot(alt,rho, label = 'Exponentail density model')
+    plt.grid()
+    plt.legend(loc = 'best')
+    plt.ylabel('Density [kg/m^3]')
+    plt.xlabel('Altitude [km]')
     plt.show()
