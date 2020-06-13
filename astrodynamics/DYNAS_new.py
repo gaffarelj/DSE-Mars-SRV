@@ -274,6 +274,43 @@ def accel_Omega(I,Mext,dIdt,Omega_bC):
 	Omega_bC=np.array(Omega_bC).reshape(3,1)
 	acc_Omega_bC=I.I*(Mext-dIdt*Omega_bC-np.cross(Omega_bC,I*Omega_bC,axis=0))
 	return acc_Omega_bC
+
+
+def get_Vn_dot(M, Fx, Ve, Vn, Vd, R, delta, Omegat):
+    Vn_dot=Fx/M - 2 * Omegat * Ve * np.sin(delta) - Omegat * Omegat * R * np.sin(delta) * np.cos(delta) - (Ve * Ve * np.tan(delta) - Vn * Vd)/R
+    return Vn_dot
+
+def get_Ve_dot(M, Fy, Ve, Vn, Vd, R, delta, Omegat):
+    Ve_dot=Fy/M + 2 * Omegat * ( Vd * np.cos(delta) + Vn * np.sin(delta) )+ Ve/R * (Vn * np.tan(delta) + Vd)
+    return Ve_dot
+
+def get_Vd_dot(M, Fz, Ve, Vn, R, delta, Omegat):
+    Vd_dot=Fz/M - 2 * Omegat * Ve * np.cos(delta) - Omegat * Omegat * R * np.cos(delta) * np.cos(delta) - (Ve * Ve + Vn * Vn)/R
+    return Vd_dot
+
+def get_p_tilde(p, theta, psi, delta_dot, delta, tau_dot, Omegat):
+    p_tilde = p +  np.cos(theta) * np.sin(psi) * delta_dot - ( np.cos(delta) * np.cos(psi) * np.cos(theta) + np.sin(delta) * np.sin(theta) ) * (tau_dot + Omegat)
+    return p_tilde
+
+def get_q_tilde(q, psi, theta, phi, delta_dot, delta, tau_dot, Omegat):
+	q_tilde = q + ( np.sin(psi) * np.sin(theta) * np.sin(phi) + np.cos(psi) * np.cos(phi)) * delta_dot - ( np.cos(delta) * ( np.cos(psi) * np.sin(theta) * np.sin(phi) - np.sin(psi) * np.cos(phi) ) - np.sin(delta) * np.cos(theta) * np.sin(phi) ) * (tau_dot * Omegat)
+	return q_tilde
+
+def get_r_tilde(r, psi, phi, theta, delta_dot, delta, tau_dot, Omegat):
+	r_tilde = r + ( np.sin(psi) * np.cos(phi) * np.sin(theta) - np.cos(psi) * np.sin(phi) ) * delta_dot - ( np.cos(delta) * ( np.sin(psi) * np.sin(phi) + np.cos(psi) * np.sin(theta) * np.cos(phi) ) - np.sin(delta) * np.cos(theta) * np.cos(phi) ) * (tau_dot * Omegat)
+	return r_tilde
+
+def get_phi_dot(p_tilde, q_tilde, r_tilde, phi, theta):
+	phi_dot = p_tilde + np.sin(phi) * np.tan(theta) * q_tilde + np.cos(phi) * np.tan(theta) * r_tilde
+	return phi_dot
+
+def get_theta_dot(q_tilde, r_tilde, phi):
+	theta_dot = np.cos(phi) * q_tilde - np.sin(phi) * r_tilde
+	return theta_dot
+
+def get_psi_dot(q_tilde, r_tilde, phi, theta):
+	psi_dot = np.sin(phi) / np.cos(theta) * q_tilde + np.cos(phi) / np.cos(theta) * r_tilde
+	return psi_dot
 #========================================================================================================================================================================================================================================================
 #   Input Parameters
 #========================================================================================================================================================================================================================================================
@@ -288,8 +325,8 @@ omega_mars=0.7088218*10**(-4)  #[rad/s] Martian angular velocity
 M_atm=43.34                    #[g/mol] Mean molecular weight
 Rgas=8314.4621/M_atm           #[J/(kg*K)] Martian air gas constant
 gamma_gas=1.37                 #[-] heat capacity of Martian air
-delta=41*np.pi/180             #[rad] latitude of the Martian base 
-tau=(23.5)*np.pi/180             #[rad] east longitude of the Martian base
+delta0=41*np.pi/180             #[rad] latitude of the Martian base 
+tau0=(23.5)*np.pi/180             #[rad] east longitude of the Martian base
 h0=-3*10**3					   #[m] altitude wrt R of Mars base
 h_phasing=609.74*10**3         #[m] altitude of the phasing orbit
 V_phasing=3272.466             #[m/s]
@@ -349,42 +386,31 @@ if updateMOI:
 #========================================================================================================================================================================================================================================================
 #   Initial Conditions  
 #========================================================================================================================================================================================================================================================
+#load the pitch rate due to the gravity gotten from the simplified ascent simulation
+gamma_dot=np.genfromtxt("gravity_pitchrate.txt")
 t=[0]					       #[s] time of flight 
 dt=0.1					       #[s] step size
 #Mass
 M=[202413.4011]
-
-#Position [in Fc]
-r0=Rmars+h0+100                    #[m] initial radial distance 
-R=[[ r0*np.cos(delta)*np.cos(tau), r0*np.cos(delta)*np.sin(tau), r0*np.sin(delta)]]
-Rnorm=[np.linalg.norm(R[-1])]
-#initial attitude
-angles=[[np.pi/2, -(np.pi/2-initial_tilt) ,0]]        #Euler angles. In order of appearance in the list: psi(yaw angle), theta(pitch angle), phi(roll angle)
-                                                           #[-np.pi/2, np.pi/2-initial_tilt, -np.pi/2]
-#Velocities [in Fc]: vehicle has initial velocity due to rotation of Mars
-#free velocities from Mars rotation
-Vfree_b=np.array([[0                          ], 	#initial velocity gotten fro free from Mars rotation IN BODY FRAME!will have to be transformed !!!
-  				  [omega_mars*r0*np.sin(delta)],
-				  [omega_mars*r0*np.cos(delta)]])
-	
-Vfree_C=T_Cb(delta,tau,angles[-1][1],angles[-1][2],angles[-1][0])*Vfree_b
-
-#initial velocity
-V0_b=[110/3.6,0,0]
-V=T_Cb(delta,tau,angles[0][1],angles[0][2],angles[0][0])*np.array(V0_b).reshape(3,1)
-V=[[float(V[0]),float(V[1]),float(V[2])]]
-Vnorm=[np.linalg.norm(V[-1])]
-#load the pitch rate due to the gravity gotten from the simplified ascent simulation
-gamma_dot=np.genfromtxt("gravity_pitchrate.txt")
-#Rotational rates of vehicle wrt inertial frame
-#vehicle is only pitching in the body frame
-Omega_bC=[[0,gamma_dot[0],0]]			#q=-0.001789 rad/s
-
-#Rotational rates of the inertial frame C wrt to the inertial frame of the planet
-Omega_CI=[0,0,omega_mars]
-
-gamma0=(90-initial_tilt)*np.pi/180 
-
+r0=Rmars+h0+100                     
+R=[r0]
+Vn=[0]
+Ve=[0]
+Vd=[110/3.6]
+Vnorm=[np.sqrt(Vn[0]*Vn[0]+Vd[0]*Vd[0]+Ve[0]*Ve[0])]
+delta=[delta0]
+tau=[tau0]
+psi=[np.pi/2]
+theta=[-(np.pi/2-initial_tilt)]
+phi=[0]
+p_dot=[0]
+q_dot=[0]
+r_dot=[0]
+p=[0]
+q=[0]
+r=[0]
+#am=aerodynamic moment to be coutneracted by control to be stable
+am=[]
 #prescribed max TWratio
 TW0=1.5
 TWe=4
@@ -397,78 +423,76 @@ xcp=[get_xcp(lcap,lcyl,ltot,xcg0,Acap,Acyl,delta_cg(t[-1],xcg0,t_xcg0,xcgm,t_xcg
 #   Simulation
 #========================================================================================================================================================================================================================================================
 i=0
-while Rnorm[-1]<Rmars+h_phasing:
+while R[-1]<Rmars+h_phasing:
 #for i in range(2):
 	i+=1
 	########################################
 	# Compute atmospheric properties at i  #
 	########################################
-	T=get_T(Rnorm[-1]-Rmars)
-	p=get_p(Rnorm[-1]-Rmars)
-	rho=get_rho(p,T,Rgas)
+	T=get_T(R[-1]-Rmars)
+	pr=get_p(R[-1]-Rmars)
+	rho=get_rho(pr,T,Rgas)
 	a=get_a(gamma_gas,Rgas,T)
 	Mach=get_Mach(Vnorm[-1],a)
 	Cl,Cd=SS_aerodynamics_coefficients(Mach,0)
-	q=0.5*rho*Vnorm[-1]*Vnorm[-1]
-	g=get_g(mu,Req,Rmars,Rnorm[-1]-Rmars,delta,J2)
+	qdyn=0.5*rho*Vnorm[-1]*Vnorm[-1]						#dynamic pressure
+	g=get_g(mu,Req,Rmars,R[-1]-Rmars,delta,J2)
 	#magnitude of the thrust force
 	if t[-1]>=tb:
 		Ftmag=0
 		mdot=0
 	else:
 		TWratio=TWlinear(t[-1],0,tb,TW0,TWe)
-		Ftmag=(TWratio*M[-1]*g)
-		mdot=(TWratio*M[-1]*g-Ae*(pe-p))/ceff
+		Ftmag=(TWratio*M[-1]*g[-1])
+		mdot=(TWratio*M[-1]*g[-1]-Ae*(pe-pr))/ceff
 	Fthrust.append(Ftmag)
 	mdot_list.append(mdot)
     ########################################
-	# Compute external Forces              #
-	########################################
-	"""
-	Fg= T_CE(delta,tau) * M[-1] * np.array([[-g * np.sin(angles[-1][1])                        ],
-		                                    [g * np.cos(angles[-1][1]) * np.sin(angles[-1][2]) ],
-											[g * np.cos(angles[-1][1]) * np.cos(angles[-1][2]) ]])
-	"""
-	Fg=  T_Cb(delta,tau,angles[-1][1],angles[-1][2],angles[-1][0]) * M[-1] * np.array([[- g  ],
-		                                                                               [ 0   ],
-									                                                   [ 0   ]])
-	
-	Fa= T_Cb(delta,tau,angles[-1][1],angles[-1][2],angles[-1][0]) * - np.array([[q * S * Cd],
-		                                                                        [0     ],
-																                [q * S * Cl]])
-	
-	Ft= T_Cb(delta,tau,angles[-1][1],angles[-1][2],angles[-1][0]) *   np.array([[-Ftmag               ],
-		                                                                        [0                    ],
-																                [0                    ]])
-	
-	Fext= Fg + Fa + Ft
+    # Compute external Forces              #
     ########################################
-	# Compute external Moments             #
-	########################################
-	Mext= np.array([[0                 ],
-				    [0*q * S * Cl*xcp[-1]],
-					[0                 ]])
+    #external forces expressed in the vehicle normal carried reference frame
+	Fext = T_Eb(theta[-1],phi[-1],psi[-1]) * np.array([[ -Ftmag - M[-1] * g[-1] * np.sin(theta[-1]) - qdyn * S * Cd[-1]           ],
+	                                                   [ M[-1] * g[-1] * np.cos(theta[-1]) * np.sin(phi[-1])                     ],
+	                                                   [ M[-1] * g[-1] * np.cos(theta[-1]) * np.cos(phi[-1]) - qdyn * S * Cl[-1] ]])
+	Fx=float(Fext[0])
+	Fy=float(Fext[1])
+	Fz=float(Fext[2])
+    ########################################
+    # Compute external Moments             #
+    ########################################
+    #in the body frame!
+	Mcm =  0 * qdyn * S * Cl[-1] * xcp[-1]
+	am.append(qdyn * S * Cl[-1] * xcp[-1])
     ########################################
 	# Compute Accelerations                #
 	########################################	
-	acc=accel(M[-1],Fext,Omega_CI,V[-1],R[-1])
+	Vn_dot=get_Vn_dot(M[-1], Fx, Ve[-1], Vn[-1], Vd[-1], R[-1], delta[-1], Omegat=omega_mars)
+	Ve_dot=get_Ve_dot(M[-1], Fy, Ve[-1], Vn[-1], Vd[-1], R[-1], delta[-1], Omegat=omega_mars)
+	Vd_dot=get_Vd_dot(M[-1], Fz, Ve[-1], Vn[-1], R[-1], delta[-1], Omegat=omega_mars)
 	#break
-	ac.append(float(np.linalg.norm(acc)))
+	ac.append(np.sqrt(Vn_dot*Vn_dot + Ve_dot*Ve_dot + Vd_dot*Vd_dot))
     ########################################
 	# Compute Velocities                   #
 	########################################
-	Vnew= np.array(V[-1]).reshape(3,1) + dt * acc
-	V.append([ float(Vnew[0]), float(Vnew[1]), float(Vnew[2]) ])
-	Vnorm.append(np.linalg.norm(V[-1])) 
+	Vn_new = Vn[-1] + dt * Vn_dot
+	Ve_new = Ve[-1] + dt * Ve_dot
+	Vd_new = Vd[-1] + dt * Vd_dot
+	Vnorm.append(np.sqrt(Vn_new*Vn_new + Ve_new*Ve_new + Vd_new*Vd_new)) 
     ########################################
 	# Compute Positions                    #
 	########################################
-	Rnew= np.array(R[-1]).reshape(3,1) + 0.5 * dt * (np.array(V[-1]).reshape(3,1)+np.array(V[-2]).reshape(3,1))
-	R.append([ float(Rnew[0]), float(Rnew[1]), float(Rnew[2]) ])
-	Rnorm.append(np.linalg.norm(R[-1])) 
+	R_dot = - Vd[-1]
+	delta_dot = Vn[-1] / R[-1]
+	tau_dot = Ve[-1] / ( R[-1] * np.cos(delta[-1]))
+	
+	Rnew = R[-1] + dt * R_dot
+	deltanew = delta[-1] + dt * delta_dot
+	taunew = tau[-1] + dt * tau_dot
+	
 	print()
-	print("Altitude is: ", Rnorm[-1]-Rmars)
+	print("Altitude is: ", Rnew-Rmars)
 	print("time is: ",t[-1])
+	
     ########################################
 	# Compute MOIs                         #
 	########################################
@@ -492,44 +516,66 @@ while Rnorm[-1]<Rmars+h_phasing:
 			        [0    , Iydot, 0    ],
 				    [0    , 0    , Izdot]])
     ########################################
-	# Compute angular accelerations        #
-	########################################		
-	acc_Omega=accel_Omega(I,Mext,dIdt,Omega_bC[-1])	
-    ########################################
-	# Compute angular rates                #
+	# Compute angular accelerations & rates#
 	########################################
-	#In inertial RF!!!!	  
-	Omeganew= np.array(Omega_bC[-1]).reshape(3,1) + dt * acc_Omega
+	Omega_bI=np.array([ [ p[-1] ], [ q[-1] ], [ r[-1] ] ])		
+	Omega_bI_dot = I.I * ( - dIdt * Omega_bI - np.cross( Omega_bI, I * Omega_bI ,axis=0) )
 	
-	if i<=len(gamma_dot):
-		#add the pitch rate due to gravity in the gravity turn
-		q_g=-gamma_dot[i]
+	# ?? add control over pitch and yaw ??
 	
-	Omega_bC.append([float(Omeganew[0]), q_g, float(Omeganew[2])])
+	p_dotnew=float(Omega_bI_dot[0])
+	q_dotnew=float(Omega_bI_dot[1])
+	r_dotnew=float(Omega_bI_dot[2])
+	p_dot.append(p_dotnew)
+	q_dot.append(q_dotnew)
+	r_dot.append(r_dotnew)
+	
+	pnew = p[-1] + dt * p_dotnew
+	#qnew = q[-1] + dt * q_dotnew
+	qnew=gamma_dot[i]
+	rnew = r[-1] + dt * r_dotnew
+	
     ########################################
-	# Compute new angles & convert to FE   #
-	########################################
-	anglesnew= np.array(angles[-1]).reshape(3,1) + 0.5 * dt *  T_Eb(angles[-1][1],angles[-1][2],angles[-1][0])* ( np.array(Omega_bC[-1]).reshape(3,1) +  np.array(Omega_bC[-2]).reshape(3,1))
+	# Compute Euler angles                 #
+	########################################	
+	p_tilde=get_p_tilde(p[-1], theta[-1], psi[-1], delta_dot, delta[-1], tau_dot, Omegat=omega_mars)
+	q_tilde=get_q_tilde(q[-1], psi[-1], theta[-1], phi[-1], delta_dot, delta[-1], tau_dot, Omegat=omega_mars)
+	r_tilde=get_r_tilde(r[-1], psi[-1], phi[-1], theta[-1], delta_dot, delta[-1], tau_dot, Omegat=omega_mars)
 	
-	deltaYawnew=-float(anglesnew[0])
-	deltaYaw.append(deltaYawnew)
-	da=np.array([[deltaYawnew],
-			     [0],
-				 [0]])
-	anglesnew=anglesnew+da
+	phi_dot=get_phi_dot(p_tilde, q_tilde, r_tilde, phi[-1], theta[-1])
+	theta_dot=get_theta_dot(q_tilde, r_tilde, phi[-1])
+	psi_dot=get_psi_dot(q_tilde, r_tilde, phi[-1], theta[-1])
 	
-	angles.append([float(anglesnew[0]), float(anglesnew[1]), float(anglesnew[2])])	
+	phinew = phi[-1] + dt * phi_dot
+	thetanew = theta[-1] + dt * theta_dot
+	psinew = psi[-1] + dt * psi_dot
+	
+	
+	
+	#append velocities
+	Vn.append(Vn_new)
+	Ve.append(Ve_new)
+	Vd.append(Vd_new)
+	#append delta
+	delta.append(deltanew)
+	#append tau
+	tau.append(taunew)
+	#append R
+	R.append(Rnew)
+	#append angular rates
+	p.append(pnew)
+	q.append(qnew)
+	r.append(rnew)
+    #append Euler angles
+	phi.append(phinew)
+	theta.append(thetanew)
+	psi.append(psinew)
     ########################################
     # Compute new Mass, c.p. & angles      #
     ########################################
 	M.append( M[-1] - mdot * dt)
     #update xcp
 	xcp.append(get_xcp(lcap,lcyl,ltot,xcg0,Acap,Acyl,delta_cg(t[-1],xcg0,t_xcg0,xcgm,t_xcgm,xcge,t_xcge,tb)))
-    #update tau
-	tau=np.arctan(R[-1][1]/R[-1][0])
-	delta=np.arctan(R[-1][2]/np.sqrt(R[-1][1]**2+R[-1][1]**2))
-	#print()
-	#print("Longitude: ", delta*180/np.pi)
     ########################################
     # Update the time                      #
     ########################################
@@ -541,32 +587,41 @@ while Rnorm[-1]<Rmars+h_phasing:
 #total propellant mass needed
 Mp=np.sum(np.array(mdot_list)*dt)
 #delta V needed
-DeltaV = ceff * np.log( M[0] / ( M[0] - Mp ) )+np.linalg.norm(Vfree_C)	
-ac=np.array(ac)
-am=[]
+DeltaV = ceff * np.log( M[0] / ( M[0] - Mp ) )
 
-#Aerodynamic moment to be counteracted
-for i in range(len(Rnorm)):
-	ami=0.5*Vnorm[i]*Vnorm[i]*get_rho(get_p(Rnorm[i]-Rmars),get_T(Rnorm[i]-Rmars),Rgas)*S*0.05
-	am.append(ami)
 
-	
-am=np.array(am)				 
+M=np.array(M)
+r0=Rmars+h0+100                     
+R=np.array(R)
+V=np.array(Vnorm)
+delta=np.array(delta)
+tau=np.array(tau)
+psi=np.array(psi)
+theta=np.array(theta)
+phi=np.array(psi)
+p_dot=np.array(p_dot)
+q_dot=np.array(q_dot)
+r_dot=np.array(r_dot)
+p=np.array(p)
+q=np.array(q)
+r=np.array(r)
+Ft=np.array(Fthrust)
+#am=aerodynamic moment to be coutneracted by control to be stable
+am=np.array(am)
+#prescribed max TWratio
+TW0=1.5
+TWe=4
+mdot=np.array(mdot_list)
+a_array=np.array(ac)			 
 t=np.array(t)	
-ac=np.array(ac)	
-Rnorm=np.array(Rnorm)	
-Vnorm=np.array(Vnorm)
-Ft=np.array(Fthrust)				 
-#correctly format R to plot it together with mars
-X=[item[0] for item in R]
-Y=[item[1] for item in R]
-Z=[item[2] for item in R]
-#correctly format angles to plot 
-Psi=np.array([item[0] for item in angles])*180/np.pi
-Theta=np.array([item[1] for item in angles])*180/np.pi
-Phi=np.array([item[2] for item in angles])*180/np.pi
-#Format angular rates
-deltaYaw=np.array(deltaYaw)
+				 
+#compute cartesian coordinates of the trajectory
+X = R * np.cos(delta) * np.cos(tau)
+Y = R * np.cos(delta) * np.sin(tau)
+Z = R * np.sin(delta)
+
+#Save the pitch acceleration 
+np.savetxt("pitch_angular_acceleration.txt", list(q_dot), delimiter=",")
 #========================================================================================================================================================================================================================================================
 #   Plotting
 #========================================================================================================================================================================================================================================================
@@ -578,7 +633,7 @@ if plotting:
 	########################################
 	#t vs R
     plt.figure()
-    plt.plot(t,(Rnorm-Rmars)/10**3,color="navy")    
+    plt.plot(t,(R-Rmars)/10**3,color="navy")    
     plt.grid(color="gainsboro")
     plt.title("Time vs Altitude")
     plt.xlabel("Time [s]")
@@ -586,10 +641,10 @@ if plotting:
     plt.show()
 
     #t vs Ft
-    ac_max=np.ones((len(ac),1))*4
+    ac_max=np.ones((len(t),1))*4
     plt.figure()
-    plt.plot(t[:-1],ac*3.71/9.81,color="hotpink")
-    plt.plot(t[:-1],ac_max,linestyle=":",color="firebrick")    
+    plt.plot(t[1::],a_array*3.71/9.81,color="hotpink")
+    plt.plot(t,ac_max,linestyle=":",color="firebrick")    
     plt.grid(color="gainsboro")
     plt.title("Time vs Acceleration")
     plt.xlabel("Time [s]")
@@ -600,7 +655,7 @@ if plotting:
     #t vs V
     Vreq=np.ones((len(Vnorm),1))*V_phasing
     plt.figure()
-    plt.plot(t,Vnorm/10**3,color="blue")
+    plt.plot(t,V/10**3,color="blue")
     plt.plot(t,Vreq/10**3,linestyle=":",color="firebrick")    
     plt.grid(color="gainsboro")
     plt.title("Time vs Velocity")
@@ -610,7 +665,7 @@ if plotting:
 		
     #t vs Thrust
     plt.figure()
-    plt.plot(t[:-1],Ft/10**3,color="maroon") 
+    plt.plot(t[1::],Ft/10**3,color="maroon") 
     plt.grid(color="gainsboro")
     plt.title("Time vs Thrust")
     plt.xlabel("Time [s]")
@@ -619,9 +674,9 @@ if plotting:
 
     #t vs Euler angles
     plt.figure()
-    plt.plot(t,Phi,color="red", label="Phi (Roll Angle)") 
-    plt.plot(t,Theta,color="blue", label="Theta (Pitch Angle)")
-    plt.plot(t,Psi,color="green",  label="Psi (Yaw Angle)")
+    plt.plot(t,phi,color="red", label="Phi (Roll Angle)") 
+    plt.plot(t,theta,color="blue", label="Theta (Pitch Angle)")
+    plt.plot(t,psi,color="green",  label="Psi (Yaw Angle)")
     plt.grid(color="gainsboro")
     plt.title("Time vs Pitch Angle")
     plt.xlabel("Time [s]")
@@ -656,7 +711,9 @@ if plotting:
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
     plt.legend(loc="upper right")
     plt.show()
-    
+ 
+
+   
     ########################################
     # 3D plots                             #
     ########################################
@@ -683,7 +740,7 @@ if plotting:
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')    
-    ax.scatter(R[0][0],R[0][1],R[0][2],color="lime")
+    ax.scatter(X[0],Y[0],Z[0],color="lime")
 
 
     #Plot of trajectory X,Y,Z
