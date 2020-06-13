@@ -12,13 +12,14 @@ def al(n):
 	except IndexError:
 		return n
 
-def run_ascent(max_M=7, min_q=100, mars=AT.Planet()):
+def run_ascent(max_M=8, min_q=100, mars=AT.Planet()):
 	ascent = BAT.ascent_sim(tb=148.7274456555216,initial_tilt=3.2,i_base=41,h0=-3*10**3,d=6.4,M_initial=187851.5265,Mp_class2=155171.0789,Isp=383.250565907662,n=9,De=1.35049466031671,pe=6077.910186177842)[4]
 	long0, lat0 = np.radians(-27.088), np.radians(4.51)
-	# Get index when M = 7
+	# Get index when M = 8
 	Mach_T_i = np.where(np.array(ascent["Mach"]) >= max_M)[0][0]
 	# Get index when q = 50 Pa (after max reached)
 	q_max_i = np.where(ascent["q"] == max(ascent["q"]))[0][0]
+	print("max q is at t = ", ascent["time"][q_max_i])
 	q_T_i = np.where(ascent["q"][q_max_i:] <= min_q)[0][0] + q_max_i
 	# Take minimum
 	LAS_T_i = min(q_T_i, Mach_T_i)

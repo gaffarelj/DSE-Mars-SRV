@@ -2,6 +2,18 @@ import numpy as np
 import multiprocessing as mp
 from matplotlib import pyplot as plt
 from scipy.optimize import fsolve
+import math
+
+
+def f_sin(a):
+	return np.sin(a)
+	return math.sin(a)
+	return a - a ** 3 / 6 + a ** 5 / 120
+
+def f_cos(a):
+	return np.cos(a)
+	return math.cos(a)	
+	return 1 - a ** 2 / 2 + a ** 4 / 24
 
 class Planet:
 	def __init__(self, mean_radius=3389500, scale_height=11.1e3, rho_0=0.01417111, gravitational_parameter=42828e9, equatorial_radius=3396200, J2=0.001960454, rotational_rate=2 * np.pi / (24.6229 * 3600)):
@@ -75,7 +87,8 @@ class Motion:
 		return dVdt
 
 	def dgammadt(self, g, D, L, V, r, gamma, delta, xi):
-		dgammadt = (L * np.cos(self.mu) / self.mass - g * np.cos(gamma) + 2 * self.omega * V * np.cos(delta) * np.sin(xi) + V * V / r * np.cos(gamma) + self.omega ** 2 * r * np.cos(delta) * (np.cos(gamma) * np.cos(delta) - np.sin(gamma) * np.sin(delta) * np.cos(xi))) / V
+		#dgammadt = (L * np.cos(self.mu) / self.mass - g * np.cos(gamma) + 2 * self.omega * V * np.cos(delta) * np.sin(xi) + V ** 2 / r * np.cos(gamma) + self.omega ** 2 * r * np.cos(delta) * (np.cos(gamma) * np.cos(delta) - np.sin(gamma) * np.sin(delta) * np.cos(xi))) / V
+		dgammadt = (L * f_cos(self.mu) / self.mass - g * f_cos(gamma) + 2 * self.omega * V * f_cos(delta) * f_sin(xi) + V ** 2 / r * f_cos(gamma) + self.omega ** 2 * r * f_cos(delta) * (f_cos(gamma) * f_cos(delta) - f_sin(gamma) * f_sin(delta) * f_cos(xi))) / V
 
 		# dgammadt = (V / r - g / V) * np.cos(gamma) + (
 		#    L * np.cos(self.mu) - self.S * np.sin(self.mu)
@@ -83,7 +96,8 @@ class Motion:
 		return dgammadt
 
 	def dxidt(self, g, L, V, r, gamma, delta, xi):
-		dxidt = (L * np.sin(self.mu) / self.mass + 2 * self.omega * V * (np.sin(delta) * np.cos(gamma) - np.cos(delta) * np.sin(gamma) * np.cos(xi)) + V * V / r * np.cos(gamma) ** 2 * np.tan(delta) * np.sin(xi) + self.omega ** 2 * r * np.cos(delta) * np.sin(delta) * np.sin(xi)) / (V * np.cos(gamma))
+		#dxidt = (L * np.sin(self.mu) / self.mass + 2 * self.omega * V * (np.sin(delta) * np.cos(gamma) - np.cos(delta) * np.sin(gamma) * np.cos(xi)) + V **2 / r * np.cos(gamma) ** 2 * np.tan(delta) * np.sin(xi) + self.omega ** 2 * r * np.cos(delta) * np.sin(delta) * np.sin(xi)) / (V * np.cos(gamma))
+		dxidt = (L * f_sin(self.mu) / self.mass + 2 * self.omega * V * (f_sin(delta) * f_cos(gamma) - f_cos(delta) * f_sin(gamma) * f_cos(xi)) + V **2 / r * f_cos(gamma) ** 2 * f_sin(delta)/f_cos(delta) * f_sin(xi) + self.omega ** 2 * r * f_cos(delta) * f_sin(delta) * f_sin(xi)) / (V * f_cos(gamma))
 
 		# dxidt = V / r * np.cos(gamma) * np.tan(delta) * np.sin(
 		#    xi
@@ -103,12 +117,13 @@ class Motion:
 		return V / r * np.cos(gamma) * np.cos(xi)
 
 	def forward_euler(self, timestep):
+		timestep = timestep
 		flight = [self.initial]
 		time = [0]
 		self.a_s, self.q_s = [], []
 		apogee, entry_burn, next_burn_back, all_burn_back, anti_pogee = False, True, False, False, False
 		state = np.zeros(6)
-		while flight[-1][3] > self.Planet.r and self.end_time > time[-1]:
+		while flight[-1][3] > self.Planet.r and self.end_time > time[-1]:# and not all_burn_back:
 			if self.end_time != float("Inf"):
 				progress = time[-1]/self.end_time*100
 				print(round(progress, 2), "%", sep="", end="\r")
@@ -128,9 +143,12 @@ class Motion:
 				next_burn_back = True
 				apogee = False
 				t1 = time[-1]
+				print(f"Un-reentry burn 1 at {t1/60} min, V = {V} [m/s], h = {r-self.Planet.r} [m], increase dV by {self.back_orbit[0]*f} [m/s]")
 			if next_burn_back and not all_burn_back and anti_pogee and time[-1] > t1+3600:
 				V += self.back_orbit[0]*(1-f)
 				all_burn_back = True
+				print(f"Un-reentry burn 2 at {time[-1]/60} min, V = {V} [m/s], h = {r-self.Planet.r} [m], increase dV by {self.back_orbit[0]*(1-f)} [m/s]")
+				self.back_orbit = []
 			# Parachute deployment
 			chute_drag_area = 0
 			if len(self.chutes) > 0:
@@ -245,7 +263,7 @@ def plot_dual(x_data, y_data_1, y_data_2, x_label, y_label_1, y_label_2):
 	ax1.set_ylabel(y_label_1, color=color)
 	ax1.plot(x_data, y_data_1, color=color)
 	ax1.tick_params(axis="y", labelcolor=color)
-	#ax1.set_xticks(np.arange(0, 1750, 250))
+	ax1.set_xticks(np.arange(0, 4.6, 0.5))
 
 	ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 

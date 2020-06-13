@@ -27,8 +27,8 @@ state[0] = mars.reentry_velocity(reentry_altitude, insertion_orbit_a, insertion_
 state[1] = mars.reentry_angle(reentry_altitude, insertion_orbit_p, insertion_orbit_a)                           # flight path angle (1.5 arcsecs (2 sigma))
 state[2] = np.radians(42.5)                                                                                     # heading angle (1.5 arcsecs (2 sigma))
 state[3] = reentry_altitude + mean_radius                                                                       # radius 
-state[4] = np.radians(-1.168)                                                                                  # lognitude 25.5 -1.168 - 0.141
-state[5] = np.radians(24.322)                                                                                  # latitude 42.5 24.322 - 0.077
+state[4] = np.radians(-1.168)                                                                                   # lognitude 25.5 -1.168 - 0.141
+state[5] = np.radians(24.322)                                                                                   # latitude 42.5 24.322 - 0.077
 state[6] = 0																									# rollrate 
 state[7] = 0																									# pitchrate
 state[8] = 0																									# yawrate
@@ -82,5 +82,5 @@ print(f"Maximum acceleration was {round(min(a)/9.81, 2)} g0.")
 print(f"Landing with velocity of {round(v[-1], 2)} m/s, with {round(dV_land, 2)} m/s for propulsive landing.")
 
 #AT.plot_dual(t, q, v, 'Time [s]', 'Dyn.  Pressure [Pa]', 'Velocity [m/s]')
-AT.plot_dual(t, q, [ht / 1000 for ht in h], 'Time [s]', 'Dyn. Pressure [Pa]', 'Altitude [km]')
-AT.plot_dual(t, [at / 9.81 for at in a], v, 'Time [s]', 'Acceleration [g0]', 'Velocity [m/s]')
+AT.plot_dual(t, v, [ht / 1000 for ht in h], 'Time [s]', 'Velocity [m/s]', 'Altitude [km]')
+AT.plot_dual(t, a, q, 'Time [s]', 'Acceleration [m/s$^2$]', 'Dynamic Pressure [Pa]')
