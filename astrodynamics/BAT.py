@@ -181,8 +181,14 @@ def dVzdt(T,D,L,M,Vz,Vx,g):
 	dVzdt = (T - D) / M * Vz / (np.sqrt(Vx * Vx + Vz * Vz)) - g + L / M * Vx / (np.sqrt(Vx * Vx + Vz * Vz))
 	return dVzdt
 
+#Lat/long calculations
+def long_lat(long, lat, dt, V, r, gamma):
+	dlong_dt = V * np.cos(gamma) / (r * np.cos(lat))
+	dlat_dt = V / r * np.cos(gamma)
+	return long + dt*dlong_dt, lat + dt*dlat_dt
+
 #point mass ascent simulation
-def ascent_sim(tb,initial_tilt,i_base,h0,d,M_initial,Mp_class2,Isp,n,De,pe):
+def ascent_sim(tb,initial_tilt,i_base,h0,d,M_initial,Mp_class2,Isp,n,De,pe,long=np.radians(-27.088),lat=np.radians(4.51)):
 	"""
 	Function that simulates the gravity turn ascent profile constrained by a linear variation of the T/W_ratio (T/W_0=1.5, T/W_final=4).
 	It simulates it for a point mass in 2D accounting for aerodynamic forces. 
@@ -325,6 +331,10 @@ def ascent_sim(tb,initial_tilt,i_base,h0,d,M_initial,Mp_class2,Isp,n,De,pe):
 			Znew = Z[-1] + deltaZ
 			Z.append(Znew)
 
+			Vnew = np.sqrt(Vxnew ** 2 + Vznew ** 2)[0]
+
+			long, lat = long_lat(long, lat, dt, Vnew, R, np.arctan(Vznew / Vxnew))
+
 			# Progress indication
 			progress = round(Znew[0]/h_phasing*100)
 			print("Ascent progress: ", progress, "%", sep="", end="\r")
@@ -337,13 +347,14 @@ def ascent_sim(tb,initial_tilt,i_base,h0,d,M_initial,Mp_class2,Isp,n,De,pe):
 			#######################################################
 			#   Update Parameters #
 			#######################################################
-			V.append(np.sqrt(Vxnew * Vxnew + Vznew * Vznew)[0])
+			V.append(Vnew)
 			Machnew = get_Mach(V[-1],a)
 			Mach.append(Machnew)
 			gnew = get_g(mu,Req,R,Z[-1],i0,J2)
 			g.append(gnew)
 			p.append(get_p(Z[-1]))
 			T.append(get_T(Z[-1]))
+			#rho_t = 0.01417111 * np.exp(-Z[-1]/11.1e3)
 			rho.append(get_rho(p[-1],T[-1],Rgas)[0])
 			Clnew,Cdnew = H_aerodynamics_coefficients(Mach[-1],0)
 			Cl.append(Clnew)
@@ -396,7 +407,9 @@ def ascent_sim(tb,initial_tilt,i_base,h0,d,M_initial,Mp_class2,Isp,n,De,pe):
 		"altitude": Z,
 		"density": rho,
 		"q": q,
-		"gamma": gamma
+		"gamma": gamma,
+		"long": long,
+		"lat": lat
 		}
 	
 	return V, Vxfree, ascent_DeltaV, q, others

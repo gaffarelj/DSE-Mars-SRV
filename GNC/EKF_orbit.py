@@ -8,7 +8,7 @@ from csv_orbit import *
 def dev(plot=False):
     data = dataset()
 
-    dt = 0.1
+    dt = 1
     T = data.t[-1]
 
     x = smp.Symbol('x')
@@ -119,4 +119,4 @@ def dev(plot=False):
         plt.show()
     return (l_ref[-1]-l_out[-1])[:6]*10**3
 
-dev(True)
+print(dev(True))

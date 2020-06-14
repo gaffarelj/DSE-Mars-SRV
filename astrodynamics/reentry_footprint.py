@@ -6,6 +6,7 @@ import matplotlib
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Aero'))
 import aero_calcs as ac
+import mars_standard_atmosphere as atm
 
 mean_radius = 3389500							#[m]
 reentry_altitude = 80000                        #[m]
@@ -30,30 +31,44 @@ state[5] = np.radians(24.322)                                                   
 state[6] = 0																									# rollrate 
 state[7] = 0																									# pitchrate
 state[8] = 0																									# yawrate
-state[9] = -np.radians(60) 																						# angle of attack defined positive downwards 
+state[9] = -np.radians(55) 																						# angle of attack defined positive downwards 
 state[10] = 0																									# sideslip angle  
 state[11] = np.radians(0)																									# bank angle 	
 
 
-motion = astro_tools.Motion(state, MOI, S, vehicle_mass, ac.H_aerodynamics_coefficients, mars) #, True, 230e3, 733.45)
+motion = astro_tools.Motion(state, MOI, S, vehicle_mass, ac.H_aerodynamics_coefficients, mars)#, True, 3*230e3, 799.585)
 flight, time = motion.forward_euler(dt)
-
+print(flight[-1,0])
 astro_tools.plot_dual(time, (flight[:,3] - mean_radius)/1000, flight[:,0], 'Time [s]', 'Altitude [km]', 'Velocity [m/s]')
-astro_tools.plot_single(time , np.degrees(flight[:,5]), 'Time [s]', 'latitude [deg]')
-astro_tools.plot_single(time , np.degrees(flight[:,4]), 'Time [s]', 'longitude [deg]')
-astro_tools.plot_single(time , np.degrees(flight[:,2]), 'Time [s]', 'heading angle [deg]')
-astro_tools.plot_single(time , np.degrees(flight[:,1]), 'Time [s]', 'flight path angle [deg]')
-astro_tools.plot_dual(time, motion.mach, motion.q_s, 'Time [s]', 'Mach Number [-]', 'Dynamic Pressure [Pa]')
-astro_tools.surfaceplots( np.degrees(flight[:,4]),  np.degrees(flight[:,5]), (flight[:,3] - mean_radius)/1000, 'longitude [deg]', 'latitude [deg]', 'Altitude [km]')
-astro_tools.plot_single(time , motion.heatflux, 'Time [s]', 'Heat Flux [W/m^2]')
-astro_tools.plot_single(time , motion.temperature, 'Time [s]', 'Post Shock Temperature [K]')
-astro_tools.plot_single(time , motion.density, 'Time [s]', 'Post Shock Density [kg/m^3]')
+#astro_tools.plot_single(time , np.degrees(flight[:,5]), 'Time [s]', 'latitude [deg]')
+#astro_tools.plot_single(time , np.degrees(flight[:,4]), 'Time [s]', 'longitude [deg]')
 
-#astro_tools.plot_single(time , -np.degrees(flight[:,9]), 'Time [s]', 'AoA [deg]')
-astro_tools.plot_single(time, motion.a_s, 'Time [s]', 'Pitching moment [Nm]')
+#astro_tools.plot_single(time , np.degrees(flight[:,2]), 'Time [s]', 'heading angle [deg]')
+astro_tools.plot_single(time , np.degrees(flight[:,1]), 'Time [s]', 'Fligth Path Angle [deg]')
+astro_tools.plot_single(time , motion.a_s, 'Time [s]', 'Acceleration [m/s^2]')
+#astro_tools.plot_dual(time, motion.mach, motion.a_s, 'Time [s]', 'Mach Number [-]', 'Acceleration [m/s^2]')
+#astro_tools.surfaceplots( np.degrees(flight[:,4]),  np.degrees(flight[:,5]), (flight[:,3] - mean_radius)/1000, 'longitude [deg]', 'latitude [deg]', 'Altitude [km]')
+astro_tools.plot_single(time, np.array(motion.pitch)/MOI[1], 'Time [s]', 'Angular Acceleration [m/s^2]')
+#astro_tools.plot_single(time, motion.roll, 'Time [s]', 'Rolling moment [Nm]')
 
-#theta = motion.pitch/np.degrees((19.28-1.7 - 6.89 + 1.7/2)*np.sqrt(pow(motion.mach,2)-1)/7.755/2)
-#astro_tools.plot_single(time, theta, 'Time [s]', 'Pitching moment [Nm]')
+
+'''
+idx = np.where(motion.pitch == max(abs(motion.pitch)))[0][0]
+m = motion.mach[idx]
+q = motion.q_s[idx]
+p2 = motion.p2[idx]
+alt = flight[idx,3] - mean_radius
+rho = mars.density(alt)
+p = atm.get_pressure(alt)
+q = motion.q_s[idx]
+print(motion.pitch[idx],flight[idx,0], rho)
+dp = abs(motion.pitch[idx] / (19.28 - 1.7 - 6.89 + 1.7/2))
+cp = dp/(q*5.185)
+
+
+print(dp, cp)
+
+'''
 '''
 random = astro_tools.Montecarlo(motion, state, dt, 10000)
 random.get_trajectories_linux()
@@ -151,9 +166,9 @@ X, Y = np.meshgrid(xp, yp)    # 50x50
 fig, ax = plt.subplots(subplot_kw={'projection': '3d'})
 X, Y, Z = xp, yp, zp
 C = mars.g(0, phi).reshape(Z.shape)
-scamap = plt.cm.ScalarMappable(cmap='inferno')
+scamap = plt.cm.ScalarMappable()
 fcolors = scamap.to_rgba(C)
-ax.plot_surface(X, Y, Z, facecolors=fcolors, cmap='inferno', label = 'g [m/s^2]')
+ax.plot_surface(X, Y, Z, facecolors=fcolors, label = 'g [m/s^2]')
 fig.colorbar(scamap)
 ax.set_xlabel('x [km]')
 ax.set_ylabel('y [km]')
