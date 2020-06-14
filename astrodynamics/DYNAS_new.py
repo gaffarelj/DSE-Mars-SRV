@@ -46,12 +46,12 @@ def inputDimitris(Mprop,Mptot,mdot):
 	
 	return Mpremain1, Mpremain2, MpremainP1, MpremainP2
 
-def xcg(t,xcg0,t_xcg0,xcgm,t_xcgm,xcge,t_xcge,tb):
+def xcg(t,xcg0,t_xcg0,xcgm,t_xcgm,xcgp,t_xcgp,xcge,t_xcge,tb):
 	"""computes the c.g. shift for a given time. In the reference frame of "vehicle layout"
 		Fitted by parabola
 	"""
-	t_list=[t_xcg0,t_xcgm,t_xcge]
-	xcg_list=[xcg0,xcgm,xcge]
+	t_list=[t_xcg0,t_xcgm,t_xcgp,t_xcge]
+	xcg_list=[xcg0,xcgm,xcgp,xcge]
 	def parabola(x, a, b, c):
 		return a*x**2 + b*x + c
 	def ln(x,a,b):
@@ -59,20 +59,21 @@ def xcg(t,xcg0,t_xcg0,xcgm,t_xcgm,xcge,t_xcge,tb):
 	def ex(x,a,b,c):
 		return a*np.exp(b*x)+c 
 	# calculate polynomial, third element is the order of the polynomial
-	#z = np.polyfit(t_list, xcg_list, 2)
-	#f = np.poly1d(z)
-	#xcg_current=f(t)
-	fit_params, pcov = scipy.optimize.curve_fit(parabola, t_list, xcg_list)
-	xcg_current=parabola(t,fit_params[0],fit_params[1],fit_params[2])
+	z = np.polyfit(t_list, xcg_list, 3)
+	f = np.poly1d(z)
+	xcg_current=f(t)
+	#fit_params, pcov = scipy.optimize.curve_fit(parabola, t_list, xcg_list)
+	#xcg_current=parabola(t,fit_params[0],fit_params[1],fit_params[2])
 	
 	return xcg_current
 	
-def delta_cg(t,xcg0,t_xcg0,xcgm,t_xcgm,xcge,t_xcge,tb):
+
+def delta_cg(t,xcg0,t_xcg0,xcgm,t_xcgm,xcgp,t_xcgp,xcge,t_xcge,tb):
 	""" Computes the cg location through-out flight. 
 	    Parabolic variation
 	"""
-	t_list=[t_xcg0,t_xcgm,t_xcge]
-	xcg_list=[xcg0,xcgm,xcge]
+	t_list=[t_xcg0,t_xcgm,t_xcgp,t_xcge]
+	xcg_list=[xcg0,xcgm,xcgp,xcge]
 	
 	def parabola(x, a, b, c):
 		return a*x**2 + b*x + c
@@ -82,11 +83,11 @@ def delta_cg(t,xcg0,t_xcg0,xcgm,t_xcgm,xcge,t_xcge,tb):
 		return a*np.exp(b*x)+c 
 	
 	# calculate polynomial, third element is the order of the polynomial
-	#z = np.polyfit(t_list, xcg_list, 2)
-	#f = np.poly1d(z)
-	#xcg_current=f(t)
-	fit_params, pcov = scipy.optimize.curve_fit(parabola, t_list, xcg_list)
-	xcg_current=parabola(t,fit_params[0],fit_params[1],fit_params[2])
+	z = np.polyfit(t_list, xcg_list, 2)
+	f = np.poly1d(z)
+	xcg_current=f(t)
+	#fit_params, pcov = scipy.optimize.curve_fit(parabola, t_list, xcg_list)
+	#xcg_current=parabola(t,fit_params[0],fit_params[1],fit_params[2])
 	delta_cg=xcg0-xcg_current
 	#delta_cg=xcg0-xcg_current
 	return delta_cg
@@ -333,7 +334,7 @@ V_phasing=3272.466             #[m/s]
 ################################
 # related to the vehicle 	   #
 ################################
-tb=489.5180709799191		   #[s] burn time of the engines 489.5180709799191
+tb=489.5180709799191+74		   #[s] burn time of the engines 489.5180709799191
 initial_tilt=(0.51)*np.pi/180      #[rad] initial tilt off the vertical axis 0.51*np.pi/180
 #Propulsive Parameters
 Isp= 383.250565907662          #[s] LOX-LCH4 ##CAN BE UPDATED##
@@ -351,22 +352,24 @@ ltot=LDratio*d                 #[m] overall length of the vehicle
 leng=3  	                   #[m] lenght of engine               ##CAN BE UPDATED##
 lcyl=ltot-lcap-leng            #[m] length of everything below the capsule
 Acyl=lcyl*d                    #[m^2] lateral cross-sectional area of cylyinder below capsule
-xcg0=5.309139075 			   #[m] c.g. position on ground from base of the cylinder ##CAN BE UPDATED##
+xcg0=5.310850335 			   #[m] c.g. position on ground from base of the cylinder ##CAN BE UPDATED##
 t_xcg0=0                       #[s] time at which xcg0 happens
-xcgm=5.379751314               #[m] c.g. position at mdot max point ##CAN BE UPDATED##
+xcgm=5.381694926               #[m] c.g. position at mdot max point ##CAN BE UPDATED##
+xcgp=5.82674107
+t_xcgp=310.6499999997914
 # print this to get the time at which mdot happens others["time"][list(others["mdot"]).index(np.max(others["mdot"]))]
 t_xcgm=131.78999999991152      #[s] time at which xcg of max fuel flow happens
-xcge=5.400472234               #[m] c.g. position at end of ascent from base of the cylinder ##CAN BE UPDATED##
+xcge=6.120803919              #[m] c.g. position at end of ascent from base of the cylinder ##CAN BE UPDATED##
 t_xcge=tb
-Iy0=8945330.201                #[kg*m^2] MMOI x on ground
-Ix0=844679.9158				   #[kg*m^2] MMOI y on ground
-Iz0=8945330.201                #[kg*m^2] MMOI z on ground
-Iym=6794407.105	               #[kg*m^2] MMOI x point of mdot max
-Ixm=802779.394			       #[kg*m^2] MMOI y point of mdot max
-Izm=6794407.105                #[kg*m^2] MMOI z point of mdot max
-Iye=4095074.195                #[kg*m^2] MMOI x at burn out
-Ixe=328306.1762				   #[kg*m^2] MMOI y at burn out
-Ize=4095074.195                #[kg*m^2] MMOI z at burn out
+Iy0=8951886.095                #[kg*m^2] MMOI x on ground
+Ix0=845561.3391				   #[kg*m^2] MMOI y on ground
+Iz0=8951886.095                #[kg*m^2] MMOI z on ground
+Iym=6799979.682	               #[kg*m^2] MMOI x point of mdot max
+Ixm=803747.0872			       #[kg*m^2] MMOI y point of mdot max
+Izm=6799979.682                #[kg*m^2] MMOI z point of mdot max
+Iye=4321654.768                #[kg*m^2] MMOI x at burn out
+Ixe=407613.6669				   #[kg*m^2] MMOI y at burn out
+Ize=4321654.768                #[kg*m^2] MMOI z at burn out
 #Aerodynamic Parameters
 S=np.pi/4*d**2                 #[m^2] reference surface area used here is the area of the circle of the cross-section  
 #========================================================================================================================================================================================================================================================
@@ -418,7 +421,7 @@ mdot_list=[]
 ac=[]
 Fthrust=[]
 deltaYaw=[]
-xcp=[get_xcp(lcap,lcyl,ltot,xcg0,Acap,Acyl,delta_cg(t[-1],xcg0,t_xcg0,xcgm,t_xcgm,xcge,t_xcge,tb))]          #[m] x-location of center of pressure from the c.g. (i.e. the origin)
+xcp=[get_xcp(lcap,lcyl,ltot,xcg0,Acap,Acyl,delta_cg(t[-1],xcg0,t_xcg0,xcgm,t_xcgm,xcgp,t_xcgp,xcge,t_xcge,tb))]          #[m] x-location of center of pressure from the c.g. (i.e. the origin)
 #========================================================================================================================================================================================================================================================
 #   Simulation
 #========================================================================================================================================================================================================================================================
@@ -549,8 +552,7 @@ while R[-1]<Rmars+h_phasing:
 	phinew = phi[-1] + dt * phi_dot
 	thetanew = theta[-1] + dt * theta_dot
 	psinew = psi[-1] + dt * psi_dot
-	
-	
+
 	
 	#append velocities
 	Vn.append(Vn_new)
@@ -575,7 +577,7 @@ while R[-1]<Rmars+h_phasing:
     ########################################
 	M.append( M[-1] - mdot * dt)
     #update xcp
-	xcp.append(get_xcp(lcap,lcyl,ltot,xcg0,Acap,Acyl,delta_cg(t[-1],xcg0,t_xcg0,xcgm,t_xcgm,xcge,t_xcge,tb)))
+	xcp.append(get_xcp(lcap,lcyl,ltot,xcg0,Acap,Acyl,delta_cg(t[-1],xcg0,t_xcg0,xcgm,t_xcgm,xcgp,t_xcgp,xcge,t_xcge,tb)))
     ########################################
     # Update the time                      #
     ########################################
@@ -622,6 +624,11 @@ Z = R * np.sin(delta)
 
 #Save the pitch acceleration 
 np.savetxt("pitch_angular_acceleration.txt", list(q_dot), delimiter=",")
+
+print()
+print("~~~ Attained percentage of phasing velocity: ", (Vnorm[-1])/V_phasing*100," % ~~~") #accounts for Rotatio of Mars
+print("~~~ Attained final flight path angle: ",theta[-1]*180/np.pi+(180-2*initial_tilt*180/np.pi)," deg ~~~")
+
 #========================================================================================================================================================================================================================================================
 #   Plotting
 #========================================================================================================================================================================================================================================================
@@ -674,9 +681,9 @@ if plotting:
 
     #t vs Euler angles
     plt.figure()
-    plt.plot(t,phi,color="red", label="Phi (Roll Angle)") 
-    plt.plot(t,theta,color="blue", label="Theta (Pitch Angle)")
-    plt.plot(t,psi,color="green",  label="Psi (Yaw Angle)")
+    plt.plot(t,phi*180/np.pi,color="red", label="Phi (Roll Angle)") 
+    plt.plot(t,theta*180/np.pi,color="blue", label="Theta (Pitch Angle)")
+    plt.plot(t,psi*180/np.pi,color="green",  label="Psi (Yaw Angle)")
     plt.grid(color="gainsboro")
     plt.title("Time vs Pitch Angle")
     plt.xlabel("Time [s]")
@@ -691,11 +698,11 @@ if plotting:
 
     ax1.set_xlabel('time [s]')
     ax1.set_ylabel('MMOI [kg*m^2]', color="tab:red")
-    ax1.plot([0,t_xcgm,tb], [Ix0,Ixm,Ixe], color="orange", label="I_x")
+    ax1.scatter([0,t_xcgm,tb], [Ix0,Ixm,Ixe], color="orange", label="I_x",marker="o")
     ax1.plot(np.linspace(0,tb,1000), get_Ix(np.linspace(0,tb,1000),Ix0,t_xcg0,Ixm,t_xcgm,Ixe,t_xcge,tb)[0], linestyle=":" , color="moccasin", label="I_x: parabolic fit")
-    ax1.plot([0,t_xcgm,tb], [Iy0,Iym,Iye], color="tab:red", label="I_y")
+    ax1.scatter([0,t_xcgm,tb], [Iy0,Iym,Iye], color="tab:red", label="I_y",marker="o")
     ax1.plot(np.linspace(0,tb,1000), get_Iy(np.linspace(0,tb,1000),Iy0,t_xcg0,Iym,t_xcgm,Iye,t_xcge,tb)[0], linestyle=":" , color="indianred", label="I_y: parabolic fit")
-    ax1.plot([0,t_xcgm,tb], [Iz0,Izm,Ize], color="tab:red", label="I_z")
+    ax1.scatter([0,t_xcgm,tb], [Iz0,Izm,Ize], color="tab:red", label="I_z",marker="o")
     ax1.plot(np.linspace(0,tb,1000), get_Iz(np.linspace(0,tb,1000),Iz0,t_xcg0,Izm,t_xcgm,Ize,t_xcge,tb)[0], linestyle=":" , color="indianred", label="I_z: parabolic fit")
     ax1.tick_params(axis='y', labelcolor="tab:red")
     plt.legend(loc="upper left")
@@ -703,8 +710,8 @@ if plotting:
 
 
     ax2.set_ylabel('X_c.g. [m]', color="tab:blue")
-    ax2.plot([0,t_xcgm,tb], [xcg0,xcgm,xcge], color="tab:blue", label="X_c.g.")
-    ax2.plot(np.linspace(0,tb,1000), xcg(np.linspace(0,tb,1000),xcg0,t_xcg0,xcgm,t_xcgm,xcge,t_xcge,tb), linestyle=":" , color="tab:blue", label="X_c.g.: parabolic fit")
+    ax2.scatter([0,t_xcgm,t_xcgp,tb], [xcg0,xcgm,xcgp,xcge], color="tab:blue", label="X_c.g.",marker="+")
+    ax2.plot(np.linspace(0,tb,1000), xcg(np.linspace(0,tb,1000),xcg0,t_xcg0,xcgm,t_xcgm,xcgp,t_xcgp,xcge,t_xcge,tb), linestyle="-" , color="tab:blue", label="X_c.g.: parabolic fit")
     ax2.tick_params(axis='y', labelcolor="tab:blue")
     plt.grid(color="gainsboro")
     plt.title("MMOI and X_c.g. variation in time")
@@ -721,14 +728,14 @@ if plotting:
     ax = fig.add_subplot(111, projection='3d')
 
     # Make data
-    r = Rmars
+    r = Rmars/10**3
     pi = np.pi
     cos = np.cos
     sin = np.sin
-    phi, theta = np.mgrid[0.0:pi:100j, 0.0:2.0*pi:100j]
-    x1 = r*sin(phi)*cos(theta)
-    y1 = r*sin(phi)*sin(theta)
-    z1 = r*cos(phi)
+    phi_d, theta_d = np.mgrid[0.0:pi:100j, 0.0:2.0*pi:100j]
+    x1 = r*sin(phi_d)*cos(theta_d)
+    y1 = r*sin(phi_d)*sin(theta_d)
+    z1 = r*cos(phi_d)
 
 
     # Plot the surface
@@ -737,14 +744,14 @@ if plotting:
     ax.w_yaxis.set_pane_color((0.8, 0.8, 0.8, 1.0))
     ax.w_zaxis.set_pane_color((0.8, 0.8, 0.8, 1.0))
     ax.plot_surface(x1, y1, z1, color='coral')
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')    
-    ax.scatter(X[0],Y[0],Z[0],color="lime")
+    ax.set_xlabel('X [km]')
+    ax.set_ylabel('Y [km]')
+    ax.set_zlabel('Z [km]')    
+    ax.scatter(X[0]/10**3,Y[0]/10**3,Z[0]/10**3,color="lime")
 
 
     #Plot of trajectory X,Y,Z
-    ax.plot(X,Y,Z,color="dodgerblue")
+    ax.plot(X/10**3,Y/10**3,Z/10**3,color="dodgerblue")
     plt.show()
 
     #Plot trajectory on its own
