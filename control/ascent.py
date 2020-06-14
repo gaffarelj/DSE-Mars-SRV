@@ -92,6 +92,7 @@ am = dns.am
 tm = dns.t
 pitch_mp = 0
 pitch_thrust = act.RCS_torque_to_thrust(tm,'z',cg_orbit,'normal')
+print(max(tm))
 
 for thrust in pitch_thrust:
     pitch_mp += 4 * act.RCSpropellant(thrust,dt,Isp)
@@ -140,18 +141,20 @@ mp_pitch_error     = 18 * act.RCSpropellant(RCS_pitch_error,tm[-1],Isp)
 #Total
 #=====================================================================================================================================================================================================================
 mp_total = Mp + mp_error + pitch_mp + mp_pitch_error
+print('==========================================================')
+print('ASCENT')
 print('Torque:',RCS_torque)
 print('Rotation thrust in total  :',4*RCS_thrust)
 print('Rotation thrust per engine:',RCS_thrust)
 print('Max. pitch control thrust in total:',max(pitch_thrust)*4)
 print('Max. pitch control thrust per engine:',max(pitch_thrust))
-print('Total propellant needed:', Mp + mp_error+pitch_mp)
+print('Total propellant needed:', Mp + mp_error+pitch_mp, Mp,mp_error,pitch_mp)
 print('REDUNDANCY')
 print('Misalignment torque rotation     : ', T_error_x-Tgx-Tsp-Tm,T_error_y-Tgy,T_error_z)
 print('Misalignment torque pitch control: ', T_error_pitch_x-Tgx-Tsp-Tm,T_error_pitch_y-Tgy,T_error_pitch_z)
 print('Disturbance torque: ', Tgx+Tsp+Tm,Tgy,0)
-print('Redundancy thrust per engine (rotation):', RCS_error)
-print('Redundancy thrust per engine (pitch control):', RCS_pitch_error)
+print('Redundancy thrust per engine (rotation):', RCS_error_x,RCS_error_y,RCS_error_z)
+print('Redundancy thrust per engine (pitch control):', RCS_error_pitch_x,RCS_error_pitch_y,RCS_error_pitch_z)
 
 print('Redundancy propellant (rotation):', mp_error)
 print('Redundancy propellant (pitch control):', mp_pitch_error)

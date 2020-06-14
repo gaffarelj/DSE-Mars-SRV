@@ -127,7 +127,7 @@ def RCS_displacement_to_thrust(F,axis,scenario):
 
     if axis == "y":
         if scenario == 'normal':
-            n_bottom = 4
+            n_bottom = 1000
             n_top    = 0
             n        = n_bottom + n_top
         if scenario == 'failure':
@@ -157,7 +157,7 @@ def slew(thrust,tburn,slew_angle,I):
     spin_rate = spin_acc * tburn
     slew_time = slew_angle / spin_rate
 
-    return slew_time
+    return slew_time,torque
 
 def thrust_error(f,cg,angle):
     lx_bottom, lx_top, ly_bottom, ly_top, lz_bottom, lz_top = thruster_arms(cg)
@@ -174,5 +174,3 @@ def RCSpropellant(f,t,Isp):
     impulse = f * t
     Mp = impulse / (Isp * g)
     return Mp
-
-print()

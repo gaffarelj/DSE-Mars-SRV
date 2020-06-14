@@ -21,7 +21,7 @@ cg = act.z_cg_empty
 # width = act. width
 Isp = act.Isp_mono
 g   = act.g
-thrust_levels = np.arange(400,450,10)
+thrust_levels = np.arange(450,451.85155228408263,0.1)
 
 #=====================================================================================================================================================================================================================
 #Flight profile
@@ -48,7 +48,7 @@ Tgx = dist.gravitygradient_disturbance(Iy,Iz,omega,angle)
 Tgy = dist.gravitygradient_disturbance(Ix,Iz,omega,angle)
 Tsp= dist.solarpressure_disturbance(angle,cg)
 Tm = dist.magnetic_disturbance(R_mars)
-T_dist = Tgx + Tsp + Tm + Td
+T_dist = Tgx + Tsp + Tm
 
 
 #=====================================================================================================================================================================================================================
@@ -56,7 +56,7 @@ T_dist = Tgx + Tsp + Tm + Td
 #=====================================================================================================================================================================================================================
 def slew_landing(thrust,alpha0,S,cp,cd,q,T_dist,cg,I,t0,t_end,Isp,g,margin):
     slew_angle_tot = 180 * np.pi / 180 - alpha0
-    thrust = thrust * 4
+    thrust = thrust
     slew_duration = t_end - t0
     spin_rate_avg = slew_angle_tot / slew_duration
     t             = 0
@@ -90,7 +90,7 @@ def slew_landing(thrust,alpha0,S,cp,cd,q,T_dist,cg,I,t0,t_end,Isp,g,margin):
     else:
         success = 'no'
     mp = mp * 2
-    return impulse,t, mp, success
+    return impulse,t, mp, success,RCS_torque
 
 #=====================================================================================================================================================================================================================
 #All possible rotations with corresponding impulse and time
@@ -101,18 +101,19 @@ for t0 in range(int(t_end-100),int(t_end-10)):
 
     for thrust in thrust_levels:
 
-            impulse, slew_time, mp, success = slew_landing(thrust,alpha,S,cp,cd,q,T_dist,cg,Iy,t0,t_end,Isp,g,margin)
+            impulse, slew_time, mp, success, RCS_torque = slew_landing(thrust,alpha,S,cp,cd,q,T_dist,cg,Iy,t0,t_end,Isp,g,margin)
             thrust = thrust
             mp     = mp * margin
             if success == 'yes':
-                print([thrust,impulse,slew_time,mp])
-                rotation_values.append([thrust,impulse,slew_time,mp])
+                # print([thrust,impulse,slew_time,mp])
+                rotation_values.append([thrust,impulse,slew_time,mp,RCS_torque])
 
 
 rotation_values = np.array(rotation_values)
-mp = rotation_values[-1,-1]
+mp = rotation_values[-1,3]
 thrust = rotation_values[-1,0]
 t  = rotation_values[-1,2]
+torque = rotation_values[-1,-1]
 
 #=====================================================================================================================================================================================================================
 #Errors
@@ -132,22 +133,24 @@ RCS_error    = max([RCS_error_x,RCS_error_y,RCS_error_z])
 mp_error     = 18 * act.RCSpropellant(RCS_error,t,Isp)
 
 print('==========================================================')
+print('REENTRY')
 print('THRUST')
+print('Total torque (x,y,z)     : ', 0., 0., torque)
 print('Thrust per engine (x,y,z): ', 0., 0., thrust)
 print('propellant needed: '    , mp)
 print('REDUNDANCY')
 print('Misalignment torque: ', T_error_x-Tgx-Tsp-Tm,T_error_y-Tgy,T_error_z)
 print('Disturbance torque: ', Tgx+Tsp+Tm,Tgy,0)
-print('redundancy thrust per engine: ', RCS_error)
+print('redundancy thrust per engine: ', RCS_error_x,RCS_error_y,RCS_error_z)
 print('redundacy propellant per engine: ', mp_error)
 
 #=====================================================================================================================================================================================================================
 #Pitch control
 #=====================================================================================================================================================================================================================
-pitch_moment = np.ones(int(t_end))*5000
-pitch_thrust = act.RCS_torque_to_thrust(pitch_moment,'z',cg,'normal')
-# print(pitch_thrust)
+pitch_moment = np.ones(int(t_end))*14500
+pitch_thrust = 2*act.RCS_torque_to_thrust(1000,'z',cg,'normal')
+print(pitch_thrust)
 pitch_mp     = 0.
 
-for thrust in pitch_thrust:
-    pitch_mp += 4 * act.RCSpropellant(thrust,1.,Isp)
+# for thrust in pitch_thrust:
+#     pitch_mp += 4 * act.RCSpropellant(thrust,1.,Isp)
