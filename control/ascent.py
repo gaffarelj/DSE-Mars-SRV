@@ -92,7 +92,6 @@ am = dns.am
 tm = dns.t
 pitch_mp = 0
 pitch_thrust_max = act.RCS_torque_to_thrust(min(am),'z',cg_orbit,'normal')
-print(max(am))
 
 pitch_mp_tot = []
 pitch_mp = 0

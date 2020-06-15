@@ -142,10 +142,10 @@ t = pm.time
 pitch_moments = pm.pitching_moment
 pitch_mp_tot = []
 pitch_mp     = 0
-pitch_thrust_max = 2*act.RCS_torque_to_thrust(min(pitch_moments),'z',cg,'normal')
+pitch_thrust_max = 4 *act.RCS_torque_to_thrust(min(pitch_moments),'z',cg,'normal')
 for pitch_moment in pitch_moments:
-    pitch_thrust = 2*act.RCS_torque_to_thrust(abs(pitch_moment),'z',cg,'normal')
-    pitch_mp = 4 * act.RCSpropellant(pitch_thrust,0.1,Isp)
+    pitch_thrust = 2 * act.RCS_torque_to_thrust(abs(pitch_moment),'z',cg,'normal')
+    pitch_mp = 2* act.RCSpropellant(pitch_thrust,0.1,Isp)
     pitch_mp_tot.append(pitch_mp)
 pitch_mp_tot = np.array(pitch_mp_tot)
 #=====================================================================================================================================================================================================================
