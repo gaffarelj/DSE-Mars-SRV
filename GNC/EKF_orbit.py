@@ -79,7 +79,7 @@ def dev(plot=False):
         l_out[n] = x_per
 
     if plot:
-        print(filter.P)
+        #print(filter.P)
         r = data.R0[0]
         pi = np.pi
         cos = np.cos
@@ -116,7 +116,7 @@ def dev(plot=False):
         ax.legend()
         ax.set_ylabel("deviation velocity [m/s]")
         ax.set_xlabel("aproach time [s]")
-        plt.show()
-    return (l_ref[-1]-l_out[-1])[:6]*10**3
 
-dev(True)
+    return (l_ref[-1]-l_out[-1])[0]*10**3, (l_ref[-1]-l_out[-1])[1]*10**3, (l_ref[-1]-l_out[-1])[2]*10**3, np.linalg.norm((l_ref[-1]-l_out[-1])[3:5]*10**3)
+
+print(dev(False))
