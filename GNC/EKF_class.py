@@ -94,16 +94,7 @@ class EKF:
 
     def corr(self,z):
         Jn = self.J.eval(self.x)
-        #print("Jn")
-        #print(Jn)
-
         self.K = self.P*Jn*npl.inv(Jn*self.P*np.transpose(Jn)+self.R)
-        #print("K")
-        #print(self.K)
         self.Pn = (np.eye(self.n)-self.K*Jn)*self.P
-        #print("Pn")
-        #print(self.Pn)
         self.P = self.Pn
-        #print("x")
-        #print(self.x)
         self.x = self.x + np.dot(self.K,(z-self.h.eval(self.x)))
