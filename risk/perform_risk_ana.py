@@ -11,7 +11,9 @@ How to use:
 files = {
 	"prop": ["Propulsion", "propulsion-risk"],
 	"thermal": ["Thermal", "thermal_risk"],
-	"gnc": ["GNC", "GNC_risks"]
+	"gnc": ["GNC", "GNC_risks"],
+	"struc": ["Structures", "Structures-risk"],
+	"power": ["Power", "Power-risk"]
 	}
 
 for key, value in files.items():

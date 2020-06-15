@@ -1,0 +1,38 @@
+\noindent The following events have been assessed and mitigated as part of the Power subsystem:
+
+\begin{itemize}
+	 \item \textbf{SRV-RISK-POWER-1} Pdu failure, results in vehicle loss of power.
+	\begin{itemize}
+		 \item Probability mitigation (-1): 4 separate pdus.	\end{itemize}
+	 \item \textbf{SRV-RISK-POWER-2} Fuel cell failure, results in loss of power source for abort.
+	\begin{itemize}
+		 \item Probability mitigation (-1): redundant fuel cell.	\end{itemize}
+	 \item \textbf{SRV-RISK-POWER-3} Ice overheating, results in temperorary loss of power.
+	\begin{itemize}
+		 \item Probability mitigation (-2): ice designed for very high peak powers.		 \item Impact mitigation (-1):  redundant ice.	\end{itemize}
+	 \item \textbf{SRV-RISK-POWER-4} Ice failure, results in propulsive stage power loss.
+	\begin{itemize}
+		 \item Probability mitigation (-1):  extra redundant ice.		 \item Impact mitigation (-1):  fuel cells can shortly take over.	\end{itemize}
+	 \item \textbf{SRV-RISK-POWER-5} Short circuit, results in loss of power to critical subsystems.
+	\begin{itemize}
+		 \item Probability mitigation (-1): extensive fault detection, fuses and short circuits in the electrical bus.		 \item Impact mitigation (-3): multiple pdus give more electrical paths to subsystems.	\end{itemize}
+\end{itemize}
+
+\noindent From this list, a mitigated risk map has been created, and can be seen in \autoref{tab:risk-map-power-mitig}.
+
+\definecolor{rm-3}{HTML}{FE0000}\definecolor{rm-2}{HTML}{FF9900}\definecolor{rm-1}{HTML}{FCFF2F}\definecolor{rm-0}{HTML}{00FF00}
+\begin{table}[H]
+\centering
+\caption{Risk map of the Power subsystem, after mitigation}
+\label{tab:risk-map-power-mitig}\begin{tabular}{l|c|c|c|c|c|}
+\cline{2-6}
+& \multicolumn{1}{l|}{Very unlikely (1)} & \multicolumn{1}{l|}{Unlikely (2)} & \multicolumn{1}{l|}{Possible (3)} & \multicolumn{1}{l|}{Likely (4)} & \multicolumn{1}{l|}{Very likely (5)} \\ \hline
+\multicolumn{1}{|l|}{Very high impact (5)} & \cellcolor{rm-3}1, 2 & \cellcolor{rm-3} & \cellcolor{rm-3} & \cellcolor{rm-3} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{High impact (4)} & \cellcolor{rm-2} & \cellcolor{rm-2} & \cellcolor{rm-2} & \cellcolor{rm-3} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Medium impact (3)} & \cellcolor{rm-0} & \cellcolor{rm-1}4 & \cellcolor{rm-1} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Low impact (2)} & \cellcolor{rm-0} & \cellcolor{rm-0}5 & \cellcolor{rm-1} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Very Low impact (1)} & \cellcolor{rm-0}3 & \cellcolor{rm-0} & \cellcolor{rm-0} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\end{tabular} 
+\end{table}
+
+ \todo[inline]{Discuss the mitigated map, and alter the text if needed.}

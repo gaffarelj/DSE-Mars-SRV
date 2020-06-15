@@ -1,0 +1,4 @@
+﻿Event (name),Consequence (text),Probability (1-5),Impact (1-5),Prob. mitigation (text),Impact mitig. (text),New prob.,New impact
+Life support failure,Crew fatality,2,5,Redundant system,Equip crew with combinations,1,3
+Abort system failure,Crew stuck in hazardous vehicle,1,5,,,,
+Unwanted abort initiation,"Crew separated from vehicle, vehicle destruction  ",3,4,,Test,,2

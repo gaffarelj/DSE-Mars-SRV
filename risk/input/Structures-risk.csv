@@ -13,5 +13,5 @@ Attenuation system failure,Crew injuries,3,5,"Redundancy in a system, overdesign
 Side Hatch not opening,Only main hatch usable,3,2,"Redundancy in a system, inspections before missions, ",Ability to perform entire mission through main hatch,2,1
 Docking hatch not opening,unable to transport anything through the hatch,2,3,"Redundancy in a system, possibility for manual opening",,1,3
 Capsule ring not deploying,Unable to dock to the orbital node,2,3,"Redundancy in a system, possibility for manual deployment ",,1,3
-Not seal connection,"Depressurization of the system, Unable to open main hatch",2,3,"Redundancy in a system, repeating docking procedure",,1,3
+Non-sealed connection,"Depressurization of the system, Unable to open main hatch",2,3,"Redundancy in a system, repeating docking procedure",,1,3
 Natural frequency oscillation,vehicle rupture and explosion ,1,4,"Overdesigning the vehicle, have adequate safety margins",,1,4

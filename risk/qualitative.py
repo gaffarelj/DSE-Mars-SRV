@@ -122,9 +122,10 @@ class risks_list():
 			print(f"/!\ {to_mitigate} risk{conjug[0]} still out of the green zone. Do your best to mitigate {conjug[1]} if possible /!\\")
 
 	def save_res(self, res, fname, extension="txt"):
-		f = open(self.path + f"\output\\{fname}.{extension}", "w")
-		f.writelines(res)
-		f.close()
+		if extension != "txt":	# Temporary: only save tex file
+			f = open(self.path + f"\output\\{fname}.{extension}", "w")
+			f.writelines(res)
+			f.close()
 		if not self.latex_file:
 			print(f"Please copy the Latex risk map from output\\{fname}.txt to Overleaf.")
 		else:
