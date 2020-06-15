@@ -1,0 +1,6 @@
+Event,Consequence ,Probability (1-5),Impact (1-5),Prob. mitigation ,Impact mitig. ,New prob.,New impact
+PDU failure,vehicle loss of power,2,5,4 separate PDUs,,1,
+Fuel cell failure,Loss of power source for abort,2,5,redundant fuel cell,,1,
+ICE overheating,Temperorary loss of power ,3,2,ICE designed for very high peak powers, redundant ICE,1,1
+ICE failure,Propulsive stage power loss,3,4, extra redundant ICE, fuel cells can shortly take over,2,3
+Short circuit,Loss of power to critical subsystems,3,5,"extensive fault detection, fuses and short circuits in the electrical bus",multiple PDUs give more electrical paths to subsystems,2,2

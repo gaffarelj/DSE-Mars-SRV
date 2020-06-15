@@ -1,0 +1,6 @@
+Event (name),Consequence (text),Probability (1-5),Impact (1-5),Prob. mitigation (text),Impact mitig. (text),New prob.,New impact
+Poor or no line of sight, Reduced or total loss of communication,5,3, Combination of 4 antennas and relay satellites ensure some line of sight is always possible, Only transmit critical mission information ,2,2
+Antenna failure, Loss of communication,2,3, Redundant antennas, Only transmit critical mission information,1,2
+Transmitter/receiver failure,Loss of communication,2,3, System redundancy,,1,
+Extensive noise from cross-link, poor communication,3,2, system designed for low BER,,2,
+No line of sight post abort landing, Extended search time for crew,3,5, 4 antenna configuration gives more oppurtinites for signal transmission, Beacon on the vehicle and personal locators for each crew member,2,1

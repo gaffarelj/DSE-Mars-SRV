@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 """
+Created on Fri Jun 12 09:41:31 2020
+
+@author: lucat
+"""
+
+"""
 Created on Fri May 15 20:51:19 2020
 
 @author: lucat
@@ -7,59 +13,64 @@ Created on Fri May 15 20:51:19 2020
 
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.optimize
 from BAT import get_a, get_Mach, get_g, get_p, get_T, get_rho, get_ceff, Lambda, Mprop, get_Fl, get_Fd, get_Ft, get_TWratio, massfractions,ROM_deltaV,Mpvertical
 #from Aero.aero_calcs import aerodynamics_coefficients
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Aero'))
-from aero_calcs import SS_aerodynamics_coefficients
+from aero_calcs import SS_aerodynamics_coefficients  
+from ISA_DEF import ISA
 import time
 start_time = time.time()
 
 #=====================================================================================================================================================================================================================
-# Mars properties =  Atmospheric composition: 95.32% CO2, 2.7% N2, 1.6% Ar, 0.13% O2, 0.08% CO  
+# Earth properties   
 #=====================================================================================================================================================================================================================
-Req=3396.2*10**3                #[m] equatorial radius
-R=3389.5*10**3                  #[m] volumetric mean radius
-g0_mars=3.71                    #[m/s^2] surface gravity
-mu=0.042828*10**6*(10**3)**3    #[m^3/s^2] gravitational parameter  
-J2=1960.45*10**(-6) 
-sol=24.6597*60*60               #[s] length of a day
+Req=6378.137*10**3                #[m] equatorial radius
+R=6371.000*10**3                  #[m] volumetric mean radius
+g0_mars=9.80665                    #[m/s^2] surface gravity
+mu=0.39860*10**6*(10**3)**3    #[m^3/s^2] gravitational parameter  
+J2=1082.63*10**(-6) 
 i_mars=25.19*np.pi/180          #[rad] inlination of Mars' equator
-omega_mars=0.7088218*10**(-4)   #[rad/s] Martian angular velocity
-M_atm=43.34                     #[g/mol] Mean molecular weight
+omega_mars=7.2921159 *10**(-5)   #[rad/s] Martian angular velocity
+M_atm=28.97                      #[g/mol] Mean molecular weight
 Rgas=8314.4621/M_atm            #[J/(kg*K)] Martian air gas constant
-gamma_gas=1.37                  #[-] heat capacity of Martian air
+gamma_gas=1.4                  #[-] heat capacity of Martian air
 #=====================================================================================================================================================================================================================
 # Node's properties & phasing orbit & Mars base
 #=====================================================================================================================================================================================================================
-i_node=41*np.pi/180             #[rad]
-h_node=500*10**3                #[m]
+i_node=51*np.pi/180             #[rad] 28.52*np.pi/180 
 i_phasing=i_node                #[rad]
-V_phasing=3272.466              #[m/s]
-h_phasing=609.74*10**3          #[m]
-h0=-3*10**3                     #[m] altitude of the launch site wrt volumetric mean altitude
+h_phasing=44726          #[m]
+h0=11617                    #[m] altitude of the launch site wrt volumetric mean altitude
 i0=i_node                       #[rad]
 #=====================================================================================================================================================================================================================
 # Vehicle's properties
 #=====================================================================================================================================================================================================================
-Isp= 383.250565907662                       #[s] LOX-LCH4 383.250565907662
-ceff=get_ceff(Isp)             #[m/s]
 
-d=6                            #[m] diameter of the vehicle assuming cylinder
-n=9                            #[-] number of engines
+
+
+d=8.7                            #[m] diameter of the vehicle assuming cylinder   
 S=np.pi/4*d**2                 #[m^2] reference surface area used here is the area of the circle of the cross-section
-De=1.35049466031671                          #[m] Diameter of an engine
-Ae=np.pi/4*De*De               #[m] Exit area of engine
-pe=6077.910186177842                     #[Pa] exit pressure of exhaust gasses
-                      
-
-
+                  #[Pa] exit pressure of exhaust gasses
+  
+#SRB-> delivers 71.4% of sea level thrust                    
+Isp_b=242.1	#was computed!
+pe_b=0
+Ae_b=0
+tb_b=124
+ceff_b=Isp_b*9.80665
+#SSME
+Isp_me=395.9	#was computed!
+pe_me=27357.23772
+Ae_me=77.45*0.053
+ceff_me=Isp_me*9.80665
 #=====================================================================================================================================================================================================================
 # Switches
 #=====================================================================================================================================================================================================================
 
-plotting=True      #Do you wanna plot? no=False
-updateMOI=True
+plotting=False       #Do you wanna plot? no=False
+updateMOI=False
 #=====================================================================================================================================================================================================================
 # Simplified 2D point-mass model: gravity turn
 #=====================================================================================================================================================================================================================
@@ -89,8 +100,6 @@ def dVxdt(T,D,L,M,Vz,Vx):
 #free Vx due to the rotation of Mars: Vx(t=0):
 Vxfree=omega_mars*(R+h0)*np.cos(i0)
 
-#final condition for Vx: Vx(t=te):
-Vxe=V_phasing
 
 def dVzdt(T,D,L,M,Vz,Vx,g):
     dVzdt=(T-D)/M*Vz/(np.sqrt(Vx*Vx+Vz*Vz))-g+L/M*Vx/(np.sqrt(Vx*Vx+Vz*Vz))
@@ -100,8 +109,8 @@ def dVzdt(T,D,L,M,Vz,Vx,g):
 
 #initial conditions
 #V0=8.33
-V0=110/3.6                                               #8.33[m/s] circa 30 km/h
-gamma0=(90-0.51)*np.pi/180                               #degs off vertical axis 3.2
+V0=447.9341                                             #8.33[m/s] circa 30 km/h
+gamma0=(90-33)*np.pi/180                               #degs off vertical axis 3.2
 
 
 Vx0=V0*np.cos(gamma0)
@@ -109,8 +118,8 @@ Vz0=V0*np.sin(gamma0)
 #=====================================================================================================================================================================================================================
 # Simulation
 #=====================================================================================================================================================================================================================
-Mp, Mwet=massfractions(ceff,202413.4011,4495.16936199617+91.66666666666633,45.842,289.485,88,30,391.492,373.65,487.238)  #old Mwet:198948 kg, old DV_ascent: 4188.466 m/s
-M=np.array([Mwet[0]])
+#Mp, Mwet=massfractions(ceff,202413.4011,4495.16936199617+91.66666666666633,45.842,289.485,88,30,391.492,373.65,487.238)  #old Mwet:198948 kg, old DV_ascent: 4188.466 m/s
+M=np.array([1376301])
 print(M)
 
     
@@ -121,28 +130,23 @@ V=np.array([V0])
 #earth reference frame is on the surface of Mars (where the base is, i.e. -3km)
 #Z=np.array([10])    #Z0=10m
 #X=np.array([0.524]) #X0=0.524m
-Z=np.array([100])
+Z=np.array([11617])
 X=np.array([0])
 
-TW0=1.5
-TWe=4		 #4
+TW0=2 #2 g's at this altitude
+TWe=3
 
-tb=ceff/(TW0*9.80665)*np.log(M[0]/(M[0]-Mp[0]))+177.7
-
-Mpver=Mpvertical(ceff,Mwet[0],TW0,V0)
-DeltaVver=ceff*np.log(Mwet[0]/(Mwet[0]-Mpver))
-tbver=ceff/(3.71*TW0)*np.log(Mwet[0]/(Mwet[0]-Mpver))
-M=np.array([Mwet[0]-Mpver])
-    
+tb=tb_b-60
+ 
 g=np.array([get_g(mu,Req,R,Z[-1],i0,J2)])
-dt=0.01
+dt=0.001
 t_tot=0
     
 #*9.80665/g0_mars 
-
-p=np.array([get_p(Z[-1])])
-T=np.array([get_T(Z[-1])])
-rho=np.array([get_rho(p[-1],T[-1],Rgas)])
+T0, p0 , rh0 = ISA(288.15,1.225,g[-1],Rgas,-0.0065,0,0.001,0.0028,0,-0.0028,-0.002,101325,Z[-1])
+p=np.array([p0])
+T=np.array([T0])
+rho=np.array([rh0])
 Mach=np.array([get_Mach(V[0],get_a(gamma_gas,Rgas, T[0]))])
 #TWratio=np.array([get_TWprofile(mode,0,g[0],1.5,4,tb,i0,Z[0])])
 #TWratio=[TWparab(0,0,tb,TW0,TWe)]
@@ -153,7 +157,8 @@ Cd=np.array([Cd0])
 Fd=np.array([get_Fd(Cd[0],rho[0],S,V[0])])
 Fl=np.array([get_Fl(Cl[0],rho[0],S,V[0])])
 Ft=np.array([TWratio[0]*M[0]*g[0]])
-mdot=np.array([(Ft[0]-Ae*(pe-p[0]))/(ceff)])
+mdot_me=np.array([(0.286*Ft[0]-Ae_me*(pe_me-p[0]))/(ceff_me)])
+mdot_b=np.array([((1-0.286)*Ft[0])/(ceff_b)])
 ax_array=np.array([dVxdt(Ft,get_Fd(Cd,rho,S,V[-1]),get_Fl(Cl,rho,S,V[-1]),M[-1],Vz[-1],Vx[-1])])
 az_array=np.array([dVzdt(Ft,get_Fd(Cd,rho,S,V[-1]),get_Fl(Cl,rho,S,V[-1]),M[-1],Vz[-1],Vx[-1],g[-1])])
 #az_array=np.array([0])
@@ -161,9 +166,9 @@ az_array=np.array([dVzdt(Ft,get_Fd(Cd,rho,S,V[-1]),get_Fl(Cl,rho,S,V[-1]),M[-1],
 
 #TWratio=np.array([Ft[0]/(M[0]*g[0])])
     
-gamma=[gamma0]
-gamma_dot=[0]    
-while Z[-1]<h_phasing+abs(h0) and Z[-1]>=0:
+j=[]
+k=0    
+while Z[-1]<h_phasing and Z[-1]>=0:
 #for i in range(2):
         
         #######################################################
@@ -196,24 +201,21 @@ while Z[-1]<h_phasing+abs(h0) and Z[-1]>=0:
         #update velocities
         Vx=np.append(Vx,Vxnew)
         Vz=np.append(Vz,Vznew)
-        gammanew=np.arctan(Vznew/Vxnew)
-        gamma.append(gammanew)
         
         
         #######################################################
         #   Update Parameters                                 #
         #######################################################
         V=np.append(V,np.sqrt(Vxnew*Vxnew+Vznew*Vznew))
-        gamma_dot.append(-g[-1]/V[-1]*np.cos(float(gammanew))+float(Fl[-1])/M[-1]*np.cos(float(gammanew)))
-
-        p=np.append(p,get_p(Z[-1]))
-        T=np.append(T,get_T(Z[-1]))
+        Tnew, pnew , rhnew = ISA(288.15,1.225,g[-1],Rgas,-0.0065,0,0.001,0.0028,0,-0.0028,-0.002,101325,Z[-1])
+        p=np.append(p,pnew)
+        T=np.append(T,Tnew)
         a=get_a(gamma_gas,Rgas, T[-1])
         Machnew=get_Mach(V[-1],a) 
         Mach=np.append(Mach,Machnew)
         gnew=get_g(mu,Req,R,Z[-1],i0,J2)
         g=np.append(g,gnew)        
-        rho=np.append(rho,get_rho(p[-1],T[-1],Rgas))
+        rho=np.append(rho,rhnew)
         Clnew,Cdnew=SS_aerodynamics_coefficients(Mach[-1],0)
         Cl=np.append(Cl,Clnew)
         Cd=np.append(Cd,Cdnew)
@@ -221,7 +223,7 @@ while Z[-1]<h_phasing+abs(h0) and Z[-1]>=0:
         Fd=np.append(Fd,Fdnew)
         Flnew=get_Fl(Clnew,rho[-1],S,V[-1])
         Fl=np.append(Fl,Flnew)
-        M=np.append(M, M[-1] - mdot[-1]*dt)
+        M=np.append(M, M[-1] - mdot_me[-1]*dt-mdot_b[-1]*dt)
 
         if t_tot<=tb:
             #TWratio=np.append(TWratio,get_TWprofile(mode,t_tot,g[-1],1.5,4,tb,i0,Z[-1]))            
@@ -232,44 +234,132 @@ while Z[-1]<h_phasing+abs(h0) and Z[-1]>=0:
             """
             TWratio.append(TWlinear(t_tot,0,tb,TW0,TWe))
             Ftnew=TWratio[-1]*M[-1]*g[-1]
-            mdotnew=(Ftnew-Ae*(pe-p[-1]))/(ceff)
+            mdotnew_b=(0.714*Ftnew)/(ceff_b)
+            mdotnew_me=(0.286*Ftnew-Ae_me*(pe_me-p[-1]))/(ceff_me)
         else:
             #TWratio=np.append(TWratio,0)
             TWratio.append(0)
             Ftnew=0
-            mdotnew=0
-            
-            
+            mdotnew_b=0
+            mdotnew_me=0
+        k+=1    
+        if t_tot>10 and t_tot<10+2*dt:
+            j.append(["10",k])
+        elif t_tot>20 and t_tot<20+2*dt:
+            j.append(["20",k])
+        elif t_tot>30 and t_tot<30+2*dt:
+            j.append(["30",k])			
+        elif t_tot>40 and t_tot<40+2*dt:
+            j.append(["40",k])		
+        elif t_tot>50 and t_tot<50+2*dt:
+            j.append(["50",k])	
+        elif t_tot>60 and t_tot<60+2*dt:
+            j.append(["60",k])			
+			
         Ft=np.append(Ft,Ftnew)
-        mdot=np.append(mdot,mdotnew)
+        mdot_me=np.append(mdot_me,mdotnew_me)
+        mdot_b=np.append(mdot_b,mdotnew_b)
 
 
 
 t_array=np.linspace(0,t_tot,len(Z)) 
-a_array=np.sqrt(ax_array*ax_array+az_array*az_array)    
-gamma=np.array(gamma)*180/np.pi
-
-gamma_dot=np.array(gamma_dot)
-print("~~~ Attained percentage of phasing velocity: ", (V[-1]+Vxfree)/V_phasing*100," % ~~~") #accounts for Rotatio of Mars
-print("~~~ Attained final flight path angle: ",gamma[-1]," deg ~~~")
+a_array=np.sqrt(ax_array*ax_array+az_array*az_array) 
+gamma=np.arctan(Vz/Vx)*180/np.pi                  #in degrees
 
 
-Mprop=np.sum(mdot*dt)
-print("~~~ Propellant mass needed: ",Mprop," kg ~~~")
-ascent_DeltaV=ceff*np.log(M[0]/(M[0]-Mprop))
-print("~~~ DeltaV needed: ", ascent_DeltaV," m/s ~~~")
+
 
 q=0.5*rho*V*V
 
-#Save the pitch rate gamma_dot from the gravity turn as a txt file
-np.savetxt("gravity_pitchrate.txt", list(gamma_dot), delimiter=",")
+
 
 #=====================================================================================================================================================================================================================
-# Verification
+# Validation: using STS-121 Ascent Data
 #=====================================================================================================================================================================================================================
-dV_verification=ROM_deltaV(g[0],R,h_phasing,h0,omega_mars,i0,V_phasing,tb)
-#print(dV_verification)
+#start at altitude after 10km and until before 50 km
+t_STS=np.array([0,10,20,30,40,50,60])
+M_STS=np.array([1376301,1277921,1177704,1075683,991872,913254,880377])
+h_STS=np.array([11617,15380,19872,25608,31412,38309,44726])
 
+def hSTSfit(t,t_STS,h_STS):	
+	def parabola(x, a, b, c):
+		   return a*x**2 + b*x + c
+	   
+	fit_params, pcov = scipy.optimize.curve_fit(parabola, t_STS, h_STS)
+	h_STS_fit=parabola(t,fit_params[0],fit_params[1],fit_params[2])
+	perr = np.sqrt(np.diag(pcov))
+	h_STS_fit_down=parabola(t,fit_params[0]-perr[0],fit_params[1]-perr[1],fit_params[2]-perr[2])
+	h_STS_fit_up=parabola(t,fit_params[0]+perr[0],fit_params[1]+perr[1],fit_params[2]+perr[2])
+	return h_STS_fit, h_STS_fit_down, h_STS_fit_up
+
+def MSTSfit(t,t_STS,M_STS):	
+	def parabola(x, a, b, c):
+		   return a*x**2 + b*x + c
+	   
+	fit_params, pcov = scipy.optimize.curve_fit(parabola, t_STS, M_STS)
+	M_STS_fit=parabola(t,fit_params[0],fit_params[1],fit_params[2])
+	perr = np.sqrt(np.diag(pcov))
+	M_STS_fit_down=parabola(t,fit_params[0]-perr[0],fit_params[1]-perr[1],fit_params[2]-perr[2])
+	M_STS_fit_up=parabola(t,fit_params[0]+perr[0],fit_params[1]+perr[1],fit_params[2]+perr[2])
+	return M_STS_fit, M_STS_fit_down, M_STS_fit_up
+
+
+def MAPE(At,Ft):
+	""" Computes the Mean Absolute Percentage Error (MAPE), for a list of estimated values (Ft), wrt actual values (At)
+	"""
+	#actual value
+	#number of points
+	n=1/len(At)
+	#estimated value
+	diff=[]
+	for i in range(len(At)):
+		diff.append(np.abs(At[i]-Ft[i])/At[i])
+		
+	MAPE=100*n*np.sum(diff)
+	return MAPE
+
+Ft_Z=[Z[0],Z[10001],Z[20000],Z[30000],Z[40001],Z[50001],Z[60001]]
+Ft_M=[M[0],M[10001],M[20000],M[30000],M[40001],M[50001],M[60001]]
+
+Z_MAPE=MAPE(h_STS,Ft_Z)
+M_MAPE=MAPE(M_STS,Ft_M)
+
+h_STS_fit, h_STS_fit_down, h_STS_fit_up=hSTSfit(t_STS,t_STS,h_STS)
+M_STS_fit, M_STS_fit_down, M_STS_fit_up=MSTSfit(t_STS,t_STS,M_STS)
+
+#plt.scatter(t_STS,h_STS,color="red",marker="+")
+plt.plot(t_STS,h_STS_fit,color="red",label="STS-121 parabolic fit")
+plt.scatter(t_STS,h_STS,color="red",marker="+")
+plt.fill_between(t_STS, h_STS_fit_down,h_STS_fit_up, color="gray", alpha=0.2)
+
+#time vs Z
+
+plt.plot(t_array,Z,color="navy",label="simulation")
+plt.grid(color="gainsboro")
+plt.title("Time vs Altitude: MAPE=" + str(round(Z_MAPE,2)) + "%")
+plt.xlabel("Time [s]")
+plt.ylabel("Altitude [m]")
+plt.legend()
+plt.show()
+
+#plt.scatter(t_STS,h_STS,color="red",marker="+")
+plt.figure()
+plt.plot(t_STS,M_STS_fit,color="forestgreen",label="STS-121 parabolic fit")
+plt.scatter(t_STS,M_STS,color="forestgreen",marker="+")
+plt.fill_between(t_STS, M_STS_fit_down,M_STS_fit_up, color="gray", alpha=0.2)
+
+#time vs Z
+
+plt.plot(t_array,M,color="gold",label="simulation")
+plt.grid(color="gainsboro")
+plt.title("Time vs Mass: MAPE="+ str(round(M_MAPE,2)) + "%")
+plt.xlabel("Time [s]")
+plt.ylabel("Mass [kg]")
+plt.legend()
+plt.show()
+        
+
+	
 
 #=====================================================================================================================================================================================================================
 # Plotting
@@ -355,55 +445,4 @@ if plotting:
 
 print("[---", (time.time() - start_time) ,"seconds ---]" )
 
-Mdry=33293.30437
-
-if updateMOI:
-	Mpremain0=M[0]-Mdry
-	i=list(mdot).index(np.max(mdot))
-	Mp1=np.sum(mdot[:i]*dt)
-	Mpremain1=M[0]-Mp1-Mdry
-	#final mass flow point
-	j=list(mdot).index(mdot[mdot!=0][-1])
-	Mp2=np.sum(mdot[:j]*dt)
-	Mpremain2=M[0]-Mp2-Mdry
-	#point between max mass flow and final mass flow point
-	lm=round((i+j)/2)
-	Mp3=np.sum(mdot[:lm]*dt)
-	MpremainP1=M[0]-Mp3-Mdry	
-	#Point between start of gravity turn and mdot max. point:
-	km=round((i)/2)
-	Mp4=np.sum(mdot[:km]*dt)
-	MpremainP2=M[0]-Mp4-Mdry
-	
-	
-	print()
-	print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-	print("Point of start of gravity turn: ",Mpremain0)
-	print("Point between start of gravity turn and mdot max. point: ", MpremainP2)
-	print("Point of mdot max.: ",Mpremain1)
-	print("Point between mdot max. and mdot final: ",MpremainP1)
-	print("Point of mdot final: ",Mpremain2)
-	print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-
-
-
-Mateusz=False
-if Mateusz:
-	k=list(a_array).index(np.max(a_array))
-	ang1=np.arctan(az_array[k]/ax_array[k])
-	a_long=np.max(a_array)*np.cos((gamma[k]*np.pi/180-ang1))*3.71/9.81
-	a_lat=np.max(a_array)*np.sin((gamma[k]*np.pi/180-ang1))*3.71/9.81
-	print()
-	print("FOR MATEUSZ:")
-	print("Longitudinal acceleration: ", a_long, " in earth g's")
-	print("Lateral acceleration: ", a_lat, " in earth g's")
-	print("Remaining overall mass at this point: ",M[k])
-	print()
-	ang1=np.arctan(Vz[k]/Vx[k])
-	V_long=V[k]*np.cos((gamma[k]*np.pi/180-ang1))
-	V_lat=V[k]*np.sin((gamma[k]*np.pi/180-ang1))	
-	print("FOR DIMITRIS:")
-	print("Longitudinal acceleration: ", V_long, " in earth g's")
-	print("Lateral acceleration: ", V_lat, " in earth g's")
-	print("Remaining overall mass at this point: ",M[k])
 

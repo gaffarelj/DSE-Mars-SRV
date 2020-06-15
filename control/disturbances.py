@@ -82,8 +82,8 @@ def magnetic_disturbance(R):
     #M: Magnetic moment of Mars [tesla*m^3]
     #B: Magnetic field of Mars at orbit height
     #D: Residual dipole of vehicle [A*m^2]
-    D = 0.1
-    M = 1.22*10**12
+    D = 3.5*10**-3 * 53248.16053543461
+    M = 1.35*10**12
     B = 2*M/R**3
     Tm = D*B
     return Tm

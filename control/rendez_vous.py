@@ -32,6 +32,7 @@ h_phasing=609.74*10**3
 g_earth= 9.81             #[m]
 
 period =  2*np.pi* np.sqrt((R+h_node) ** 3 / mu)
+period_phasing = 2*np.pi* np.sqrt((R+h_node+h_phasing) ** 3 / mu)
 omega  = (2 * np.pi)/period
 time_hohmann = np.pi*np.sqrt(((h_node+h_phasing+2*R)/2)**3*1/mu)
 V      = np.sqrt((R+h_node) / mu)
@@ -45,9 +46,9 @@ m0   =53248.16053543461         #previous value was: 100000
 Isp  = act.Isp
 Isp_mono = act.Isp         #previous value was: 390
 OF_ratio = 3.8
-Ix = 4069666.12 #kg/m^2
-Iy = 276844.4638 #kg/m^2
-Iz = 4069666.12 #kg/m^2
+Ix = 4124615.776 #kg/m^2
+Iy = 433619.6909 #kg/m^2
+Iz = 4124615.776 #kg/m^2
 cg_orbit = act.z_cg_orbit
 
 #=====================================================================================================================================================================================================================
@@ -83,9 +84,9 @@ print(2*omega*Vx_A*m0,2*omega*Vx_B*m0,2*omega*Vx_d*m0)
 #=====================================================================================================================================================================================================================
 #Navigation measurement errors
 #=====================================================================================================================================================================================================================
-error_xm = 10.
-error_ym = 10.
-error_zm = 10.
+error_xm = 1.
+error_ym = 1.
+error_zm = 1.
 
 error_xdot = 1.
 error_ydot = 1.
@@ -169,6 +170,7 @@ f_array   = np.array([[fx0,fy0,fz0]])
 X_array   = np.array([[x,y,z]])
 t_array   = np.array(t)
 mp_array  = np.array(mp)
+m_array = np.array(m0)
 mp_biprop_array = np.array(mp)
 
 #DeltaV maneuver 1
@@ -178,6 +180,7 @@ m -= mp_deltaV1
 f_array = np.append(f_array,[[thrust_deltaV1,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV1)
+m_array = np.append(m_array,m)
 mp_biprop_array = np.append(mp_biprop_array,mp_deltaV1)
 t_array  = np.append(t_array,t)
 
@@ -224,6 +227,7 @@ while x >= x0_A-1 and x < x1_A:
     f_array  = np.append(f_array,[[fx,fy,fz]],axis=0)
     X_array  = np.append(X_array,[[x,y,z]],axis=0)
     mp_array = np.append(mp_array,mp)
+    m_array = np.append(m_array,m)
     t_array  = np.append(t_array,t)
 
     delta_x       = delta_x_new
@@ -245,6 +249,7 @@ m -= mp_deltaV2
 f_array = np.append(f_array,[[thrust_deltaV2,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV2)
+m_array = np.append(m_array,m)
 mp_biprop_array = np.append(mp_biprop_array,mp_deltaV2)
 t_array  = np.append(t_array,t)
 
@@ -255,6 +260,7 @@ m -= mp_deltaV3
 f_array = np.append(f_array,[[thrust_deltaV3,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV3)
+m_array = np.append(m_array,m)
 mp_biprop_array = np.append(mp_biprop_array,mp_deltaV3)
 t_array  = np.append(t_array,t)
 
@@ -284,7 +290,6 @@ while x >= x0_B-1 and x < x1_B:
     x       = x0_B + Vx*tb + delta_x_rel
     xdot    = Vx + delta_xdot_rel
     xdotdot = delta_xdotdot_rel
-
     y       = delta_y_rel
     ydot    = delta_ydot_rel
     ydotdot = delta_ydotdot_rel
@@ -304,6 +309,7 @@ while x >= x0_B-1 and x < x1_B:
     f_array = np.append(f_array,[[fx,fy,fz]],axis=0)
     X_array = np.append(X_array,[[x,y,z]],axis=0)
     mp_array = np.append(mp_array,mp)
+    m_array = np.append(m_array,m)
     t_array = np.append(t_array,t)
 
     delta_x       = delta_x_new
@@ -318,8 +324,6 @@ while x >= x0_B-1 and x < x1_B:
     delta_zdot    = delta_zdot_new
     delta_zdotdot = delta_zdotdot_new
 
-
-
 #Delta V maneuver 4
 # t += tburn
 thrust_deltaV4, mp_deltaV4 = vac_thrust(deltaV_B_1,Isp,m0,tburn,De=0,pe=0)
@@ -327,6 +331,7 @@ m -= mp_deltaV4
 f_array = np.append(f_array,[[thrust_deltaV4,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV4)
+m_array = np.append(m_array,m)
 mp_biprop_array = np.append(mp_biprop_array,mp_deltaV4)
 t_array  = np.append(t_array,t)
 
@@ -337,10 +342,10 @@ m -= mp_deltaV5
 f_array = np.append(f_array,[[thrust_deltaV5,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV5)
+m_array = np.append(m_array,m)
 mp_biprop_array = np.append(mp_biprop_array,mp_deltaV5)
 t_array  = np.append(t_array,t)
-
-while x >= x0_d-1 and x < x1_d:
+while x >= x0_d-10 and x < x1_d:
     Vx  = Vx_d
     td += dt
     t  += dt
@@ -364,7 +369,6 @@ while x >= x0_d-1 and x < x1_d:
     x       = x0_d + Vx*td + delta_x_rel
     xdot    = Vx + delta_xdot_rel
     xdotdot = delta_xdotdot_rel
-
     y       = delta_y_rel
     ydot    = delta_ydot_rel
     ydotdot = delta_ydotdot_rel
@@ -383,6 +387,7 @@ while x >= x0_d-1 and x < x1_d:
     f_array = np.append(f_array,[[fx,fy,fz]],axis=0)
     X_array = np.append(X_array,[[x,y,z]],axis=0)
     mp_array = np.append(mp_array,mp)
+    m_array = np.append(m_array,m)
     t_array = np.append(t_array,t)
 
     delta_x       = delta_x_new
@@ -402,7 +407,6 @@ while x >= x0_d-1 and x < x1_d:
 #=================================================================================================================================================
 # Total thrust and propellant mass
 #=================================================================================================================================================
-
 #Delta V maneuvers in between phases
 thrust_deltaV = [thrust_deltaV1, thrust_deltaV2, thrust_deltaV3, thrust_deltaV4, thrust_deltaV5]
 mp_deltaV = mp_deltaV1 + mp_deltaV2 + mp_deltaV3 + mp_deltaV4 + mp_deltaV5
@@ -453,6 +457,8 @@ RCS_thrust_error_x = act.RCS_torque_to_thrust(T_error_y_tot,'y',cg_orbit,'error_
 RCS_thrust_error_y = act.RCS_torque_to_thrust(T_error_x_tot,'x',cg_orbit,'error_bottom') * margin
 RCS_thrust_error_z = act.RCS_torque_to_thrust(T_error_z_tot,'z',cg_orbit,'error_bottom') * margin
 
+RCS_thrust_error_tot = margin * max(RCS_thrust_error_x,RCS_thrust_error_y,RCS_thrust_error_z)
+
 RCS_impulse_error = (np.sum(RCS_thrust_error_x*t) + np.sum(RCS_thrust_error_y*t) + np.sum(RCS_thrust_error_z*t))
 mp_error           = RCS_impulse_error / (Isp_mono * g_earth)
 
@@ -471,8 +477,8 @@ RCS_thrust_rotations  = 451.85155228408263
 tburn                 = 1.
 
 
-transfer_time         = act.slew(RCS_thrust_rotations,tburn,angle_transfer,Iy)
-mp_rotations          = 4 * 3 * act.RCSpropellant(RCS_thrust_rotations,tburn,Isp_mono)
+transfer_time,RCS_torque_rotations        = act.slew(RCS_thrust_rotations,tburn,angle_transfer,Iy)
+mp_rotations                 = 4 * 3 * act.RCSpropellant(RCS_thrust_rotations,tburn,Isp_mono)
 print('Rotation time limit: ', time_hohmann)
 print('Rotation duration  :',transfer_time)
 T_error_rot_y, T_error_rot_x, T_error_rot_z = act.thrust_error(RCS_thrust_rotations,cg_orbit,angle)
@@ -494,6 +500,7 @@ print('==========================================================')
 print('==========================================================')
 print('APPROACH PHASE')
 print('==========================================================')
+print('TIME:',ta/60,tb/60,td/60,t_array[-1]/60, (transfer_time*2)/60, 2*period_phasing/60,t_array[-1]/60+ (transfer_time*2)/60+2*period_phasing/60)
 print('PROPELLANT')
 print('Total propellant used: ', mp_total)
 print('Redundancy propellant: ', mp_error)
@@ -514,6 +521,7 @@ print('==========================================================')
 print('==========================================================')
 print('ROTATIONS')
 print('Propellant used (transfer, go-nogo): '      , mp_rotations)
+print('Torque                             :'       , RCS_torque_rotations)
 print('Thrust                             : '      , RCS_thrust_rotations)
 print('MISALIGNMENT REDUNDANCY')
 print('Misalignment torque (x,y,z): '              , T_error_rot_x+2*(Tgx+Tsp+Tm), T_error_rot_y, T_error_rot_z)
@@ -522,6 +530,8 @@ print('Redundancy thrust (transfer, go-nogo): '    , RCS_error_rot_x + RCS_error
 print('Redundancy propellant (transfer, go-nogo): ', mp_error_rot)
 print('==========================================================')
 print('==========================================================')
+print('REQUIREMENTS: 0.16 m/s^2 acceleration')
+print('Acceleration by thrusters (x,y,z):',act.RCS_thrust_to_torque(451,'y',cg_orbit))
 
 #=====================================================================================================================================================================================================================
 # Plotting
@@ -573,4 +583,12 @@ if plotting:
     axs[1][1].grid(color="gainsboro")
     axs[1][1].set_xlabel("Time [s]")
     axs[1][1].set_ylabel("Propellant mass [kg]")
+    plt.show()
+
+    plt.figure()
+    plt.plot(t_array,(m0-m_array),color="navy")
+    plt.grid(color="gainsboro")
+    plt.title("Time vs Propellant mass")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Propellant mass [kg]")
     plt.show()

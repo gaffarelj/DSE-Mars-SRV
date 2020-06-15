@@ -10,9 +10,10 @@ capsule_radius_top      = 1.4
 
 x_cg                    = 0.
 z_cg                    = 0.
-z_cg_full               = 7.7085 #m
-z_cg_empty              = 10.0344 #m
-z_cg_orbit              = 6.62390
+z_cg_full               = 5.276 #m
+z_cg_empty              = 9.238 #m
+z_cg_orbit              = 9.007
+z_cg_end_ascent         = 6.120
 
 x_body_side             = body_radius
 x_capsule_bottomside    = capsule_radius_bottom
@@ -157,7 +158,7 @@ def slew(thrust,tburn,slew_angle,I):
     spin_rate = spin_acc * tburn
     slew_time = slew_angle / spin_rate
 
-    return slew_time
+    return slew_time,torque
 
 def thrust_error(f,cg,angle):
     lx_bottom, lx_top, ly_bottom, ly_top, lz_bottom, lz_top = thruster_arms(cg)
@@ -174,5 +175,3 @@ def RCSpropellant(f,t,Isp):
     impulse = f * t
     Mp = impulse / (Isp * g)
     return Mp
-
-print()
