@@ -15,7 +15,8 @@ files = {
 	"struc": ["Structures", "Structures-risk"],
 	"power": ["Power", "Power-risk"],
 	"com": ["Communication", "Comm-risk"],
-	"ls": ["Life Support", "life-support-risk"]
+	"ls": ["Life Support", "life-support-risk"],
+	"abort": ["Abort", "abort-risk"]
 	}
 
 for key, value in files.items():
