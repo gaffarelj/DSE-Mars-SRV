@@ -10,9 +10,10 @@ capsule_radius_top      = 1.4
 
 x_cg                    = 0.
 z_cg                    = 0.
-z_cg_full               = 7.7085 #m
-z_cg_empty              = 10.0344 #m
-z_cg_orbit              = 6.62390
+z_cg_full               = 5.276 #m
+z_cg_empty              = 9.238 #m
+z_cg_orbit              = 9.007
+z_cg_end_ascent         = 6.120
 
 x_body_side             = body_radius
 x_capsule_bottomside    = capsule_radius_bottom
@@ -127,7 +128,7 @@ def RCS_displacement_to_thrust(F,axis,scenario):
 
     if axis == "y":
         if scenario == 'normal':
-            n_bottom = 1000
+            n_bottom = 4
             n_top    = 0
             n        = n_bottom + n_top
         if scenario == 'failure':

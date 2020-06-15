@@ -46,9 +46,9 @@ m0   =53248.16053543461         #previous value was: 100000
 Isp  = act.Isp
 Isp_mono = act.Isp         #previous value was: 390
 OF_ratio = 3.8
-Ix = 4069666.12 #kg/m^2
-Iy = 276844.4638 #kg/m^2
-Iz = 4069666.12 #kg/m^2
+Ix = 4124615.776 #kg/m^2
+Iy = 433619.6909 #kg/m^2
+Iz = 4124615.776 #kg/m^2
 cg_orbit = act.z_cg_orbit
 
 #=====================================================================================================================================================================================================================
@@ -170,6 +170,7 @@ f_array   = np.array([[fx0,fy0,fz0]])
 X_array   = np.array([[x,y,z]])
 t_array   = np.array(t)
 mp_array  = np.array(mp)
+m_array = np.array(m0)
 mp_biprop_array = np.array(mp)
 
 #DeltaV maneuver 1
@@ -179,6 +180,7 @@ m -= mp_deltaV1
 f_array = np.append(f_array,[[thrust_deltaV1,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV1)
+m_array = np.append(m_array,m)
 mp_biprop_array = np.append(mp_biprop_array,mp_deltaV1)
 t_array  = np.append(t_array,t)
 
@@ -225,6 +227,7 @@ while x >= x0_A-1 and x < x1_A:
     f_array  = np.append(f_array,[[fx,fy,fz]],axis=0)
     X_array  = np.append(X_array,[[x,y,z]],axis=0)
     mp_array = np.append(mp_array,mp)
+    m_array = np.append(m_array,m)
     t_array  = np.append(t_array,t)
 
     delta_x       = delta_x_new
@@ -246,6 +249,7 @@ m -= mp_deltaV2
 f_array = np.append(f_array,[[thrust_deltaV2,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV2)
+m_array = np.append(m_array,m)
 mp_biprop_array = np.append(mp_biprop_array,mp_deltaV2)
 t_array  = np.append(t_array,t)
 
@@ -256,6 +260,7 @@ m -= mp_deltaV3
 f_array = np.append(f_array,[[thrust_deltaV3,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV3)
+m_array = np.append(m_array,m)
 mp_biprop_array = np.append(mp_biprop_array,mp_deltaV3)
 t_array  = np.append(t_array,t)
 
@@ -304,6 +309,7 @@ while x >= x0_B-1 and x < x1_B:
     f_array = np.append(f_array,[[fx,fy,fz]],axis=0)
     X_array = np.append(X_array,[[x,y,z]],axis=0)
     mp_array = np.append(mp_array,mp)
+    m_array = np.append(m_array,m)
     t_array = np.append(t_array,t)
 
     delta_x       = delta_x_new
@@ -325,6 +331,7 @@ m -= mp_deltaV4
 f_array = np.append(f_array,[[thrust_deltaV4,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV4)
+m_array = np.append(m_array,m)
 mp_biprop_array = np.append(mp_biprop_array,mp_deltaV4)
 t_array  = np.append(t_array,t)
 
@@ -335,6 +342,7 @@ m -= mp_deltaV5
 f_array = np.append(f_array,[[thrust_deltaV5,0,0]],axis=0)
 X_array  = np.append(X_array,[[x,y,z]],axis=0)
 mp_array = np.append(mp_array,mp_deltaV5)
+m_array = np.append(m_array,m)
 mp_biprop_array = np.append(mp_biprop_array,mp_deltaV5)
 t_array  = np.append(t_array,t)
 while x >= x0_d-10 and x < x1_d:
@@ -379,6 +387,7 @@ while x >= x0_d-10 and x < x1_d:
     f_array = np.append(f_array,[[fx,fy,fz]],axis=0)
     X_array = np.append(X_array,[[x,y,z]],axis=0)
     mp_array = np.append(mp_array,mp)
+    m_array = np.append(m_array,m)
     t_array = np.append(t_array,t)
 
     delta_x       = delta_x_new
@@ -524,7 +533,7 @@ print('==========================================================')
 print('REQUIREMENTS: 0.16 m/s^2 acceleration')
 print('Acceleration by thrusters (x,y,z):',act.RCS_thrust_to_torque(451,'y',cg_orbit))
 
-
+print(m_array)
 #=====================================================================================================================================================================================================================
 # Plotting
 #=====================================================================================================================================================================================================================
@@ -575,4 +584,12 @@ if plotting:
     axs[1][1].grid(color="gainsboro")
     axs[1][1].set_xlabel("Time [s]")
     axs[1][1].set_ylabel("Propellant mass [kg]")
+    plt.show()
+
+    plt.figure()
+    plt.plot(t_array,(m0-m_array),color="navy")
+    plt.grid(color="gainsboro")
+    plt.title("Time vs Propellant mass")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Propellant mass [kg]")
     plt.show()

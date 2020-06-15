@@ -1,7 +1,7 @@
 import sys
 sys.path.append('../astrodynamics')
 import mars_standard_atmosphere as MSA
-import DYNAS as dns
+import DYNAS_new as dns
 import disturbances as dist
 import actuator_properties as act
 
@@ -11,7 +11,7 @@ from matplotlib import pyplot as plt
 margin = 2.
 
 
-
+plotting = True
 #=====================================================================================================================================================================================================================
 #Node properties
 #=====================================================================================================================================================================================================================
@@ -40,10 +40,10 @@ tburn = 1.
 #=====================================================================================================================================================================================================================
 length = act.length_body
 width  = act.body_radius * 2
-Ix = 4098123.837
-Iy = 315781.2849
-Iz = 4098123.837
-cg_orbit = act.z_cg_orbit
+Ix = 4321654.768
+Iy = 407613.6669
+Iz = 4321654.768
+cg_orbit = act.z_cg_end_ascent
 m  = 53056.28092
 
 #propellant properties
@@ -91,11 +91,16 @@ dt = 0.1
 am = dns.am
 tm = dns.t
 pitch_mp = 0
-pitch_thrust = act.RCS_torque_to_thrust(tm,'z',cg_orbit,'normal')
-print(max(tm))
+pitch_thrust_max = act.RCS_torque_to_thrust(min(am),'z',cg_orbit,'normal')
+print(max(am))
 
-for thrust in pitch_thrust:
-    pitch_mp += 4 * act.RCSpropellant(thrust,dt,Isp)
+pitch_mp_tot = []
+pitch_mp = 0
+for aero_moment in am:
+    pitch_thrust = 2*act.RCS_torque_to_thrust(aero_moment,'z',cg_orbit,'normal')
+    pitch_mp     += 4 * act.RCSpropellant(abs(pitch_thrust),dt,Isp)
+    pitch_mp_tot.append(pitch_mp)
+pitch_mp_tot = np.array(pitch_mp_tot)
 
 #=====================================================================================================================================================================================================================
 #Errors
@@ -106,7 +111,7 @@ for thrust in pitch_thrust:
 error_angle = 2 * np.pi / 180
 
 T_error_y, T_error_x, T_error_z = act.thrust_error(RCS_thrust,cg_orbit,error_angle)
-T_error_pitch_y, T_error_pitch_x, T_error_pitch_z = act.thrust_error(max(pitch_thrust),cg_orbit,error_angle)
+T_error_pitch_y, T_error_pitch_x, T_error_pitch_z = act.thrust_error(pitch_thrust_max,cg_orbit,error_angle)
 #========================================================================
 # Disturbances
 #========================================================================
@@ -146,8 +151,8 @@ print('ASCENT')
 print('Torque:',RCS_torque)
 print('Rotation thrust in total  :',4*RCS_thrust)
 print('Rotation thrust per engine:',RCS_thrust)
-print('Max. pitch control thrust in total:',max(pitch_thrust)*4)
-print('Max. pitch control thrust per engine:',max(pitch_thrust))
+print('Max. pitch control thrust in total:', pitch_thrust_max*4)
+print('Max. pitch control thrust per engine:',pitch_thrust_max)
 print('Total propellant needed:', Mp + mp_error+pitch_mp, Mp,mp_error,pitch_mp)
 print('REDUNDANCY')
 print('Misalignment torque rotation     : ', T_error_x-Tgx-Tsp-Tm,T_error_y-Tgy,T_error_z)
@@ -158,3 +163,15 @@ print('Redundancy thrust per engine (pitch control):', RCS_error_pitch_x,RCS_err
 
 print('Redundancy propellant (rotation):', mp_error)
 print('Redundancy propellant (pitch control):', mp_pitch_error)
+
+#=====================================================================================================================================================================================================================
+#Plot
+#=====================================================================================================================================================================================================================
+if plotting == True:
+    plt.figure()
+    plt.plot(tm[1:],pitch_mp_tot,color="navy")
+    plt.grid(color="gainsboro")
+    plt.title("Time vs Propellant mass")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Propellant mass [kg]")
+    plt.show()
