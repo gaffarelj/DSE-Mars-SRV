@@ -1,48 +1,48 @@
-\noindent The following events have been assessed and mitigated as part of the Gnc subsystem:
+\noindent The following risks have been analysed and mitigated as part of the Gnc subsystem:
 
 \begin{itemize}
-	 \item \textbf{SRV-RISK-GNC-1} Docking camera failure, results in lom: not being able to dock.
+	 \item \textbf{SRV-RISK-GNC-1} Docking camera failure (P=3), results in lom: not being able to dock (I=3).
 	\begin{itemize}
-		 \item Impact mitigation (-2):  redundancy.	\end{itemize}
-	 \item \textbf{SRV-RISK-GNC-2} Landing camera failure, results in possible vehicle damage.
+		 \item Impact mitigation (I-2):  redundancy.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-2} Landing camera failure (P=3), results in possible vehicle damage (I=3).
 	\begin{itemize}
-		 \item Impact mitigation (-2):  redundancy.	\end{itemize}
-	 \item \textbf{SRV-RISK-GNC-3} Star tracker failure, results in loc: not being able to successfully reentry.
+		 \item Impact mitigation (I-2):  redundancy.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-3} Star tracker failure (P=2), results in loc: not being able to successfully reentry (I=5).
 	\begin{itemize}
-		 \item Impact mitigation (-3):  redundancy.	\end{itemize}
-	 \item \textbf{SRV-RISK-GNC-4} Gyroscope failure, results in lom: loss of attitude.
+		 \item Impact mitigation (I-3):  redundancy.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-4} Gyroscope failure (P=4), results in lom: loss of attitude (I=4).
 	\begin{itemize}
-		 \item Impact mitigation (-3):  redundancy.	\end{itemize}
-	 \item \textbf{SRV-RISK-GNC-5} Accelerometer, results in lom: loss of position.
+		 \item Impact mitigation (I-3):  redundancy.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-5} Accelerometer (P=4), results in lom: loss of position (I=4).
 	\begin{itemize}
-		 \item Impact mitigation (-3):  redundancy.	\end{itemize}
-	 \item \textbf{SRV-RISK-GNC-6} Flight computer failure, results in loc: loss of control of vehicle.
+		 \item Impact mitigation (I-3):  redundancy.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-6} Flight computer failure (P=2), results in loc: loss of control of vehicle (I=5).
 	\begin{itemize}
-		 \item Probability mitigation (-1):  extensive validation and testing.		 \item Impact mitigation (-2):  redundancy.	\end{itemize}
-	 \item \textbf{SRV-RISK-GNC-7} Thruster failure, results in lov: loss of manoeuvrability.
+		 \item Probability mitigation (P-1):  extensive validation and testing.		 \item Impact mitigation (I-2):  redundancy.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-7} Thruster failure (P=4), results in lov: loss of manoeuvrability (I=4).
 	\begin{itemize}
-		 \item Impact mitigation (-3):  redundancy.	\end{itemize}
-	 \item \textbf{SRV-RISK-GNC-8} Ignition failure, results in lom: momentary loss of control.
+		 \item Impact mitigation (I-3):  redundancy.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-8} Ignition failure (P=4), results in lom: momentary loss of control (I=4).
 	\begin{itemize}
-		 \item Impact mitigation (-3):  automatic monitoring system of the engines.	\end{itemize}
-	 \item \textbf{SRV-RISK-GNC-9} Valve/feedsystem failure, results in lom: loss of single thruster.
+		 \item Impact mitigation (I-3):  automatic monitoring system of the engines.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-9} Valve/feedsystem failure (P=4), results in lom: loss of single thruster (I=4).
 	\begin{itemize}
-		 \item Impact mitigation (-3):  redundancy.	\end{itemize}
-	 \item \textbf{SRV-RISK-GNC-10} Critical thruster failure, results in lov: : vehicle damage.
+		 \item Impact mitigation (I-3):  redundancy.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-10} Critical thruster failure (P=2), results in lov: : vehicle damage (I=5).
 	\begin{itemize}
-		 \item Impact mitigation (-2):  adding shutoff valves in the feedsystem.	\end{itemize}
-	 \item \textbf{SRV-RISK-GNC-11} Propellant leakage, results in loss of multiple thrusters.
+		 \item Impact mitigation (I-2):  adding shutoff valves in the feedsystem.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-11} Propellant leakage (P=1), results in loss of multiple thrusters (I=5).
 	\begin{itemize}
-		 \item Impact mitigation (-2):  adding shutoff valves in the feedsystem.	\end{itemize}
-	 \item \textbf{SRV-RISK-GNC-12} Control algorithm errors, results in lov: terminal loss of control and possible ill manoeuvring.
+		 \item Impact mitigation (I-2):  adding shutoff valves in the feedsystem.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-12} Control algorithm errors (P=2), results in lov: terminal loss of control and possible ill manoeuvring (I=5).
 	\begin{itemize}
-		 \item Probability mitigation (-1):  extensive v\&v.		 \item Impact mitigation (-2):  alternate emergency control software.	\end{itemize}
-	 \item \textbf{SRV-RISK-GNC-13} Guidance algorithm errors, results in lom: terminal loss of guidance information.
+		 \item Probability mitigation (P-1):  extensive v\&v.		 \item Impact mitigation (I-2):  alternate emergency control software.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-13} Guidance algorithm errors (P=2), results in lom: terminal loss of guidance information (I=3).
 	\begin{itemize}
-		 \item Probability mitigation (-1):  extensive v\&v.	\end{itemize}
-	 \item \textbf{SRV-RISK-GNC-14} Engine thruster misalignment, results in introduces an extra disturbance torque.
+		 \item Probability mitigation (P-1):  extensive v\&v.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-14} Engine thruster misalignment (P=5), results in introduces an extra disturbance torque (I=2).
 	\begin{itemize}
-		 \item Probability mitigation (-2):  installment checks.		 \item Impact mitigation (-1):  compensation.	\end{itemize}
+		 \item Probability mitigation (P-2):  installment checks.		 \item Impact mitigation (I-1):  compensation.	\end{itemize}
 \end{itemize}
 
 \noindent From this list, a mitigated risk map has been created, and can be seen in \autoref{tab:risk-map-gnc-mitig}.

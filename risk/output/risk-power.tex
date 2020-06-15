@@ -1,21 +1,21 @@
-\noindent The following events have been assessed and mitigated as part of the Power subsystem:
+\noindent The following risks have been analysed and mitigated as part of the Power subsystem:
 
 \begin{itemize}
-	 \item \textbf{SRV-RISK-POWER-1} Pdu failure, results in vehicle loss of power.
+	 \item \textbf{SRV-RISK-POWER-1} Pdu failure (P=2), results in vehicle loss of power (I=5).
 	\begin{itemize}
-		 \item Probability mitigation (-1): 4 separate pdus.	\end{itemize}
-	 \item \textbf{SRV-RISK-POWER-2} Fuel cell failure, results in loss of power source for abort.
+		 \item Probability mitigation (P-1): 4 separate pdus.	\end{itemize}
+	 \item \textbf{SRV-RISK-POWER-2} Fuel cell failure (P=2), results in loss of power source for abort (I=5).
 	\begin{itemize}
-		 \item Probability mitigation (-1): redundant fuel cell.	\end{itemize}
-	 \item \textbf{SRV-RISK-POWER-3} Ice overheating, results in temperorary loss of power.
+		 \item Probability mitigation (P-1): redundant fuel cell.	\end{itemize}
+	 \item \textbf{SRV-RISK-POWER-3} Ice overheating (P=3), results in temperorary loss of power (I=2).
 	\begin{itemize}
-		 \item Probability mitigation (-2): ice designed for very high peak powers.		 \item Impact mitigation (-1):  redundant ice.	\end{itemize}
-	 \item \textbf{SRV-RISK-POWER-4} Ice failure, results in propulsive stage power loss.
+		 \item Probability mitigation (P-2): ice designed for very high peak powers.		 \item Impact mitigation (I-1):  redundant ice.	\end{itemize}
+	 \item \textbf{SRV-RISK-POWER-4} Ice failure (P=3), results in propulsive stage power loss (I=4).
 	\begin{itemize}
-		 \item Probability mitigation (-1):  extra redundant ice.		 \item Impact mitigation (-1):  fuel cells can shortly take over.	\end{itemize}
-	 \item \textbf{SRV-RISK-POWER-5} Short circuit, results in loss of power to critical subsystems.
+		 \item Probability mitigation (P-1):  extra redundant ice.		 \item Impact mitigation (I-1):  fuel cells can shortly take over.	\end{itemize}
+	 \item \textbf{SRV-RISK-POWER-5} Short circuit (P=3), results in loss of power to critical subsystems (I=5).
 	\begin{itemize}
-		 \item Probability mitigation (-1): extensive fault detection, fuses and short circuits in the electrical bus.		 \item Impact mitigation (-3): multiple pdus give more electrical paths to subsystems.	\end{itemize}
+		 \item Probability mitigation (P-1): extensive fault detection, fuses and short circuits in the electrical bus.		 \item Impact mitigation (I-3): multiple pdus give more electrical paths to subsystems.	\end{itemize}
 \end{itemize}
 
 \noindent From this list, a mitigated risk map has been created, and can be seen in \autoref{tab:risk-map-power-mitig}.
