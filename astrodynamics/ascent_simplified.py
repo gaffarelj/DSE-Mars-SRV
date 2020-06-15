@@ -42,7 +42,7 @@ i0=i_node                       #[rad]
 #=====================================================================================================================================================================================================================
 # Vehicle's properties
 #=====================================================================================================================================================================================================================
-Isp= 383.250565907662                       #[s] LOX-LCH4
+Isp= 383.250565907662                       #[s] LOX-LCH4 383.250565907662
 ceff=get_ceff(Isp)             #[m/s]
 
 d=6                            #[m] diameter of the vehicle assuming cylinder
@@ -58,7 +58,7 @@ pe=6077.910186177842                     #[Pa] exit pressure of exhaust gasses
 # Switches
 #=====================================================================================================================================================================================================================
 
-plotting=False       #Do you wanna plot? no=False
+plotting=True      #Do you wanna plot? no=False
 updateMOI=True
 #=====================================================================================================================================================================================================================
 # Simplified 2D point-mass model: gravity turn
@@ -125,7 +125,7 @@ Z=np.array([100])
 X=np.array([0])
 
 TW0=1.5
-TWe=4
+TWe=4		 #4
 
 tb=ceff/(TW0*9.80665)*np.log(M[0]/(M[0]-Mp[0]))+177.7
 
@@ -370,10 +370,16 @@ if updateMOI:
 	lm=round((i+j)/2)
 	Mp3=np.sum(mdot[:lm]*dt)
 	MpremainP1=M[0]-Mp3-Mdry	
+	#Point between start of gravity turn and mdot max. point:
+	km=round((i)/2)
+	Mp4=np.sum(mdot[:km]*dt)
+	MpremainP2=M[0]-Mp4-Mdry
+	
 	
 	print()
 	print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 	print("Point of start of gravity turn: ",Mpremain0)
+	print("Point between start of gravity turn and mdot max. point: ", MpremainP2)
 	print("Point of mdot max.: ",Mpremain1)
 	print("Point between mdot max. and mdot final: ",MpremainP1)
 	print("Point of mdot final: ",Mpremain2)
