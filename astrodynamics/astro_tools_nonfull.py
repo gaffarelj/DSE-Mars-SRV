@@ -263,7 +263,7 @@ def plot_dual(x_data, y_data_1, y_data_2, x_label, y_label_1, y_label_2):
 	ax1.set_ylabel(y_label_1, color=color)
 	ax1.plot(x_data, y_data_1, color=color)
 	ax1.tick_params(axis="y", labelcolor=color)
-	ax1.set_xticks(np.arange(0, 4.6, 0.5))
+	#ax1.set_xticks(np.arange(0, 4.6, 0.5))
 
 	ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
