@@ -1,5 +1,5 @@
 ﻿Event (name),Consequence (text),Probability (1-5),Impact (1-5),Prob. mitigation (text),Impact mitig. (text),New prob.,New impact
-Insufficient thermal protection sizing, Vehicle runs too hot, 2, 5, Overdesign TPS, Overdesign TPS, 1, 3
+TPS damaged due to surface debris, Partial TPS failure, 2, 3, Frequent check-ups, Add redundancy layer, 1, 2
 TPS damaged due to space debris, Partial or complete TPS failure, 2, 4, Optimise orbital time,Design surface for impact resistance, 1, 3
-TPS breaks due to wear \& tear, Partial or complete TPS failure, 2,4, Frequent check-ups, Add redundancy layer, 1, 3
+TPS breaks due to fatigue, Partial or complete TPS failure, 2,4, Frequent check-ups, Add redundancy layer, 1, 3
 TPS breaks due to high stress, Partial or complete TPS failure, 2, 3, High strength TPS materials, Add redundancy layer , 1, 2
