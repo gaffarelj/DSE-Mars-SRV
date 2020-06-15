@@ -247,16 +247,18 @@ class Motion:
             
             #cl = cn[i]*np.cos(aoa[i]) + ca[i]*np.sin(aoa[i])
             #cd = cn[i]*np.sin(aoa[i]) + ca[i]*np.cos(aoa[i])
-            cl,cd = cl_cd(mach, -np.degrees(alpha))
+            #cl,cd = cl_cd(mach, -np.degrees(alpha))
 
             #if cn[i] == -1:
-                #cl = 0
-                #cd = 1.8
+            #    cl = 0
+            #    cd = 1.8
+            cl = 0.0859
+            cd = 1.7084   
 
             D = q * (cd * self.S + chute_drag_area)
             L = q * cl * self.S 
             My = -(L*np.cos(alpha) + D*np.sin(alpha))*0.1
-            #i+=1
+            i+=1
             if time[-1] > self.thrust_start:
                 D = D + self.thrust
 
@@ -524,8 +526,8 @@ def plot_from_csv(file, x, y):
     plt.show()
 
 
-cl_data = np.genfromtxt(os.path.dirname(__file__)+'\cl_standard_config.csv', delimiter=";", dtype=None)
-cd_data = np.genfromtxt(os.path.dirname(__file__)+'\cd_standard_config.csv', delimiter=";", dtype=None)
+cl_data = np.genfromtxt('cl_standard_config.csv', delimiter=";", dtype=None)
+cd_data = np.genfromtxt('cd_standard_config.csv', delimiter=";", dtype=None)
 alpha_list = np.round(cl_data[0][1:],1) 
 mach_list = np.round(cl_data[:,0],1)
 f_cl = interpolate.interp2d(alpha_list, mach_list, cl_data[:, 1:], kind='cubic')
