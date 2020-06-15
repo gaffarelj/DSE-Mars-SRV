@@ -1,0 +1,5 @@
+Very low impact (1): this event results in crew inconvenience
+• Low impact (2): this event results in part of the vehicle functions to be inoperable
+• Medium impact (3): LOM event and/or events resulting in considerable deterioration of the vehicle
+• High impact (4): LOV event
+• Very high impact (5): LOC event
