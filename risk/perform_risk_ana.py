@@ -13,7 +13,9 @@ files = {
 	"thermal": ["Thermal", "thermal_risk"],
 	"gnc": ["GNC", "GNC_risks"],
 	"struc": ["Structures", "Structures-risk"],
-	"power": ["Power", "Power-risk"]
+	"power": ["Power", "Power-risk"],
+	"com": ["Communication", "Comm-risk"],
+	"ls": ["Life Support", "life-support-risk"]
 	}
 
 for key, value in files.items():

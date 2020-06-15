@@ -1,0 +1,41 @@
+\noindent The following events have been assessed and mitigated as part of the Life Support subsystem:
+
+\begin{itemize}
+	 \item \textbf{SRV-RISK-LS-1} Oxygen supply failure, results in no more oxygen supplied to the capsule.
+	\begin{itemize}
+		 \item Probability mitigation (-1): have 3 separate overdesigned tanks for oxygen.		 \item Impact mitigation (-2): have the combinations able to directly connect to the supply .	\end{itemize}
+	 \item \textbf{SRV-RISK-LS-2} Capsule fire, results in capsule atmosphere filled with co2.
+	\begin{itemize}
+		 \item Impact mitigation (-2): have a 100\% safety margin in oxygen supply.	\end{itemize}
+	 \item \textbf{SRV-RISK-LS-3} Vent out valve stuck in open position, results in loss of atmospheric filtering, possible depressurisation.
+	\begin{itemize}
+		 \item Probability mitigation (-1): add a second safety valve.		 \item Impact mitigation (-1): duplicate the atmospheric filter.	\end{itemize}
+	 \item \textbf{SRV-RISK-LS-4} Fuel cells failure, results in no more water produced.
+	\begin{itemize}
+		 \item Probability mitigation (-1): duplicate the fuel cells.		 \item Impact mitigation (-2): already take 20\% of the required water in the capsule.	\end{itemize}
+	 \item \textbf{SRV-RISK-LS-5} Capsule radiator failure, results in crew overheating.
+	\begin{itemize}
+		 \item Probability mitigation (-1): duplicate the number of radiators.		 \item Impact mitigation (-2): isolate the fuel cells separatly as the crew.	\end{itemize}
+	 \item \textbf{SRV-RISK-LS-6} Waste management failure, results in toxic vapours (ammonia, methane).
+	\begin{itemize}
+		 \item Impact mitigation (-1): provide hermetic bags in addition to the toilet.	\end{itemize}
+\end{itemize}
+
+\noindent From this list, a mitigated risk map has been created, and can be seen in \autoref{tab:risk-map-ls-mitig}.
+
+\definecolor{rm-3}{HTML}{FE0000}\definecolor{rm-2}{HTML}{FF9900}\definecolor{rm-1}{HTML}{FCFF2F}\definecolor{rm-0}{HTML}{00FF00}
+\begin{table}[H]
+\centering
+\caption{Risk map of the Life Support subsystem, after mitigation}
+\label{tab:risk-map-ls-mitig}\begin{tabular}{l|c|c|c|c|c|}
+\cline{2-6}
+& \multicolumn{1}{l|}{Very unlikely (1)} & \multicolumn{1}{l|}{Unlikely (2)} & \multicolumn{1}{l|}{Possible (3)} & \multicolumn{1}{l|}{Likely (4)} & \multicolumn{1}{l|}{Very likely (5)} \\ \hline
+\multicolumn{1}{|l|}{Very high impact (5)} & \cellcolor{rm-3} & \cellcolor{rm-3} & \cellcolor{rm-3} & \cellcolor{rm-3} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{High impact (4)} & \cellcolor{rm-2} & \cellcolor{rm-2} & \cellcolor{rm-2} & \cellcolor{rm-3} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Medium impact (3)} & \cellcolor{rm-0}1, 4, 5 & \cellcolor{rm-1} & \cellcolor{rm-1} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Low impact (2)} & \cellcolor{rm-0}3, 6 & \cellcolor{rm-0} & \cellcolor{rm-1} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Very Low impact (1)} & \cellcolor{rm-0}2 & \cellcolor{rm-0} & \cellcolor{rm-0} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\end{tabular} 
+\end{table}
+
+ \todo[inline]{Discuss the mitigated map, and alter the text if needed.}

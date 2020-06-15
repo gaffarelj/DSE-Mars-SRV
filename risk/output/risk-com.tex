@@ -1,0 +1,38 @@
+\noindent The following events have been assessed and mitigated as part of the Communication subsystem:
+
+\begin{itemize}
+	 \item \textbf{SRV-RISK-COM-1} Poor or no line of sight, results in reduced or total loss of communication.
+	\begin{itemize}
+		 \item Probability mitigation (-3):  combination of 4 antennas and relay satellites ensure some line of sight is always possible.		 \item Impact mitigation (-1):  only transmit critical mission information .	\end{itemize}
+	 \item \textbf{SRV-RISK-COM-2} Antenna failure, results in loss of communication.
+	\begin{itemize}
+		 \item Probability mitigation (-1):  redundant antennas.		 \item Impact mitigation (-1):  only transmit critical mission information.	\end{itemize}
+	 \item \textbf{SRV-RISK-COM-3} Transmitter/receiver failure, results in loss of communication.
+	\begin{itemize}
+		 \item Probability mitigation (-1):  system redundancy.	\end{itemize}
+	 \item \textbf{SRV-RISK-COM-4} Extensive noise from cross-link, results in poor communication.
+	\begin{itemize}
+		 \item Probability mitigation (-1):  system designed for low ber.	\end{itemize}
+	 \item \textbf{SRV-RISK-COM-5} No line of sight post abort landing, results in extended search time for crew.
+	\begin{itemize}
+		 \item Probability mitigation (-1):  4 antenna configuration gives more oppurtinites for signal transmission.		 \item Impact mitigation (-4):  beacon on the vehicle and personal locators for each crew member.	\end{itemize}
+\end{itemize}
+
+\noindent From this list, a mitigated risk map has been created, and can be seen in \autoref{tab:risk-map-com-mitig}.
+
+\definecolor{rm-3}{HTML}{FE0000}\definecolor{rm-2}{HTML}{FF9900}\definecolor{rm-1}{HTML}{FCFF2F}\definecolor{rm-0}{HTML}{00FF00}
+\begin{table}[H]
+\centering
+\caption{Risk map of the Communication subsystem, after mitigation}
+\label{tab:risk-map-com-mitig}\begin{tabular}{l|c|c|c|c|c|}
+\cline{2-6}
+& \multicolumn{1}{l|}{Very unlikely (1)} & \multicolumn{1}{l|}{Unlikely (2)} & \multicolumn{1}{l|}{Possible (3)} & \multicolumn{1}{l|}{Likely (4)} & \multicolumn{1}{l|}{Very likely (5)} \\ \hline
+\multicolumn{1}{|l|}{Very high impact (5)} & \cellcolor{rm-3} & \cellcolor{rm-3} & \cellcolor{rm-3} & \cellcolor{rm-3} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{High impact (4)} & \cellcolor{rm-2} & \cellcolor{rm-2} & \cellcolor{rm-2} & \cellcolor{rm-3} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Medium impact (3)} & \cellcolor{rm-0}3 & \cellcolor{rm-1} & \cellcolor{rm-1} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Low impact (2)} & \cellcolor{rm-0}2 & \cellcolor{rm-0}1, 4 & \cellcolor{rm-1} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Very Low impact (1)} & \cellcolor{rm-0} & \cellcolor{rm-0}5 & \cellcolor{rm-0} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\end{tabular} 
+\end{table}
+
+ \todo[inline]{Discuss the mitigated map, and alter the text if needed.}
