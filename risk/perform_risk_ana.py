@@ -7,5 +7,13 @@ How to use:
 	3: Run this file, import your output "tex" file on Overleaf, and \include{Chapters/risk/your-risk.tex}
 	4: Adapt the Overleaf "tex" file to match the maps, and discuss the results
 """
-risks = ql.risks_list(ss_codename="safe", ss_name="Life Support")		# Input subsystem codename
-risks.get_risks(fname="Example-COPY-ONLY")	# Change input file (copy example and change the values)
+
+files = {
+	"prop": ["Propulsion", "propulsion-risk"],
+	"thermal": ["Thermal", "thermal_risk"],
+	"gnc": ["GNC", "GNC_risks"]
+	}
+
+for key, value in files.items():
+	risks = ql.risks_list(ss_codename=key, ss_name=value[0], risk_list=[])	# Input subsystem codename
+	risks.get_risks(fname=value[1])	# Change input file (copy example and change the values)
