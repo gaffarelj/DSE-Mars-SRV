@@ -1,5 +1,5 @@
 ﻿Event (name),Consequence (text),Probability (1-5),Impact (1-5),Prob. mitigation (text),Impact mitig. (text),New prob.,New impact
-Catastrophic engine failure,"explosion, loss of all engines and vehicle",1,5,rigorous inspections and lower complexity,"Fast acting abort system, engine mounting allows for explosive separation",1,4
-Control failure,loss of thrust vectoring or throttleability,2,3,inspection,multiple engines,1,2
-Ignition failure,"Engine does not start, or takes too long to start",2,4,"robust igniter design, inspection + maintenance",multiple engines,1,4
-fluid leak,localized engine failure,3,3,"sensors, inspections, maintenance",multiple engines,1,2
+Catastrophic engine failure,"explosion, loss of all engines and vehicle",1,5,,"Fast acting abort system, engine mounting allows for explosive separation",1,4
+Control failure,loss of thrust vectoring or throttleability,2,3,rigorous inspections and lower complexity,multiple engines,1,2
+Ignition failure,"Engine does not start, or takes too long to start",2,4,"robust igniter design, inspection + maintenance",multiple engines,1,3
+fluid leak,localized engine failure,2,3,"sensors, inspections, maintenance",multiple engines,1,2
