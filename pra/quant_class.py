@@ -47,7 +47,7 @@ class comp:
         self.name = "("
         for key in self.event_list:
             if key in pra.e_dict:
-                self.name += "$"+ key.replace("_", "_{") + "}$"
+                self.name += key.replace("_", "$_{\\text{") + "}}$"
             elif key in pra.c_dict:
                 self.name += pra.c_dict[key].name_func(pra)
             elif key[:4] == "all_":
@@ -101,14 +101,18 @@ class PRA:
         for i in range(len(self.con_list)):
             con = self.con_list[i]
             print("\\multicolumn{4}{|c|}{\\textbf{" + con + "}}\\\\\\hline")
-            print("\\textbf{Code} & \\textbf{Source} & \\textbf{Description} &  \\textbf{probability [-]} \\\\\\hline")
+            print("\\textbf{ID} & \\textbf{Source} & \\textbf{Description} &  \\textbf{Probability [-]} \\\\\\hline")
             for key in self.e_dict:
                 event = self.e_dict[key]
                 if event.con == con:
-                    if event.prob == 1:
-                        print("$" + key.replace("_", "_{") + "}$ & " + event.source + " & " + event.desc + " & " + "0E0" + "\\\\\\hline")
+                    if event.source != "":
+                        src = "\\cite{"+ event.source +"}"
                     else:
-                        print("$" + key.replace("_", "_{") + "}$ & " + event.source + " & " + event.desc + " & " + "{:.2E}".format(Decimal((1-event.prob))) + "\\\\\\hline")
+                        src = ""
+                    if event.prob == 1:
+                        print(key.replace("_", "$_{\\text{") + "}}$ & " + src + " & " + event.desc + " & " + "0E0" + "\\\\\\hline")
+                    else:
+                        print(key.replace("_", "$_{\\text{") + "}}$ & " + src + " & " + event.desc + " & " + "{:.2E}".format(Decimal((1-event.prob))) + "\\\\\\hline")
             
             for key in self.c_dict:
                 comp = self.c_dict[key]
@@ -117,7 +121,7 @@ class PRA:
                         print("\\multicolumn{2}{|l|}{" + comp.name_func(self) + "} & " + comp.desc + " & " + "0E0" + "\\\\\\hline")
                     else:
                         print("\\multicolumn{2}{|l|}{" + comp.name_func(self) + "} & " + comp.desc + " & " + "{:.2E}".format(Decimal((1-comp.prob_val))) + "\\\\\\hline")
-            print("\\multicolumn{3}{|l|}{\\textbf{Total " + con + " }} & " + "{:.2E}".format(Decimal(self.proability[i])) + "\\\\\\hline")
+            print("\\multicolumn{3}{|l|}{\\textbf{Total " + con + " }} & \\textbf{" + "{:.2E}".format(Decimal((1-self.proability[i]))) + "} \\\\\\hline")
         print("\end{longtable}")
 
 
