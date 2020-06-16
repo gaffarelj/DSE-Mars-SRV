@@ -60,7 +60,7 @@ event_dict ={
     "e4_pow" : qc.event("ICE failure",1.50e-3,"LOM",count = 2, redundancy=1),
     "e5_pow" : qc.event("Short circuit",3.33e-4,"LOM",count = 1),
 
-	"e1_ls" : qc.event("Oxygen supply failure",2.48e-5,"LOV",count = 3,redundancy = 2),
+	"e1_ls" : qc.event("Oxygen supply failure",2.48e-5,"LOC",count = 3,redundancy = 2),
     "e2_ls" : qc.event("Capsule fire",6.19e-6,"LOM",count = 1),
     "e3_ls" : qc.event("Atmospheric control failure",2.48e-5,"LOM",count = 2,redundancy = 1),
     "e4_ls" : qc.event("Capsule radiator failure",1.86e-5,"LOC",count = 2,redundancy = 1),
