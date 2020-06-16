@@ -106,7 +106,10 @@ class PRA:
                 event = self.e_dict[key]
                 if event.con == con:
                     if event.source != "":
-                        src = "\\cite{"+ event.source +"}"
+                        if event.source[0] == "~":
+                            src = event.source[1:]
+                        else:
+                            src = "\\cite{"+ event.source +"}"
                     else:
                         src = ""
                     if event.prob == 1:
