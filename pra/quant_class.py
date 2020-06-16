@@ -10,7 +10,7 @@ class event:
         self.con = consqequence
         self.con_n = 0
         self.red = redundancy
-        self.sou = source
+        self.source = source
 
 class comp:
     def __init__(self,description,consqequence,event_list):
@@ -103,12 +103,18 @@ class PRA:
             for key in self.e_dict:
                 event = self.e_dict[key]
                 if event.con == con:
-                    print(key + " & " + event.source + " & " + event.desc + " & " + str(round(1/(1-event.prob))) + "\\\\\\hline")
+                    if event.prob == 1:
+                        print(key + " & " + event.source + " & " + event.desc + " & " + "X" + "\\\\\\hline")
+                    else:
+                        print(key + " & " + event.source + " & " + event.desc + " & " + str(round(1/(1-event.prob))) + "\\\\\\hline")
             
             for key in self.c_dict:
                 comp = self.c_dict[key]
                 if comp.con == con:
-                    print("\\multicolumn{2}{|l|}{" + comp.name_func(self) + "} & " + comp.desc + " & " + str(round(1/(1-comp.prob_val))) + "\\\\\\hline")
+                    if comp.prob_val == 1:
+                        print("\\multicolumn{2}{|l|}{" + comp.name_func(self) + "} & " + comp.desc + " & " + "X" + "\\\\\\hline")
+                    else:
+                        print("\\multicolumn{2}{|l|}{" + comp.name_func(self) + "} & " + comp.desc + " & " + str(round(1/(1-comp.prob_val))) + "\\\\\\hline")
         print("\\label{tab:"+label+"}")
         print("\end{tabular}")
         print("\end{longtable}")
