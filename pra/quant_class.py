@@ -85,12 +85,12 @@ class PRA:
             for key in self.e_dict:
                 event = self.e_dict[key]
                 if event.con_n == i:
+                    print(str(pr) + " , " + str(event.prob) )
                     pr *= event.prob
             for key in self.c_dict:
                 comp = self.c_dict[key]
                 
                 if comp.con_n == i:
-                    print(key)
                     pr *= comp.prob(self)
             self.proability[i] = pr
     def gen_table(self,caption, label):
