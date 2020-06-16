@@ -1,6 +1,6 @@
 
 class event:
-    def __init__(self,description,proability,consqequence,count,redundancy = 0):
+    def __init__(self,description,proability,consqequence,count=1,redundancy = 0,source=""):
         self.desc = description
         self.count = count
         pr = 1
@@ -8,9 +8,9 @@ class event:
             pr *= (1-(1-proability)**(self.count-i))
         self.prob = 1 - pr
         self.con = consqequence
-        
         self.con_n = 0
         self.red = redundancy
+        self.sou = source
 
 class comp:
     def __init__(self,description,consqequence,event_list):
@@ -92,25 +92,26 @@ class PRA:
                     pr *= comp.prob(self)
             self.proability[i] = pr
     def gen_table(self,caption, label):
-        print("\\begin{table}[H]")
+        print("\\begin{longtable}[H]")
         print("\\centering")
         print("\\caption{" + caption + "}")
-        print("\\begin{tabular}{|l|c|c|} \\hline")
+        print("\\begin{tabular}{|l|c|c|c|} \\hline")
         for i in range(len(self.con_list)):
             con = self.con_list[i]
-            print("\\multicolumn{2}{|c|}{\\textbf{" + con + "}} & " + str(round(1/(1-self.proability[i]))) + "\\\\\\hline")
+            print("\\multicolumn{4}{|c|}{\\textbf{" + con + "}}\\\\\\hline")
+            print("\\textbf{Code} & \\textbf{Source} & \\textbf{Description} &  \\textbf{probability [1/]} \\\\\\hline")
             for key in self.e_dict:
                 event = self.e_dict[key]
                 if event.con == con:
-                    print(key + " & " + event.desc + " & " + str(round(1/(1-event.prob))) + "\\\\\\hline")
+                    print(key + " & " + event.source + " & " + event.desc + " & " + str(round(1/(1-event.prob))) + "\\\\\\hline")
             
             for key in self.c_dict:
                 comp = self.c_dict[key]
                 if comp.con == con:
-                    print(comp.name_func(self) + " & " + comp.desc + " & " + str(round(1/(1-comp.prob_val))) + "\\\\\\hline")
+                    print("\\multicolumn{2}{|l|}{" + comp.name_func(self) + "} & " + comp.desc + " & " + str(round(1/(1-comp.prob_val))) + "\\\\\\hline")
         print("\\label{tab:"+label+"}")
         print("\end{tabular}")
-        print("\end{table}")
+        print("\end{longtable}")
 
 
 
