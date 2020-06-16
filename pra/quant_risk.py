@@ -1,4 +1,5 @@
 import quant_class as qc
+import numpy as np
 # Enter your events here as follows
 # Basic failure events of a component as such
 # "<id>" : qc.event("<description>",<failure probability for on component>,"<consequence from list>",count=<number of components>,redundancy=<number of redudant components>)
@@ -105,5 +106,5 @@ compined_dict = {
 
 }
 test = qc.PRA(event_dict,compined_dict,["LOM","LOV","LOC"])
-test.gen_table("1", "1")
-print([round((1-p)*100, 3) for p in test.proability])
+#test.gen_table("1", "1")
+print((1-np.array(test.proability))*100)
