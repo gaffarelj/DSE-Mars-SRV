@@ -1,3 +1,5 @@
+from decimal import *
+
 
 class event:
     def __init__(self,description,proability,consqequence,count=1,redundancy = 0,source=""):
@@ -45,10 +47,10 @@ class comp:
         self.name = "("
         for key in self.event_list:
             if key in pra.e_dict:
-                self.name += key
+                self.name += "$"+ key.replace("_", "_{") + "}$"
             elif key in pra.c_dict:
                 self.name += pra.c_dict[key].name_func(pra)
-            elif key[:4] == "all_":
+            elif key[:4] == "all ":
                 self.name += key
             if key != self.event_list[-1]:
                 self.name += " AND "
@@ -93,20 +95,20 @@ class PRA:
             self.proability[i] = pr
     def gen_table(self,caption, label):
         print("\\begin{longtable}[H]")
-        print("\\centering")
         print("\\caption{" + caption + "}")
+        print("\\label{tab:fta} \\\\")
         print("\\begin{tabular}{|l|c|c|c|} \\hline")
         for i in range(len(self.con_list)):
             con = self.con_list[i]
             print("\\multicolumn{4}{|c|}{\\textbf{" + con + "}}\\\\\\hline")
-            print("\\textbf{Code} & \\textbf{Source} & \\textbf{Description} &  \\textbf{probability [1/]} \\\\\\hline")
+            print("\\textbf{Code} & \\textbf{Source} & \\textbf{Description} &  \\textbf{probability [-]} \\\\\\hline")
             for key in self.e_dict:
                 event = self.e_dict[key]
                 if event.con == con:
                     if event.prob == 1:
-                        print(key + " & " + event.source + " & " + event.desc + " & " + "X" + "\\\\\\hline")
+                        print("$" + key.replace("_", "_{") + "}$ & " + event.source + " & " + event.desc + " & " + "X" + "\\\\\\hline")
                     else:
-                        print(key + " & " + event.source + " & " + event.desc + " & " + str(round(1/(1-event.prob))) + "\\\\\\hline")
+                        print("$" + key.replace("_", "_{") + "}$ & " + event.source + " & " + event.desc + " & " + "{:.2E}".format(Decimal((1-event.prob))) + "\\\\\\hline")
             
             for key in self.c_dict:
                 comp = self.c_dict[key]
@@ -114,7 +116,7 @@ class PRA:
                     if comp.prob_val == 1:
                         print("\\multicolumn{2}{|l|}{" + comp.name_func(self) + "} & " + comp.desc + " & " + "X" + "\\\\\\hline")
                     else:
-                        print("\\multicolumn{2}{|l|}{" + comp.name_func(self) + "} & " + comp.desc + " & " + str(round(1/(1-comp.prob_val))) + "\\\\\\hline")
+                        print("\\multicolumn{2}{|l|}{" + comp.name_func(self) + "} & " + comp.desc + " & " + "{:.2E}".format(Decimal((1-comp.prob_val))) + "\\\\\\hline")
         print("\\label{tab:"+label+"}")
         print("\end{tabular}")
         print("\end{longtable}")
