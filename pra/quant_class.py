@@ -94,10 +94,10 @@ class PRA:
                     pr *= comp.prob(self)
             self.proability[i] = pr
     def gen_table(self,caption, label):
-        print("\\begin{longtable}[H]")
+        print("\\begin{longtable}[H]{|l|l|l|l|}")
         print("\\caption{" + caption + "}")
-        print("\\label{tab:fta} \\\\")
-        print("\\begin{tabular}{|l|c|c|c|} \\hline")
+        print("\\label{tab:"+label+"} \\\\")
+        print("\\hline")
         for i in range(len(self.con_list)):
             con = self.con_list[i]
             print("\\multicolumn{4}{|c|}{\\textbf{" + con + "}}\\\\\\hline")
@@ -117,8 +117,6 @@ class PRA:
                         print("\\multicolumn{2}{|l|}{" + comp.name_func(self) + "} & " + comp.desc + " & " + "X" + "\\\\\\hline")
                     else:
                         print("\\multicolumn{2}{|l|}{" + comp.name_func(self) + "} & " + comp.desc + " & " + "{:.2E}".format(Decimal((1-comp.prob_val))) + "\\\\\\hline")
-        print("\\label{tab:"+label+"}")
-        print("\end{tabular}")
         print("\end{longtable}")
 
 
