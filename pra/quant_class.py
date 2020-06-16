@@ -40,7 +40,7 @@ class comp:
                         pr *= 1-pra.proability[pra.con_list.index(key[4:])]
             self.prob_val = 1- pr
             self.val_comp = True
-            print(self.prob_val)
+            #print(self.prob_val)
         return self.prob_val
     
     def name_func(self, pra):
@@ -85,13 +85,14 @@ class PRA:
             for key in self.e_dict:
                 event = self.e_dict[key]
                 if event.con_n == i:
-                    print(str(pr) + " , " + str(event.prob) )
+                    #print(str(pr) + " , " + str(event.prob) )
                     pr *= event.prob
             for key in self.c_dict:
                 comp = self.c_dict[key]
                 
                 if comp.con_n == i:
                     pr *= comp.prob(self)
+            print(pr)
             self.proability[i] = pr
     def gen_table(self,caption, label):
         print("\\begin{longtable}[H]{|l|l|l|l|}")
