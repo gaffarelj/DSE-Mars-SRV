@@ -141,7 +141,7 @@ class risks_list():
 		#out += self.latex[1]
 		#out += f"\n\n\\noindent As seen in the risk map of \\autoref{{tab:risk-map-{self.ss_codename.lower()}}}, some risks have to be mitigated. \
 		#An updated risk map, following mitigation, can be seen in \\autoref{{tab:risk-map-{self.ss_codename.lower()}-mitig}}.\n\n"
-		out += f"\n\n\\noindent From this list, a mitigated risk map has been created, and can be seen in \\autoref{{tab:risk-map-{self.ss_codename.lower()}-mitig}}.\n\n"
+		out += f"\n\n\\noindent From this list, a mitigated risk map has been created. It can be seen in \\autoref{{tab:risk-map-{self.ss_codename.lower()}-mitig}}.\n\n"
 		out += self.latex[2]
 		out += "\n\n \\todo[inline]{Discuss the mitigated map, and alter the text if needed.}"
 		self.save_res(out, f"risk-{self.ss_codename.lower()}", "tex")
