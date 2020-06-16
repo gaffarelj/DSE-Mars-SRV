@@ -12,21 +12,6 @@ event_dict ={
     "e5_s" : qc.event("Skirt buckling",3.4e-6,"LOM",count= 1),
     "e6_s" : qc.event("Separation mechanism failure",5e-4,"LOM",count= 1),
     "e8_s" : qc.event("Hydraulics system failure",0.02,"LOV",count= 9, redundancy=2),
-<<<<<<< HEAD
-    "e9_s" : qc.event("Legs not deploying",0.02,"LOV",count= 4),
-	"e10_s" : qc.event("Decompression of the capsule",7.23e-5,"LOC",count= 1),
-    "e11_s" : qc.event("Buckling of the capsule",3.4e-6,"LOM",count= 1),
-    "e12_s" : qc.event("Attenuation system failure",4.35e-3,"LOV",count= 1),
-	"e13_s" : qc.event("Side Hatch not opening",0,"LOM",count= 1),
-    "e14_s" : qc.event("Docking hatch not opening",0,"LOM",count= 1),
-	"e15_s" : qc.event("Capsule ring not deploying",0.02,"LOM",count= 1),
-    "e16_s" : qc.event("Not seal connection",0.02,"LOM",count= 1),
-    "e1_th" : qc.event("TPS damaged due to surface debris",3e-6,"LOM",count= 1),
-    "e2_th" : qc.event("TPS damaged due to space debris",7.23e-4,"LOC",count= 1),
-    "e3_th" : qc.event("TPS breaks due to fatigue",12e-8,"LOC",count= 1),
-	"e4_th" : qc.event("TPS breaks due to high stress",1.44e-8,"LOC",count= 1),
-	"e1_en" : qc.event("Catastrophic engine failure",0.02,"LOV",count= 9, redundancy=2),
-=======
     "e9_s" : qc.event("Legs not deploying",0.02,"LOV",count=8, redundancy=4),
 	"e10_s" : qc.event("Decompression of the capsule",0.02,"LOC",count= 1),
     "e11_s" : qc.event("Buckling of the capsule",0.02,"LOM",count= 1),
@@ -42,7 +27,6 @@ event_dict ={
 	"e4_th" : qc.event("TPS breaks due to high stress",0.02,"LOC",count= 1),
 
 	"e1_en" : qc.event("Catastrophic engine failure",1.09e-3,"LOV",count= 9, redundancy=2),
->>>>>>> 1d15d6330e78f1b4f5035422fe5dd197b63393b8
     "e2_en" : qc.event("Control system failure",0.02,"LOV",count= 9, redundancy=2),
     "e3_en" : qc.event("Ignition failure",0.02,"LOV",count= 9, redundancy=2),
 	"e4_en" : qc.event("Fluid leak",0.02,"LOM",count= 9, redundancy=2),
