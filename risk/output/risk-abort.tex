@@ -1,0 +1,38 @@
+\noindent The following risks have been analysed and mitigated as part of the Abort subsystem:
+
+\begin{itemize}
+	 \item \textbf{SRV-RISK-ABORT-1} Failure to detect need to abort (P=2), results in capsule attached to hazardeous vehicle (I=5).
+	\begin{itemize}
+		 \item Probability mitigation (P-1): multiple redondants sensors at all possible failure points, crew override.	\end{itemize}
+	 \item \textbf{SRV-RISK-ABORT-2} Abort engine failure (P=2), results in not enough thurst to detach from the vehicle or to land (I=5).
+	\begin{itemize}
+		 \item Probability mitigation (P-1): have an engine layout of 3x2 instead of 3x1.	\end{itemize}
+	 \item \textbf{SRV-RISK-ABORT-3} Suicide burn starting too early or late (P=3), results in capsule impact on the ground (I=5).
+	\begin{itemize}
+		 \item Probability mitigation (P-2): continuously compute the best burn time.		 \item Impact mitigation (I-1): equip the capsule with additional airbags.	\end{itemize}
+	 \item \textbf{SRV-RISK-ABORT-4} Too high load (P=2), results in capsule structural failure, potential crew internal damade (I=5).
+	\begin{itemize}
+		 \item Probability mitigation (P-1): limit the engine thrust to 8 $g_\textrm{{earth}}$, and the parachute deployment to 1 [kpa].		 \item Impact mitigation (I-2): equip the crew seats with shock absorbers.	\end{itemize}
+	 \item \textbf{SRV-RISK-ABORT-5} Parachute deployment failure (P=2), results in high energy impact of the capsule (I=5).
+	\begin{itemize}
+		 \item Probability mitigation (P-1): add an extra parachute of each type.	\end{itemize}
+\end{itemize}
+
+\noindent From this list, a mitigated risk map has been created, and can be seen in \autoref{tab:risk-map-abort-mitig}.
+
+\definecolor{rm-3}{HTML}{FE0000}\definecolor{rm-2}{HTML}{FF9900}\definecolor{rm-1}{HTML}{FCFF2F}\definecolor{rm-0}{HTML}{00FF00}
+\begin{table}[H]
+\centering
+\caption{Risk map of the Abort subsystem, after mitigation}
+\label{tab:risk-map-abort-mitig}\begin{tabular}{l|c|c|c|c|c|}
+\cline{2-6}
+& \multicolumn{1}{l|}{Very unlikely (1)} & \multicolumn{1}{l|}{Unlikely (2)} & \multicolumn{1}{l|}{Possible (3)} & \multicolumn{1}{l|}{Likely (4)} & \multicolumn{1}{l|}{Very likely (5)} \\ \hline
+\multicolumn{1}{|l|}{Very high impact (5)} & \cellcolor{rm-3}1, 2, 5 & \cellcolor{rm-3} & \cellcolor{rm-3} & \cellcolor{rm-3} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{High impact (4)} & \cellcolor{rm-2}3 & \cellcolor{rm-2} & \cellcolor{rm-2} & \cellcolor{rm-3} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Medium impact (3)} & \cellcolor{rm-0}4 & \cellcolor{rm-1} & \cellcolor{rm-1} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Low impact (2)} & \cellcolor{rm-0} & \cellcolor{rm-0} & \cellcolor{rm-1} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Very Low impact (1)} & \cellcolor{rm-0} & \cellcolor{rm-0} & \cellcolor{rm-0} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\end{tabular} 
+\end{table}
+
+ \todo[inline]{Discuss the mitigated map, and alter the text if needed.}

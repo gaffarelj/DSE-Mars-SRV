@@ -2,6 +2,7 @@
 
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy import interpolate
 
 import matplotlib.pyplot as plt
 
@@ -39,68 +40,16 @@ SS_Cd_M_1000 = np.array([0.14,0.11,0.08,0.07,0.08,0.13,0.19,0.31])
 SS_Cd_M_1500 = np.array([0.14,0.11,0.08,0.07,0.08,0.13,0.19,0.31])
 SS_Cd_M_2000 = np.array([0.14,0.11,0.08,0.07,0.08,0.13,0.19,0.31])
 
-"""
-plt.plot(SS_alpha_spacing,SS_Cd_M_0500)
-plt.show()
-plt.plot(SS_alpha_spacing,SS_Cl_M_0500)
-plt.show()
-"""
-def SS_aerodynamics_coefficients(Mach,alpha):
-    ''''
-    The input Mach number is changed to the nearest Mach number for which aero data is available.
-    Alpha is linearly interpolated between the datapoints, and linearly extrapolated afterwards.
-    Function testing has been performed, for various Mach and alpha values.
-    '''
-    if Mach < 0.425:
-        clvals = SS_Cl_M_0025
-        cdvals = SS_Cd_M_0025
-    if 0.425 <= Mach < 0.7:
-        clvals = SS_Cl_M_0060
-        cdvals = SS_Cd_M_0060
-    if 0.7 <= Mach < 0.86:
-        clvals = SS_Cl_M_0080
-        cdvals = SS_Cd_M_0080
-    if 0.86 <= Mach < 0.95:
-        clvals = SS_Cl_M_0092
-        cdvals = SS_Cd_M_0092
-    if 0.95 <= Mach < 1.04:
-        clvals = SS_Cl_M_0098
-        cdvals = SS_Cd_M_0098
-    if 1.04 <= Mach < 1.3:
-        clvals = SS_Cl_M_0110
-        cdvals = SS_Cd_M_0110
-    if 1.3 <= Mach < 1.75:
-        clvals = SS_Cl_M_0150
-        cdvals = SS_Cd_M_0150
-    if 1.75 <= Mach < 2.5:
-        clvals = SS_Cl_M_0200
-        cdvals = SS_Cd_M_0200
-    if 2.5 <= Mach < 3.5:
-        clvals = SS_Cl_M_0300
-        cdvals = SS_Cd_M_0300
-    if 3.5 <= Mach < 4.5:
-        clvals = SS_Cl_M_0400
-        cdvals = SS_Cd_M_0400
-    if 4.5 <= Mach < 6.5:
-        clvals = SS_Cl_M_0500
-        cdvals = SS_Cd_M_0500
-    if 6.5 <= Mach < 9:
-        clvals = SS_Cl_M_0800
-        cdvals = SS_Cd_M_0800
-    if 9 <= Mach < 12.5:
-        clvals = SS_Cl_M_1000
-        cdvals = SS_Cd_M_1000
-    if 12.5 <= Mach < 17.5:
-        clvals = SS_Cl_M_1500
-        cdvals = SS_Cd_M_1500
-    if 17.5 <= Mach:
-        clvals = SS_Cl_M_2000
-        cdvals = SS_Cd_M_2000
+cd_data_SS = np.vstack([SS_Cd_M_0025,SS_Cd_M_0060,SS_Cd_M_0080,SS_Cd_M_0092,SS_Cd_M_0098,SS_Cd_M_0110,SS_Cd_M_0150,SS_Cd_M_0200,SS_Cd_M_0300,SS_Cd_M_0400,SS_Cd_M_0500,SS_Cd_M_0800,SS_Cd_M_1000,SS_Cd_M_1500,SS_Cd_M_2000])
+cl_data_SS = np.vstack([SS_Cl_M_0025,SS_Cl_M_0060,SS_Cl_M_0080,SS_Cl_M_0092,SS_Cl_M_0098,SS_Cl_M_0110,SS_Cl_M_0150,SS_Cl_M_0200,SS_Cl_M_0300,SS_Cl_M_0400,SS_Cl_M_0500,SS_Cl_M_0800,SS_Cl_M_1000,SS_Cl_M_1500,SS_Cl_M_2000])
+f_cl_SS = interpolate.interp2d(SS_alpha_spacing, [0.25, 0.6, 0.8, 0.92, 0.98, 1.1, 1.5, 2, 3, 4, 5, 8, 10, 15, 20], cl_data_SS, kind='cubic')
+f_cd_SS = interpolate.interp2d(SS_alpha_spacing, [0.25, 0.6, 0.8, 0.92, 0.98, 1.1, 1.5, 2, 3, 4, 5, 8, 10, 15, 20], cd_data_SS, kind='cubic')
 
-    cd_function  = InterpolatedUnivariateSpline(SS_alpha_spacing,cdvals,k=1)
-    cl_function = InterpolatedUnivariateSpline(SS_alpha_spacing,clvals,k=1)
-    cl = cl_function(alpha)
-    cd = cd_function(alpha)
+
+def SS_aerodynamics_coefficients(mach,alpha):
+    cl = f_cl_SS(alpha, mach)
+    cd = f_cd_SS(alpha, mach)
+
     return cl,cd
 
 
@@ -122,36 +71,26 @@ H_Cd_M_0500 = np.array([0.07,0.07,0.09,0.14,0.20,0.31,0.45,0.63,0.82,1.05])
 H_Cd_M_1000 = np.array([0.07,0.07,0.08,0.12,0.18,0.29,0.42,0.60,0.79,1.02])
 H_Cd_M_2000 = np.array([0.05,0.05,0.06,0.09,0.14,0.24,0.36,0.52,0.70,0.92])
 
-def H_aerodynamics_coefficients(Mach,alpha):
-    ''''
-    The input Mach number is changed to the nearest Mach number for which aero data is available.
-    Alpha is linearly interpolated between the datapoints, and linearly extrapolated afterwards.
-    Function testing has been performed, for various Mach and alpha values.
-    '''
-    if Mach < 1.25:
-        clvals = H_Cl_M_0120
-        cdvals = H_Cd_M_0120
-    if 1.25 <= Mach < 1.75:
-        clvals = H_Cl_M_0150
-        cdvals = H_Cd_M_0150
-    if 1.75 <= Mach < 2.5:
-        clvals = H_Cl_M_0200
-        cdvals = H_Cd_M_0200
-    if 2.5 <= Mach < 4:
-        clvals = H_Cl_M_0300
-        cdvals = H_Cd_M_0300
-    if 4 <= Mach < 7.5:
-        clvals = H_Cl_M_0500
-        cdvals = H_Cd_M_0500
-    if 7.5 <= Mach < 15:
-        clvals = H_Cl_M_1000
-        cdvals = H_Cd_M_1000
-    if 15 <= Mach:
-        clvals = H_Cl_M_2000
-        cdvals = H_Cd_M_2000
+cd_data_H = np.vstack([H_Cd_M_0120,H_Cd_M_0150,H_Cd_M_0200,H_Cd_M_0300,H_Cd_M_0500,H_Cd_M_1000,H_Cd_M_2000])
+cl_data_H = np.vstack([H_Cl_M_0120,H_Cl_M_0150,H_Cl_M_0200,H_Cl_M_0300,H_Cl_M_0500,H_Cl_M_1000,H_Cl_M_2000])
+f_cl_H = interpolate.interp2d(H_alpha_spacing, [1.2, 1.5, 2, 3, 5, 10, 20], cl_data_H, kind='cubic')
+f_cd_H = interpolate.interp2d(H_alpha_spacing, [1.2, 1.5, 2, 3, 5, 10, 20], cd_data_H, kind='cubic')
 
-    cd_function  = InterpolatedUnivariateSpline(H_alpha_spacing,cdvals,k=1)
-    cl_function = InterpolatedUnivariateSpline(H_alpha_spacing,clvals,k=1)
-    cl = cl_function(alpha)
-    cd = cd_function(alpha)
+def H_aerodynamics_coefficients(mach,alpha):
+    cl = f_cl_H(alpha, mach)/2
+    cd = f_cd_H(alpha, mach)
+
+    if alpha > 45:
+        cd = 1.22
+        cl = 0.2
+
     return cl,cd
+
+
+if __name__ == '__main__':
+    plt.plot(SS_alpha_spacing,SS_Cd_M_0025)
+    plt.plot(H_alpha_spacing,H_Cd_M_0500)
+    plt.show()
+    plt.plot(SS_alpha_spacing,SS_Cl_M_0025)
+    plt.plot(H_alpha_spacing,H_Cl_M_0500)
+    plt.show()

@@ -55,8 +55,9 @@ class risks_list():
 		for i, row in enumerate(read):
 			if i > 0:
 				prob_mitig, impact_mitig = clean_tuple(row[4], row[6]), clean_tuple(row[5], row[7])
-				r = risk(i, row[0], row[1], row[2], row[3], prob_mitig, impact_mitig)
-				self.risk_list.append(r)
+				if len(row[0]) > 0:
+					r = risk(i, row[0], row[1], row[2], row[3], prob_mitig, impact_mitig)
+					self.risk_list.append(r)
 		self.risks_def()
 		self.map()
 		self.mitig(True)
@@ -66,13 +67,13 @@ class risks_list():
 	def risks_def(self):
 		ret = "\\begin{itemize}\n"
 		for r in self.risk_list:
-			ret += f"\t \\item \\textbf{{SRV-RISK-{self.ss_codename}-{r.id}}} {r.event.capitalize()}, results in {r.conseq.lower()}.\n"
+			ret += f"\t \\item \\textbf{{SRV-RISK-{self.ss_codename}-{r.id}}} {r.event.capitalize()} (P={r.prob}), results in {r.conseq.lower()} (I={r.impact}).\n"
 			if r.impact_mit != r.impact or r.prob_mit != r.prob:
 				ret += "\t\\begin{itemize}\n"
 				if r.prob_mit != r.prob:
-					ret += f"\t\t \item Probability mitigation (-{r.prob-r.prob_mit}): {r.prob_mit_exp.lower()}."
+					ret += f"\t\t \item Probability mitigation (P-{r.prob-r.prob_mit}): {r.prob_mit_exp.lower()}."
 				if r.impact_mit != r.impact:
-					ret += f"\t\t \item Impact mitigation (-{r.impact-r.impact_mit}): {r.impact_mit_exp.lower()}."
+					ret += f"\t\t \item Impact mitigation (I-{r.impact-r.impact_mit}): {r.impact_mit_exp.lower()}."
 				ret += "\t\\end{itemize}\n"
 		ret += "\end{itemize}"
 		self.save_res(ret, "risk-def")
@@ -121,9 +122,10 @@ class risks_list():
 			print(f"/!\ {to_mitigate} risk{conjug[0]} still out of the green zone. Do your best to mitigate {conjug[1]} if possible /!\\")
 
 	def save_res(self, res, fname, extension="txt"):
-		f = open(self.path + f"\output\\{fname}.{extension}", "w")
-		f.writelines(res)
-		f.close()
+		if extension != "txt":	# Temporary: only save tex file
+			f = open(self.path + f"\output\\{fname}.{extension}", "w")
+			f.writelines(res)
+			f.close()
 		if not self.latex_file:
 			print(f"Please copy the Latex risk map from output\\{fname}.txt to Overleaf.")
 		else:
@@ -133,12 +135,13 @@ class risks_list():
 		self.use_mitig = status
 
 	def combine_latex(self):
-		out = f"\\noindent The following events have been assessed and mitigated as part of the {self.ss_name} subsystem:\n\n"
+		out = f"\\noindent The following risks have been analysed and mitigated as part of the {self.ss_name} subsystem:\n\n"
 		out += self.latex[0]
-		out += f"\n\n\\noindent From this list, the risk map of \\autoref{{tab:risk-map-{self.ss_codename.lower()}}} has been created.\n\n"
-		out += self.latex[1]
-		out += f"\n\n\\noindent As seen in the risk map of \\autoref{{tab:risk-map-{self.ss_codename.lower()}}}, some risks have to be mitigated. \
-		An updated risk map, following mitigation, can be seen in \\autoref{{tab:risk-map-{self.ss_codename.lower()}-mitig}}.\n\n"
+		#out += f"\n\n\\noindent From this list, the risk map of \\autoref{{tab:risk-map-{self.ss_codename.lower()}}} has been created.\n\n"
+		#out += self.latex[1]
+		#out += f"\n\n\\noindent As seen in the risk map of \\autoref{{tab:risk-map-{self.ss_codename.lower()}}}, some risks have to be mitigated. \
+		#An updated risk map, following mitigation, can be seen in \\autoref{{tab:risk-map-{self.ss_codename.lower()}-mitig}}.\n\n"
+		out += f"\n\n\\noindent From this list, a mitigated risk map has been created, and can be seen in \\autoref{{tab:risk-map-{self.ss_codename.lower()}-mitig}}.\n\n"
 		out += self.latex[2]
 		out += "\n\n \\todo[inline]{Discuss the mitigated map, and alter the text if needed.}"
 		self.save_res(out, f"risk-{self.ss_codename.lower()}", "tex")

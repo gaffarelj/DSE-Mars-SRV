@@ -1,0 +1,7 @@
+﻿Event (name),Consequence (text),Probability (1-5),Impact (1-5),Prob. mitigation (text),Impact mitig. (text),New prob.,New impact
+Oxygen supply failure,No more Oxygen supplied to the capsule,2,5,Have 3 separate overdesigned tanks for Oxygen,Have the combinations able to directly connect to the supply ,1,3
+Capsule fire,Capsule atmosphere filled with CO2,1,3,,Have a 100\% safety margin in Oxygen supply,,1
+Vent out valve stuck in open position,"Loss of atmospheric filtering, possible depressurisation",2,3,Add a second safety valve,Duplicate the atmospheric filter,1,2
+Fuel cells failure,No more water produced,2,5,Duplicate the fuel cells,Already take 20\% of the required water in the capsule,1,3
+Capsule radiator failure,Crew overheating,2,5,Duplicate the number of radiators,Isolate the fuel cells  from the crew volume,1,3
+Waste management failure,"Toxic vapours (ammonia, methane)",1,3,,Provide hermetic bags in addition to the toilet,,2

@@ -1,9 +1,0 @@
-\begin{itemize}
-	 \item \textbf{SRV-RISK-SAFE-1} Life support failure, results in crew fatality.
-	\begin{itemize}
-		 \item Probability mitigation (-1): redundant system.		 \item Impact mitigation (-2): equip crew with combinations.	\end{itemize}
-	 \item \textbf{SRV-RISK-SAFE-2} Abort system failure, results in crew stuck in hazardous vehicle.
-	 \item \textbf{SRV-RISK-SAFE-3} Unwanted abort initiation, results in crew separated from vehicle, vehicle destruction.
-	\begin{itemize}
-		 \item Impact mitigation (-2): test.	\end{itemize}
-\end{itemize}

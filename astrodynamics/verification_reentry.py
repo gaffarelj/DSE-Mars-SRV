@@ -1,133 +1,103 @@
 import numpy as np
 from matplotlib import pyplot as plt
-import isa
-
-# Constants  
-mean_radius = 6731e3                #[m]
-reentry_altitude = 405000*0.3048    #[m]
-v_reentry = 36309*0.3048            #[m/s]
-gamma = 1.4
-g0 = 9.81                           #[m/s^2]
-R = 287
-ct = 1.28                            # tangential force coefficient 
-cn = 0.22                           # normal force coefficicent 
-vehicle_mass = 13000*0.453592                 #[kg]
-S = 3.9**2*np.pi/4             #[m^2] 
-
-def cnct(mach):
-    cn,ct = 0.236, 1.2891
-    return cn, ct
+import astro_tools
+import csv
 
 
-def dynamic_pressure_earth(V, altitude, gamma=gamma, R=R):
-    temperature_1, pressure_1, density_1 = isa.ISA(altitude)
-    a_1 = np.sqrt(gamma*R*temperature_1)
-    mach_1 = V/a_1
+vehicle_mass = 836                            #[kg]
+S = 5.52                                         #[m^2]
+MOI = [1, 1, 1]   # Ixx, Iyy, Izz
+dt = 0.25 
 
-    q = mach_1**2 * 0.5*gamma*pressure_1
-
-    return q, mach_1
-
-# Ballistic equations
-def ballistic_coefficient(g, S=S, ct=ct, m=vehicle_mass):
-    return m*g/ct/S
-
-def gravitational_acceleration(h, mean_radius=mean_radius, g0=g0):
-    return g0*(mean_radius/(mean_radius + h))**2
-
-def dVdt(g, q, beta, flight_path_angle):
-    return g*(-q/beta + np.sin(flight_path_angle))
-
-def dalphadt(g, q, beta, flight_path_angle, V, h, cn=cn, ct=ct):
-    return (-q*g/beta * cn/ct + np.cos(flight_path_angle) * (g-V**2/(mean_radius+h)))/V
-
-def dhdt(V, flight_path_angle):
-    return -V*np.sin(flight_path_angle)
-
-def drdt(flight_path_angle, V, h):
-    return mean_radius*V*np.cos(flight_path_angle)/(mean_radius+h)
-
-# Integration scheme 
-def forward_euler(y_n, dy):
-    return y_n + dy
+data = np.genfromtxt('spirit_flightpath.csv', delimiter='', dtype=None)
+t = data[:,0]-data[0,0]
+alt = data[:,2]
+gamma = data[:,1]
+lat = data[:,4]
+long = data[:,6]
+ca = data[:,32]
+cn = data[:,34]
+vx = data[:,18]
+vy = data[:,20]
+vz = data[:,22]
+v = np.sqrt(vx**2+vy**2+vz**2)
+vrel = data[:,24]
+aaxial = data[:,8]
+aradial = data[:,10]
+mars = astro_tools.Planet(scale_height=11.1e3)
 
 
-# Reentry trajectory
-height = [reentry_altitude]
-velocity = [v_reentry]
-flight_path = [6.62*np.pi/180]
-time = [0]
-distance = [0]
-deceleration = [0]
-dyn_pressure = [0]
-dt = 0.01
 
-while height[-1] > 11000:
-    time.append(time[-1] + dt)
-    
-    g = gravitational_acceleration(height[-1])
-    beta = ballistic_coefficient(g)
-    q, mach = dynamic_pressure_earth(velocity[-1], height[-1])
-    dyn_pressure.append(q)
-    cn ,ct = cnct(mach)
+state = np.zeros(12)
+state[0] = v[0]						                                                     # velocity
+state[1] = np.radians(-12)                                                             # flight path angle 
+state[2] = np.radians(86.5)                                                              # heading angle 
+state[3] = 3522200                                                                       # radius end at 3400300 m
+state[4] = np.radians(340.9)                                                             # lognitude 
+state[5] = np.radians(-2.9)                                                              # latitude 
+state[6] = 0																			 # rollrate 
+state[7] = 0																			 # pitchrate
+state[8] = 0																			 # yawrate
+state[9] = np.radians(0) 																 # angle of attack defined positive downwards 
+state[10] = 0																			 # sideslip angle  
+state[11] = np.radians(0)																 # bank angle 	
 
-    dV = dVdt(g, q, beta, flight_path[-1]) * dt
-    deceleration.append(dV/dt)
-    V = forward_euler(velocity[-1], dV)
-    velocity.append(V)
 
-    dh = dhdt(velocity[-1], flight_path[-1]) * dt
-    h = forward_euler(height[-1], dh)
-    height.append(h)
-
-    dalpha = dalphadt(g, q, beta, flight_path[-1], velocity[-1], height[-1], cn, ct) * dt
-    alpha = forward_euler(flight_path[-1], dalpha)
-    flight_path.append(alpha)
-
-    dr = drdt(flight_path[-1], velocity[-1], height[-1]) * dt
-    r = forward_euler(distance[-1], dr)
-    distance.append(r) 
-    if round(time[-1],2) == 438.64:
-        print(h/0.3048)
-        print(V/0.3048)
-
-"""
-plt.rcParams.update({'font.size': 14})
-plt.plot(np.array(time), np.array(height)/1000/0.3048)
-plt.ylabel("Altitude [1000 ft]")
-plt.xlabel("Time [min]")
-plt.grid()
+motion = astro_tools.Motion(state, MOI, S, vehicle_mass, 0, mars)     
+flight, time = motion.forward_euler(dt)
+plt.rcParams.update({"font.size": 12})
+plt.plot(t, (alt - mars.r), label = 'flight data')
+plt.plot(time, (flight[:,3] - mars.r), label = 'simulation')
+plt.legend(loc = 'best')
+plt.xlabel('Time [s]')
+plt.ylabel('Altitude [m]')
+plt.tight_layout()
 plt.show()
 
-plt.plot(np.array(time), np.array(velocity)/1000/0.3048)
-plt.ylabel("Velocity [1000 ft/s]")
-plt.xlabel("Time [min]")
-plt.grid()
+plt.plot(t, v, label = 'flight data')
+plt.plot(time, flight[:,0], label = 'simulation')
+plt.legend(loc = 'best')
+plt.xlabel('Time [s]')
+plt.ylabel('Velocity [m/s]')
 plt.show()
 
-
-plt.plot(np.array(time), np.array(flight_path)/1000/0.3048)
-plt.ylabel("Velocity [1000 ft/s]")
-plt.xlabel("Time [min]")
-plt.grid()
+plt.plot(t, lat, label = 'flight data')
+plt.plot(time, np.degrees(flight[:,5]), label = 'simulation')
+plt.legend(loc = 'best')
+plt.xlabel('Time [s]')
+plt.ylabel('Latitude [deg]')
 plt.show()
-"""
-fig, ax1 = plt.subplots()
 
-color = 'tab:red'
-ax1.set_xlabel('Time [min]')
-ax1.set_ylabel('Altitude [1000 ft]', color=color)
-ax1.plot(np.array(time)/60, np.array(height)/1000/0.3048, color=color)
-ax1.set_xticks(np.arange(0, 9, 1))
-ax1.tick_params(axis='y', labelcolor=color)
-
-ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-
-color = 'tab:blue'
-ax2.set_ylabel('Velocity [1000 ft/s]', color=color)  # we already handled the x-label with ax1
-ax2.plot(np.array(time)/60, np.array(velocity)/1000/0.3048, color=color)
-ax2.tick_params(axis='y', labelcolor=color)
-
-fig.tight_layout()  # otherwise the right y-label is slightly clipped
-plt.grid()
+plt.plot(t, long, label = 'flight data')
+plt.plot(time, np.degrees(flight[:,4]), label = 'simulation')
+plt.legend(loc = 'best')
+plt.xlabel('Time [s]')
+plt.ylabel('Longitude [deg]')
 plt.show()
+
+height1 = alt - mars.r
+height2 = flight[:,3] - mars.r
+
+e1 = np.dot((height1 - height2),(height1 - height2))/np.dot(height1,height1)
+e2 = np.dot((v - flight[:,0]),(v - flight[:,0]))/np.dot(v,v)
+e3 = np.dot((lat - np.degrees(flight[:,5])),(lat - np.degrees(flight[:,5])))/np.dot(lat,lat)
+e4 = np.dot((long - np.degrees(flight[:,4])),(long - np.degrees(flight[:,4])))/np.dot(long,long)
+
+print(e1*100)
+print(e2*100)
+print(e3*100)
+print(e4*100)
+
+astro_tools.plot_single(time , motion.q_s, 'Time [s]', 'Stagnation heat flux [W/m^2]')
+
+'''
+
+astro_tools.plot_dual(time, (flight[:,3] - mars.r)/1000, flight[:,0], 'Time [s]', 'Altitude [km]', 'Velocity [m/s]')
+astro_tools.plot_single(time , np.degrees(flight[:,5]), 'Time [s]', 'latitude [deg]')
+astro_tools.plot_single(time , np.degrees(flight[:,4]), 'Time [s]', 'longitude [deg]')
+astro_tools.plot_single(time , np.degrees(flight[:,2]), 'Time [s]', 'heading angle [deg]')
+astro_tools.plot_single(time , np.degrees(flight[:,1]), 'Time [s]', 'flight path angle [deg]')
+astro_tools.surfaceplots( np.degrees(flight[:,4]),  np.degrees(flight[:,5]), (flight[:,3] - mars.r)/1000, 'longitude [deg]', 'latitude [deg]', 'Altitude [km]' )
+'''
+
+

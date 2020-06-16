@@ -1,0 +1,65 @@
+\noindent The following risks have been analysed and mitigated as part of the Gnc subsystem:
+
+\begin{itemize}
+	 \item \textbf{SRV-RISK-GNC-1} Docking camera failure (P=3), results in lom: not being able to dock (I=3).
+	\begin{itemize}
+		 \item Impact mitigation (I-2):  redundancy.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-2} Landing camera failure (P=3), results in possible vehicle damage (I=3).
+	\begin{itemize}
+		 \item Impact mitigation (I-2):  redundancy.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-3} Star tracker failure (P=2), results in loc: not being able to successfully reentry (I=5).
+	\begin{itemize}
+		 \item Impact mitigation (I-3):  redundancy.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-4} Gyroscope failure (P=4), results in lom: loss of attitude (I=4).
+	\begin{itemize}
+		 \item Impact mitigation (I-3):  redundancy.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-5} Accelerometer (P=4), results in lom: loss of position (I=4).
+	\begin{itemize}
+		 \item Impact mitigation (I-3):  redundancy.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-6} Flight computer failure (P=2), results in loc: loss of control of vehicle (I=5).
+	\begin{itemize}
+		 \item Probability mitigation (P-1):  extensive validation and testing.		 \item Impact mitigation (I-2):  redundancy.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-7} Thruster failure (P=4), results in lov: loss of manoeuvrability (I=4).
+	\begin{itemize}
+		 \item Impact mitigation (I-3):  redundancy.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-8} Ignition failure (P=4), results in lom: momentary loss of control (I=4).
+	\begin{itemize}
+		 \item Impact mitigation (I-3):  automatic monitoring system of the engines.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-9} Valve/feedsystem failure (P=4), results in lom: loss of single thruster (I=4).
+	\begin{itemize}
+		 \item Impact mitigation (I-3):  redundancy.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-10} Critical thruster failure (P=2), results in lov: : vehicle damage (I=5).
+	\begin{itemize}
+		 \item Impact mitigation (I-2):  adding shutoff valves in the feedsystem.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-11} Propellant leakage (P=1), results in loss of multiple thrusters (I=5).
+	\begin{itemize}
+		 \item Impact mitigation (I-2):  adding shutoff valves in the feedsystem.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-12} Control algorithm errors (P=2), results in lov: terminal loss of control and possible ill manoeuvring (I=5).
+	\begin{itemize}
+		 \item Probability mitigation (P-1):  extensive v\&v.		 \item Impact mitigation (I-2):  alternate emergency control software.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-13} Guidance algorithm errors (P=2), results in lom: terminal loss of guidance information (I=3).
+	\begin{itemize}
+		 \item Probability mitigation (P-1):  extensive v\&v.	\end{itemize}
+	 \item \textbf{SRV-RISK-GNC-14} Engine thruster misalignment (P=5), results in introduces an extra disturbance torque (I=2).
+	\begin{itemize}
+		 \item Probability mitigation (P-2):  installment checks.		 \item Impact mitigation (I-1):  compensation.	\end{itemize}
+\end{itemize}
+
+\noindent From this list, a mitigated risk map has been created, and can be seen in \autoref{tab:risk-map-gnc-mitig}.
+
+\definecolor{rm-3}{HTML}{FE0000}\definecolor{rm-2}{HTML}{FF9900}\definecolor{rm-1}{HTML}{FCFF2F}\definecolor{rm-0}{HTML}{00FF00}
+\begin{table}[H]
+\centering
+\caption{Risk map of the Gnc subsystem, after mitigation}
+\label{tab:risk-map-gnc-mitig}\begin{tabular}{l|c|c|c|c|c|}
+\cline{2-6}
+& \multicolumn{1}{l|}{Very unlikely (1)} & \multicolumn{1}{l|}{Unlikely (2)} & \multicolumn{1}{l|}{Possible (3)} & \multicolumn{1}{l|}{Likely (4)} & \multicolumn{1}{l|}{Very likely (5)} \\ \hline
+\multicolumn{1}{|l|}{Very high impact (5)} & \cellcolor{rm-3} & \cellcolor{rm-3} & \cellcolor{rm-3} & \cellcolor{rm-3} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{High impact (4)} & \cellcolor{rm-2} & \cellcolor{rm-2} & \cellcolor{rm-2} & \cellcolor{rm-3} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Medium impact (3)} & \cellcolor{rm-0}6, 11, 12, 13 & \cellcolor{rm-1}10 & \cellcolor{rm-1} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Low impact (2)} & \cellcolor{rm-0} & \cellcolor{rm-0}3 & \cellcolor{rm-1} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Very Low impact (1)} & \cellcolor{rm-0} & \cellcolor{rm-0} & \cellcolor{rm-0}1, 2, 14 & \cellcolor{rm-2}4, 5, 7, 8, 9 & \cellcolor{rm-3}\\ \hline 
+\end{tabular} 
+\end{table}
+
+ \todo[inline]{Discuss the mitigated map, and alter the text if needed.}
