@@ -66,7 +66,7 @@ event_dict ={
     "e4_ls" : qc.event("Capsule radiator failure",1.86e-5,"LOC",count = 2,redundancy = 1),
     "e5_ls" : qc.event("Waste management failure",4.95e-5,"LOM",count = 1),
 
-	"e1_ab" : qc.event("Abort detection need failure",5.00e-2,"LOC",count = 2, redundancy=1),
+	"e1_ab" : qc.event("Abort detection need failure",5.00e-3,"LOC",count = 2, redundancy=1),
     "e2_ab" : qc.event("Abort engine failure",1.09e-3,"LOM",count = 6, redundancy=1),
     "e3_ab" : qc.event("Suicide burn starting too early or late",1.10e-5,"LOM",count = 1),
     "e4_ab" : qc.event("Too high load",1.00e-4,"LOM",count = 1),
