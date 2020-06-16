@@ -4,8 +4,8 @@ import astro_tools
 import csv
 
 
-vehicle_mass = 836                            #[kg]
-S = 5.52                                         #[m^2]
+vehicle_mass = 3257                           #[kg]836
+S = np.pi*4.5**2/4                                         #[m^2]5.52 
 MOI = [1, 1, 1]   # Ixx, Iyy, Izz
 dt = 0.25 
 
@@ -30,9 +30,9 @@ mars = astro_tools.Planet(scale_height=11.1e3)
 
 state = np.zeros(12)
 state[0] = v[0]						                                                     # velocity
-state[1] = np.radians(-12)                                                             # flight path angle 
+state[1] = np.radians(-16)                                                             # flight path angle 
 state[2] = np.radians(86.5)                                                              # heading angle 
-state[3] = 3522200                                                                       # radius end at 3400300 m
+state[3] = mars.r + 125000                                                                       # radius end at 3400300 m 3522200 
 state[4] = np.radians(340.9)                                                             # lognitude 
 state[5] = np.radians(-2.9)                                                              # latitude 
 state[6] = 0																			 # rollrate 
@@ -45,6 +45,7 @@ state[11] = np.radians(0)																 # bank angle
 
 motion = astro_tools.Motion(state, MOI, S, vehicle_mass, 0, mars)     
 flight, time = motion.forward_euler(dt)
+'''
 plt.rcParams.update({"font.size": 12})
 plt.plot(t, (alt - mars.r), label = 'flight data')
 plt.plot(time, (flight[:,3] - mars.r), label = 'simulation')
@@ -75,6 +76,7 @@ plt.xlabel('Time [s]')
 plt.ylabel('Longitude [deg]')
 plt.show()
 
+
 height1 = alt - mars.r
 height2 = flight[:,3] - mars.r
 
@@ -87,8 +89,10 @@ print(e1*100)
 print(e2*100)
 print(e3*100)
 print(e4*100)
-
-astro_tools.plot_single(time , motion.q_s, 'Time [s]', 'Stagnation heat flux [W/m^2]')
+'''
+astro_tools.plot_single(time , np.array(motion.heatflux)/100/100, 'Time [s]', 'Stagnation heat flux [W/cm^2]')
+astro_tools.plot_single(time , np.array(motion.mach), 'Time [s]', 'Mach')
+astro_tools.plot_single(time , (flight[:,3] - mars.r)/1000, 'Time [s]', 'Altitude [km]')
 
 '''
 
