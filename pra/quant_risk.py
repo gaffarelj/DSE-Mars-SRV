@@ -107,5 +107,9 @@ compined_dict = {
 
 }
 test = qc.PRA(event_dict,compined_dict,["LOM","LOV","LOC"])
-test.gen_table("1", "1")
-print((1-np.array(test.proability))*100)
+test.sens(1000,0.1)
+print(test.std)
+print(1-test.mu+3*test.std)
+print(1-test.mu-3*test.std)
+#test.gen_table("1", "1")
+#print((1-np.array(test.proability))*100)
