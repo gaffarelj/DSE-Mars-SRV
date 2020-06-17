@@ -1,18 +1,25 @@
 from decimal import *
-
+import numpy as np
+import copy
 
 class event:
     def __init__(self,description,proability,consqequence,count=1,redundancy = 0,source=""):
         self.desc = description
         self.count = count
+        self.red = redundancy
+        self.prob_single = proability
         pr = 1
         for i in range(redundancy+1):
-            pr *= (1-(1-proability)**(self.count-i))
+            pr *= (1-(1-self.prob_single)**(self.count-i))
         self.prob = 1 - pr
         self.con = consqequence
         self.con_n = 0
-        self.red = redundancy
         self.source = source
+    def redo_prob(self):
+        pr = 1
+        for i in range(self.red+1):
+            pr *= (1-(1-self.prob_single)**(self.count-i))
+        self.prob = 1 - pr
 
 class comp:
     def __init__(self,description,consqequence,event_list):
@@ -93,6 +100,21 @@ class PRA:
                     #print(key)
                     pr *= comp.prob(self)
             self.proability[i] = pr
+
+    def sens(self,n, div):
+        temp_ref_list = []
+        for i in range(n):
+            temp_e_dict = copy.deepcopy(self.e_dict)
+            for key in temp_e_dict:
+                temp_e_dict[key].prob_single = self.e_dict[key].prob_single + np.random.normal(0,div*self.e_dict[key].prob_single)
+                temp_e_dict[key].redo_prob()
+            temp_pra = PRA(temp_e_dict,self.c_dict,self.con_list)
+            temp_ref_list.append(temp_pra.proability)
+        self.ref_list = np.array(temp_ref_list)
+        self.std = np.std(self.ref_list,axis = 0)
+        self.mu = np.average(self.ref_list,axis = 0)
+
+
     def gen_table(self,caption, label):
         print("\\begin{longtable}[H]{|l|l|l|l|}")
         print("\\caption{" + caption + "}")
