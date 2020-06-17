@@ -185,10 +185,10 @@ def dVzdt(T,D,L,M,Vz,Vx,g):
 def long_lat(long, lat, dt, V, r, gamma):
 	dlong_dt = V * np.cos(gamma) / (r * np.cos(lat))
 	dlat_dt = V / r * np.cos(gamma)
-	return long + dt*dlong_dt, lat + dt*dlat_dt
+	return long + dt*dlong_dt[0], lat + dt*dlat_dt[0]
 
 #point mass ascent simulation
-def ascent_sim(tb,initial_tilt,i_base,h0,d,M_initial,Mp_class2,Isp,n,De,pe,long=np.radians(-27.088),lat=np.radians(4.51)):
+def ascent_sim(tb,initial_tilt,i_base,h0,d,M_initial,Mp_class2,Isp,n,De,pe,long_t=[np.radians(-27.088)],lat_t=[np.radians(4.51)]):
 	"""
 	Function that simulates the gravity turn ascent profile constrained by a linear variation of the T/W_ratio (T/W_0=1.5, T/W_final=4).
 	It simulates it for a point mass in 2D accounting for aerodynamic forces. 
@@ -333,7 +333,9 @@ def ascent_sim(tb,initial_tilt,i_base,h0,d,M_initial,Mp_class2,Isp,n,De,pe,long=
 
 			Vnew = np.sqrt(Vxnew ** 2 + Vznew ** 2)[0]
 
-			long, lat = long_lat(long, lat, dt, Vnew, R, np.arctan(Vznew / Vxnew))
+			long, lat = long_lat(long_t[-1], lat_t[-1], dt, Vnew, R, np.arctan(Vznew / Vxnew))
+			long_t.append(long)
+			lat_t.append(lat)
 
 			# Progress indication
 			progress = round(Znew[0]/h_phasing*100)
@@ -408,8 +410,8 @@ def ascent_sim(tb,initial_tilt,i_base,h0,d,M_initial,Mp_class2,Isp,n,De,pe,long=
 		"density": rho,
 		"q": q,
 		"gamma": gamma,
-		"long": long,
-		"lat": lat
+		"long": np.array(long_t),
+		"lat": np.array(lat_t)
 		}
 	
 	return V, Vxfree, ascent_DeltaV, q, others
