@@ -93,7 +93,6 @@ def RV_Docking_control(I,cg,tburn_deltaV,tburn_rot,Isp,m0,error):
 
     deltaV_tot = deltaV_A_0 + deltaV_A_1 + deltaV_B_0 + deltaV_B_1 + deltaV_d_0 + deltaV_d_1
 
-    print(2*omega*Vx_A*m0,2*omega*Vx_B*m0,2*omega*Vx_d*m0)
     #=====================================================================================================================================================================================================================
     #Navigation measurement errors
     #=====================================================================================================================================================================================================================
@@ -460,14 +459,14 @@ def RV_Docking_control(I,cg,tburn_deltaV,tburn_rot,Isp,m0,error):
     T_error_y_tot = T_error_y + Tgy
     T_error_z_tot = T_error_z
 
-    RCS_thrust_error_x = margin * act.RCS_torque_to_thrust(T_error_y_tot,'y',cg_orbit,'error_bottom') * margin
-    RCS_thrust_error_y = margin * act.RCS_torque_to_thrust(T_error_x_tot,'x',cg_orbit,'error_bottom') * margin
-    RCS_thrust_error_z = margin * act.RCS_torque_to_thrust(T_error_z_tot,'z',cg_orbit,'error_bottom') * margin
+    RCS_thrust_error_x = margin * act.RCS_torque_to_thrust(T_error_y_tot,'y',cg_orbit,'error_bottom')
+    RCS_thrust_error_y = margin * act.RCS_torque_to_thrust(T_error_x_tot,'x',cg_orbit,'error_bottom')
+    RCS_thrust_error_z = margin * act.RCS_torque_to_thrust(T_error_z_tot,'z',cg_orbit,'error_bottom')
 
     RCS_thrust_error_tot = max(RCS_thrust_error_x,RCS_thrust_error_y,RCS_thrust_error_z)
 
     RCS_impulse_error = (np.sum(RCS_thrust_error_x*t) + np.sum(RCS_thrust_error_y*t) + np.sum(RCS_thrust_error_z*t))
-    mp_error           = 18 * RCS_impulse_error / (Isp * g_earth)
+    mp_error           = RCS_impulse_error / (Isp * g_earth)
 
     #=================================================================================================================================================
     # Rotations
@@ -479,8 +478,7 @@ def RV_Docking_control(I,cg,tburn_deltaV,tburn_rot,Isp,m0,error):
 
     time_transfer       = time_hohmann
     time_rendezvous     = time_hohmann
-    print('check: ', max(RCS_thrust_x), '451.85155228408263')
-    RCS_thrust_rotations  = 451.85155228408263  #max(RCS_thrust_x)
+    RCS_thrust_rotations  = max(RCS_thrust_x)
     tburn                 = tburn_rot
 
 
@@ -507,7 +505,7 @@ def RV_Docking_control(I,cg,tburn_deltaV,tburn_rot,Isp,m0,error):
     t_docking         = t_array[-1]
 
     T_error_docking   = max(RCS_thrust_error_x,RCS_thrust_error_y,RCS_thrust_error_z)
-    RCS_error_docking = [RCS_thrust_error_x, RCS_thrust_error_y, RCS_thrust_error_z]
+    RCS_error_docking = max([RCS_thrust_error_x, RCS_thrust_error_y, RCS_thrust_error_z])
     mp_error_docking  = mp_error
 
     T_rot             = RCS_torque_rotations
@@ -517,9 +515,11 @@ def RV_Docking_control(I,cg,tburn_deltaV,tburn_rot,Isp,m0,error):
 
     T_error_rot       = [T_error_rot_x, T_error_rot_y, T_error_rot_z]
     RCS_error_rot     = max(RCS_error_rot_x, RCS_error_rot_y, RCS_error_rot_z)
-    mp_error_rot      = 18 * act.RCSpropellant(RCS_error_rot,tburn,Isp)
+    mp_error_rot      = act.RCSpropellant(RCS_error_rot,tburn,Isp)
 
     mp_total          = mp_docking + mp_error_docking + mp_rot + mp_error_rot
+    acc_lat           = act.RCS_thrust_to_torque(F_docking_max[0],'y',cg_orbit)/Iy
+    acc_long          = act.RCS_thrust_to_torque(F_docking_max[0],'z',cg_orbit)/Iz
 
     if printing == True:
 
@@ -535,7 +535,7 @@ def RV_Docking_control(I,cg,tburn_deltaV,tburn_rot,Isp,m0,error):
         print('Max thrust per engine        : ', RCS_docking_max)
         print('Min thrust total             : ', F_docking_min)
         print('Min thrust per engine        : ', RCS_docking_min)
-        print('Propellant used              : ', mp_docking)
+        print('Propellant needed            : ', mp_docking)
         print('time                         : ', t_docking)
         print('REDUNDANCY')
         print('Disturbance torque           : ', T_error_docking)
@@ -545,7 +545,7 @@ def RV_Docking_control(I,cg,tburn_deltaV,tburn_rot,Isp,m0,error):
         print('RV')
         print('Total torque                 : ', T_rot)
         print('Thrust                       : ', RCS_rot)
-        print('Propellant used              : ', mp_rot)
+        print('Propellant needed            : ', mp_rot)
         print('REDUNDANCY')
         print('Disturbance torque           : ', T_error_rot)
         print('Redundancy thrust            : ', RCS_error_rot)
@@ -556,8 +556,8 @@ def RV_Docking_control(I,cg,tburn_deltaV,tburn_rot,Isp,m0,error):
         print('Total propellant needed      : ', mp_total)
         print('==========================================================')
         print('REQUIREMENTS: 0.16 m/s^2 acceleration')
-        print('Acceleration by thrusters (y):',act.RCS_thrust_to_torque(F_docking_max[0],'y',cg_orbit)/Iy)
-        print('Acceleration by thrusters (y):',act.RCS_thrust_to_torque(F_docking_max[0],'y',cg_orbit)/Ix)
+        print('Acceleration longitudinal    :',acc_lat)
+        print('Acceleration lateral         :',acc_long)
         print('==========================================================')
         print('==========================================================')
     #=====================================================================================================================================================================================================================
@@ -620,4 +620,4 @@ def RV_Docking_control(I,cg,tburn_deltaV,tburn_rot,Isp,m0,error):
         plt.ylabel("Propellant mass [kg]")
         plt.show()
 
-    return mp_total, mp_rot+mp_error_rot, mp_docking+mp_error_docking, RCS_rot+RCS_error_rot,RCS_docking_max+RCS_error_docking,t_rot
+    return acc_lat, acc_long, mp_total, mp_rot+mp_error_rot, mp_docking+mp_error_docking, RCS_rot+RCS_error_rot,RCS_docking_max+RCS_error_docking,t_rot

@@ -4,14 +4,14 @@ sys.path.append('../astrodynamics')
 # from reentry_footprint import flight, time, dt, mean_radius, mars
 import disturbances as dist
 import actuator_properties as act
-import pitching_moment as pm
+
 
 import numpy as np
 np.set_printoptions(threshold=sys.maxsize)
 from matplotlib import pyplot as plt
 
 
-def reentry_control(I,cg,tburn,thrust_level,Isp):
+def reentry_control(t_pitch,pitch_moments,I,cg,tburn,thrust_level,Isp):
     margin = 2.
 
     plotting = False
@@ -135,17 +135,16 @@ def reentry_control(I,cg,tburn,thrust_level,Isp):
     #=====================================================================================================================================================================================================================
     #Aerodynamic pitch control
     #=====================================================================================================================================================================================================================
-    t_pitch = pm.time
-
-    pitch_moments = pm.pitching_moment
     pitch_mp_tot = []
     pitch_mp     = 0
     pitch_thrust_max = 4 *act.RCS_torque_to_thrust(abs(min(pitch_moments)),'z',cg,'normal')
     for pitch_moment in pitch_moments:
         pitch_thrust = 4 * act.RCS_torque_to_thrust(abs(pitch_moment),'z',cg,'normal')
-        pitch_mp = act.RCSpropellant(pitch_thrust,0.1,Isp)
+        pitch_mp    += act.RCSpropellant(abs(pitch_thrust),0.1,Isp)
         pitch_mp_tot.append(pitch_mp)
-
+    pitch_mp_tot = np.array(pitch_mp_tot)[:,0]
+    t_pitch      = np.array(t_pitch)
+    print(t_pitch.shape,pitch_mp_tot.shape)
     #=====================================================================================================================================================================================================================
     #Total
     #=====================================================================================================================================================================================================================
@@ -158,12 +157,14 @@ def reentry_control(I,cg,tburn,thrust_level,Isp):
     mp_rot       = np.sum(mp)
     t_rot        = t
 
-    T_pitch      = [abs(min(pm.pitching_moment)), 0., 0.]
+    T_pitch      = [abs(min(pitch_moments)), 0., 0.]
     RCS_pitch    = pitch_thrust_max
-    mp_pitch     = sum(np.array(pitch_mp_tot))
+    mp_pitch     = np.sum(pitch_mp_tot)
     t_pitch      = t_pitch[-1]
 
-    mp_total     = mp + mp_error + pitch_mp
+    mp_total     = mp_rot + mp_pitch + mp_error
+
+    acc_lat      = T_pitch[0] / Iy
 
     if printing == True:
         print('==========================================================')
@@ -188,6 +189,8 @@ def reentry_control(I,cg,tburn,thrust_level,Isp):
         print('')
         print('Total propellant mass          :', mp_total)
         print('==========================================================')
+        print('REQUIREMENTS: 0.16 m/s^2 acceleration')
+        print('Acceleration lateral           :', acc_lat)
         print('==========================================================')
 
     #=====================================================================================================================================================================================================================

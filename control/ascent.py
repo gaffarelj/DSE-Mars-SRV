@@ -1,14 +1,13 @@
 import sys
 sys.path.append('../astrodynamics')
 import mars_standard_atmosphere as MSA
-import DYNAS_new as dns
 import disturbances as dist
 import actuator_properties as act
 
 import numpy as np
 from matplotlib import pyplot as plt
 
-def ascent_control(I,cg_orbit,tburn,RCS_thrust_rot,Isp):
+def ascent_control(tm,am,I,cg_orbit,tburn,RCS_thrust_rot,Isp):
     margin = 2.
 
     printing = True
@@ -64,8 +63,6 @@ def ascent_control(I,cg_orbit,tburn,RCS_thrust_rot,Isp):
     # Aerodynamic pitch control
     #========================================================================
     dt = 0.1
-    am = dns.am
-    tm = dns.t
     pitch_mp = 0
     pitch_thrust_max = act.RCS_torque_to_thrust(abs(min(am)),'z',cg_orbit,'normal')
 
@@ -73,10 +70,10 @@ def ascent_control(I,cg_orbit,tburn,RCS_thrust_rot,Isp):
     pitch_mp = 0
     for aero_moment in am:
         pitch_thrust = 2*act.RCS_torque_to_thrust(aero_moment,'z',cg_orbit,'normal')
-        pitch_mp     += 4 * act.RCSpropellant(abs(pitch_thrust),dt,Isp)
+        pitch_mp    += 4 * act.RCSpropellant(abs(pitch_thrust),dt,Isp)
         pitch_mp_tot.append(pitch_mp)
     pitch_mp_tot = np.array(pitch_mp_tot)
-    print('check: ', pitch_mp_tot)
+
 
     #=====================================================================================================================================================================================================================
     #Errors
@@ -108,7 +105,7 @@ def ascent_control(I,cg_orbit,tburn,RCS_thrust_rot,Isp):
     RCS_error_z  = margin * act.RCS_torque_to_thrust(T_error_z,'z',cg_orbit,'error_bottom')
 
     RCS_error    = max([RCS_error_x,RCS_error_y,RCS_error_z])
-    mp_error     = 18 * act.RCSpropellant(RCS_error,tburn,Isp)
+    mp_error     = act.RCSpropellant(RCS_error,tburn,Isp)
 
     T_error_pitch_x += Tgx + Tsp + Tm
     T_error_pitch_y += Tgy
@@ -122,7 +119,7 @@ def ascent_control(I,cg_orbit,tburn,RCS_thrust_rot,Isp):
     #Total
     #=====================================================================================================================================================================================================================
     T_rot   = [RCS_torque, 0., 0.]
-    RCS_rot = [RCS_thrust, 0., 0.]
+    RCS_rot = RCS_thrust
     mp_rot  = Mp
     t_rot   = slew_time
 
@@ -138,7 +135,7 @@ def ascent_control(I,cg_orbit,tburn,RCS_thrust_rot,Isp):
 
     T_pitch         = [abs(min(am)), 0., 0.]
     RCS_pitch       = [pitch_thrust_max, 0., 0.]
-    mp_pitch        = np.sum(pitch_mp_tot)
+    mp_pitch        = pitch_mp_tot[-1]
     t_pitch         = tm[-1]
 
     mp_tot          = mp_rot + mp_error_tot + mp_pitch
@@ -158,7 +155,7 @@ def ascent_control(I,cg_orbit,tburn,RCS_thrust_rot,Isp):
         print('Max pitch moment                            : ', T_pitch)
         print('Max thrust                                  : ', RCS_pitch)
         print('propellant needed                           : ', mp_pitch)
-        print('time                                        : ', )
+        print('time                                        : ', tm[-1])
         print('')
         print('REDUNDANCY')
         print('Disturbance torque (rotation)               : ', T_error_rot)
