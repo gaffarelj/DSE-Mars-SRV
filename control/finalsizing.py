@@ -19,4 +19,4 @@ Vpropellant_total = Mpropellant_total / rho_propellant
 
 
 print(Mpropellant_total,Vpropellant_total)
-print(rvs.mp_total,asc.mp_total,np.rty.mp,rty.mp_error,np.sum(rty.pitch_mp_tot))
+print(rvs.mp_total,asc.mp_total,rty.mp,rty.mp_error,np.sum(rty.pitch_mp_tot))
