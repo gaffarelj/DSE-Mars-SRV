@@ -32,7 +32,7 @@ gamma_gas=1.37                  #[-] heat capacity of Martian air
 #=====================================================================================================================================================================================================================
 # Node's properties & phasing orbit & Mars base
 #=====================================================================================================================================================================================================================
-i_node=41*np.pi/180             #[rad]
+i_node=42.48*np.pi/180             #[rad]
 h_node=500*10**3                #[m]
 i_phasing=i_node                #[rad]
 V_phasing=3272.466              #[m/s]
@@ -42,7 +42,7 @@ i0=i_node                       #[rad]
 #=====================================================================================================================================================================================================================
 # Vehicle's properties
 #=====================================================================================================================================================================================================================
-Isp= 383.250565907662                       #[s] LOX-LCH4 383.250565907662
+Isp=383.250565907662                       #[s] LOX-LCH4 383.250565907662
 ceff=get_ceff(Isp)             #[m/s]
 
 d=6                            #[m] diameter of the vehicle assuming cylinder
@@ -96,7 +96,8 @@ def dVzdt(T,D,L,M,Vz,Vx,g):
     dVzdt=(T-D)/M*Vz/(np.sqrt(Vx*Vx+Vz*Vz))-g+L/M*Vx/(np.sqrt(Vx*Vx+Vz*Vz))
     return dVzdt
 
-
+def get_Mp(DeltaV,ceff,Mwet):
+	return (Mwet*(np.exp(DeltaV/ceff)-1))/(np.exp(DeltaV/ceff))
 
 #initial conditions
 #V0=8.33
@@ -127,7 +128,7 @@ X=np.array([0])
 TW0=1.5
 TWe=4		 #4
 
-tb=ceff/(TW0*9.80665)*np.log(M[0]/(M[0]-Mp[0]))+177.7
+tb=489.5180709799191  #489.5180709799191 ceff/(TW0*9.80665)*np.log(M[0]/(M[0]-Mp[0]))+185
 
 Mpver=Mpvertical(ceff,Mwet[0],TW0,V0)
 DeltaVver=ceff*np.log(Mwet[0]/(Mwet[0]-Mpver))
@@ -186,7 +187,7 @@ while Z[-1]<h_phasing+abs(h0) and Z[-1]>=0:
         X=np.append(X,Xnew)
         #solve for Vz
         az=dVzdt(Ft[-1],Fd[-1],Fl[-1],M[-1],Vz[-1],Vx[-1],g[-1])
-        az_array=np.append(az_array,az)
+        az_array=np.append(az_array,az)        
         Vznew=Vz[-1]+dt*az        
         #Integrate using Trapezoidal rule 
         deltaZ=dt/2*(Vz[-1]+Vznew)
@@ -222,7 +223,7 @@ while Z[-1]<h_phasing+abs(h0) and Z[-1]>=0:
         Flnew=get_Fl(Clnew,rho[-1],S,V[-1])
         Fl=np.append(Fl,Flnew)
         M=np.append(M, M[-1] - mdot[-1]*dt)
-
+        
         if t_tot<=tb:
             #TWratio=np.append(TWratio,get_TWprofile(mode,t_tot,g[-1],1.5,4,tb,i0,Z[-1]))            
             """acc=np.sqrt(ax_array[-1]*ax_array[-1]+az_array[-1]*az_array[-1])
@@ -264,6 +265,10 @@ q=0.5*rho*V*V
 #Save the pitch rate gamma_dot from the gravity turn as a txt file
 np.savetxt("gravity_pitchrate.txt", list(gamma_dot), delimiter=",")
 
+
+ij=list(a_array).index(np.max(a_array))
+a_crew=list(a_array[:ij]-1)+list(np.zeros((len(a_array)-ij,1)))
+a_crew=np.array(a_crew)
 #=====================================================================================================================================================================================================================
 # Verification
 #=====================================================================================================================================================================================================================
@@ -275,8 +280,26 @@ dV_verification=ROM_deltaV(g[0],R,h_phasing,h0,omega_mars,i0,V_phasing,tb)
 # Plotting
 #=====================================================================================================================================================================================================================
 if plotting:
-    
+	
+	#time vs a_crew
+    plt.plot(t_array,(a_array+3.71)/9.81,color="navy")    
+    plt.grid(color="gainsboro")
+    plt.title("Time vs Acceleration experienced by the Crew")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Acceleration [g_earth's]")
+    plt.show()
+	
+	#a vs time
+    plt.figure()
+    plt.plot(t_array,a_array/9.81,color="cyan")    
+    plt.grid(color="gainsboro")
+    plt.title("Time vs Acceleration")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Acceleration [g_earth's]")
+    plt.show()
+"""
     #time vs Z
+    plt.figure()
     plt.plot(t_array,Z/10**3,color="navy")    
     plt.grid(color="gainsboro")
     plt.title("Time vs Altitude")
@@ -338,25 +361,74 @@ if plotting:
     plt.ylabel("Dynamic Pressure [Pa]")
     plt.show()
 
-    #a vs time
-    plt.figure()
-    plt.plot(t_array,a_array*3.71/9.81,color="cyan")    
+
+    fig, ax1 = plt.subplots()
+    ax1.set_xlabel('time [s]')
+    ax1.set_ylabel('Altitude [km]', color="navy")
+    ax1.plot(t_array,Z/10**3,color="navy", label="Altitude")
+    ax1.tick_params(axis='y', labelcolor="navy")
+    plt.legend(loc="upper left")
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+    ax2.set_ylabel('Velocity [km/s]', color="darkorange")
+    ax2.plot(t_array, V/10**3, color="darkorange", label="Velocity")
+    ax2.tick_params(axis='y', labelcolor="darkorange")
     plt.grid(color="gainsboro")
-    plt.title("Time vs Acceleration")
-    plt.xlabel("Time [s]")
-    plt.ylabel("Acceleration [g_earth's]")
+    plt.title("Altitude and Velocity vs time")
+    fig.tight_layout()  # otherwise the right y-label is slightly clipped
+    plt.legend(loc="upper right")
     plt.show()
 
 
+    fig, ax1 = plt.subplots()
+    ax1.set_xlabel('time [s]')
+    ax1.set_ylabel('Acceleration [g_earth]', color="red")
+    ax1.plot(t_array,a_crew*3.71/9.81,color="red", label="Acceleration")
+    ax1.tick_params(axis='y', labelcolor="red")
+    plt.grid(axis='y',color="gainsboro")
+    plt.legend(loc="upper left")
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
+    ax2.set_ylabel('Thrust [kN]', color="green")
+    ax2.plot(t_array,Ft*1/10**3 , color="green", label="Thrust")
+    ax2.tick_params(axis='y', labelcolor="green")
+    
+    plt.title("Acceleration and Thrust vs time")
+    fig.tight_layout()  # otherwise the right y-label is slightly clipped
+    plt.legend(loc="upper right")
+    plt.show()
 
+    fig, ax1 = plt.subplots()
+    ax1.set_xlabel('time [s]')
+    ax1.set_ylabel('Flight path angle [deg]', color="hotpink")
+    ax1.plot(t_array,gamma,color="hotpink", label="Flight path angle")
+    ax1.tick_params(axis='y', labelcolor="hotpink")
+    plt.grid(axis='y',color="gainsboro")
+    plt.legend(loc="upper left")
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
-
+    ax2.set_ylabel('Mass flow [kg/s]', color="dodgerblue")
+    ax2.plot(t_array,mdot , color="dodgerblue", label="Mass flow")
+    ax2.tick_params(axis='y', labelcolor="dodgerblue")
+    
+    plt.title("Flight path angle and Mass flow vs time")
+    fig.tight_layout()  # otherwise the right y-label is slightly clipped
+    plt.legend(loc="upper right")
+    plt.show()
 
 print("[---", (time.time() - start_time) ,"seconds ---]" )
 
-Mdry=33293.30437
 
+
+
+	
+	
+	
+	
+	
+	
+	
+Mdry=33293.30437	
 if updateMOI:
 	Mpremain0=M[0]-Mdry
 	i=list(mdot).index(np.max(mdot))
@@ -384,7 +456,7 @@ if updateMOI:
 	print("Point between mdot max. and mdot final: ",MpremainP1)
 	print("Point of mdot final: ",Mpremain2)
 	print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-
+"""
 
 
 Mateusz=False
@@ -393,12 +465,23 @@ if Mateusz:
 	ang1=np.arctan(az_array[k]/ax_array[k])
 	a_long=np.max(a_array)*np.cos((gamma[k]*np.pi/180-ang1))*3.71/9.81
 	a_lat=np.max(a_array)*np.sin((gamma[k]*np.pi/180-ang1))*3.71/9.81
+	jj=list(Ft).index(np.max(Ft))
+	ang2=np.arctan(az_array[jj]/ax_array[jj])
+	a_long2=a_array[jj]*np.cos((gamma[jj]*np.pi/180-ang2))
+	a_lat2=a_array[jj]*np.sin((gamma[jj]*np.pi/180-ang2))
+	
+	print()
+	print("FOR MATEUSZ:")
+	print("Longitudinal acceleration: ", a_long2, " in Mars g's")
+	print("Lateral acceleration: ", a_lat2, " in Mars g's")	
+	"""
 	print()
 	print("FOR MATEUSZ:")
 	print("Longitudinal acceleration: ", a_long, " in earth g's")
 	print("Lateral acceleration: ", a_lat, " in earth g's")
 	print("Remaining overall mass at this point: ",M[k])
 	print()
+	"""
 	ang1=np.arctan(Vz[k]/Vx[k])
 	V_long=V[k]*np.cos((gamma[k]*np.pi/180-ang1))
 	V_lat=V[k]*np.sin((gamma[k]*np.pi/180-ang1))	
@@ -406,4 +489,3 @@ if Mateusz:
 	print("Longitudinal acceleration: ", V_long, " in earth g's")
 	print("Lateral acceleration: ", V_lat, " in earth g's")
 	print("Remaining overall mass at this point: ",M[k])
-
