@@ -81,11 +81,12 @@ class Motion:
     def stagnation_heating(self, nose_radius, r,  mach):
         #c = 1.9027e-4
         #q = rho_inf**0.5 * V**3 * c * nose_radius**(-0.5)
-        t_wall = 400
+        t_wall = 800
 
         altitude = r - self.Planet.r
         t_static = atm.get_temperature(altitude)
         p_static = atm.get_pressure(altitude)
+        v = mach*np.sqrt(atm.gamma*atm.R*t_static)
         if p_static == 0:
             q, t2, rho2 = 0, t_static, 0
         else:
@@ -98,6 +99,9 @@ class Motion:
             t_total = t2*(1+0.5*(atm.gamma - 1)*m2**2)
             dudx = 1/nose_radius * np.sqrt(2*(p2 - p_static)/rho2)
             q = 0.94*(rho2*mu_post)**0.4 * (rho_wall*mu_wall)**0.1 * np.sqrt(dudx) * gas_post.Cpg*(t_total-t_wall)
+
+        #c = 1.9027e-4
+        #q = atm.get_density(p_static, t_static)**0.5 * v**3 * c * nose_radius**(-0.5)
     
         return q, t2, rho2
 
@@ -207,7 +211,7 @@ class Motion:
         cn =abs(data[:,34])
         rho = data[:,42]
         aoa = np.radians(data[:,36])
-        while flight[-1][3] > self.Planet.r - 3000:
+        while flight[-1][3] > (self.Planet.r + 20000):
             V          = flight[-1][0]
             gamma      = flight[-1][1]
             xi         = flight[-1][2]
@@ -247,16 +251,18 @@ class Motion:
             
             #cl = cn[i]*np.cos(aoa[i]) + ca[i]*np.sin(aoa[i])
             #cd = cn[i]*np.sin(aoa[i]) + ca[i]*np.cos(aoa[i])
-            cl,cd = cl_cd(mach, -np.degrees(alpha))
+            #cl,cd = cl_cd(mach, -np.degrees(alpha))
 
             #if cn[i] == -1:
-                #cl = 0
-                #cd = 1.8
+            #    cl = 0
+            #    cd = 1.8
+            cl = 0.0859
+            cd = 1.7084   
 
             D = q * (cd * self.S + chute_drag_area)
             L = q * cl * self.S 
             My = -(L*np.cos(alpha) + D*np.sin(alpha))*0.1
-            #i+=1
+            i+=1
             if time[-1] > self.thrust_start:
                 D = D + self.thrust
 
@@ -291,7 +297,7 @@ class Motion:
             self.mach.append(mach)
             self.pitch.append(pitching_moment)
             self.roll.append(rolling_moment)
-            q_in, t2, rho2 = self.stagnation_heating(7, r, mach)
+            q_in, t2, rho2 = self.stagnation_heating(1.125, r, mach)
             self.heatflux.append(q_in)
             self.temperature.append(t2)
             self.density.append(rho2)
@@ -524,8 +530,8 @@ def plot_from_csv(file, x, y):
     plt.show()
 
 
-cl_data = np.genfromtxt(os.path.dirname(__file__)+'\cl_standard_config.csv', delimiter=";", dtype=None)
-cd_data = np.genfromtxt(os.path.dirname(__file__)+'\cd_standard_config.csv', delimiter=";", dtype=None)
+cl_data = np.genfromtxt('cl_standard_config.csv', delimiter=";", dtype=None)
+cd_data = np.genfromtxt('cd_standard_config.csv', delimiter=";", dtype=None)
 alpha_list = np.round(cl_data[0][1:],1) 
 mach_list = np.round(cl_data[:,0],1)
 f_cl = interpolate.interp2d(alpha_list, mach_list, cl_data[:, 1:], kind='cubic')

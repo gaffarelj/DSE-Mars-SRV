@@ -1,0 +1,32 @@
+\noindent The following risks have been analysed and mitigated as part of the C\&Dh subsystem:
+
+\begin{itemize}
+	 \item \textbf{SRV-RISK-CDH-1} Computer failure (P=2), results in total loss of commanding in the vehicle (I=5).
+	\begin{itemize}
+		 \item Probability mitigation (P-1):  4 computers in the capsule provide high redundancy.	\end{itemize}
+	 \item \textbf{SRV-RISK-CDH-2} Critical software erros (P=3), results in wrong in-flight calculations (I=5).
+	\begin{itemize}
+		 \item Probability mitigation (P-2): use flight proven and redundant computer systems.		 \item Impact mitigation (I-2):  crew can use manual override or the vehicle is commanded from the ground.	\end{itemize}
+	 \item \textbf{SRV-RISK-CDH-3} Sudden processing erros (P=4), results in erros in spacecraft commanding (I=3).
+	\begin{itemize}
+		 \item Probability mitigation (P-2): processors are equipped with watchdogs that can reset and reboot the system when errors occur, system redundancy.	\end{itemize}
+\end{itemize}
+
+\noindent From this list, a mitigated risk map has been created, and can be seen in \autoref{tab:risk-map-cdh-mitig}.
+
+\definecolor{rm-3}{HTML}{FE0000}\definecolor{rm-2}{HTML}{FF9900}\definecolor{rm-1}{HTML}{FCFF2F}\definecolor{rm-0}{HTML}{00FF00}
+\begin{table}[H]
+\centering
+\caption{Risk map of the C\&Dh subsystem, after mitigation}
+\label{tab:risk-map-cdh-mitig}\begin{tabular}{l|c|c|c|c|c|}
+\cline{2-6}
+& \multicolumn{1}{l|}{Very unlikely (1)} & \multicolumn{1}{l|}{Unlikely (2)} & \multicolumn{1}{l|}{Possible (3)} & \multicolumn{1}{l|}{Likely (4)} & \multicolumn{1}{l|}{Very likely (5)} \\ \hline
+\multicolumn{1}{|l|}{Very high impact (5)} & \cellcolor{rm-3}1 & \cellcolor{rm-3} & \cellcolor{rm-3} & \cellcolor{rm-3} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{High impact (4)} & \cellcolor{rm-2} & \cellcolor{rm-2} & \cellcolor{rm-2} & \cellcolor{rm-3} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Medium impact (3)} & \cellcolor{rm-0}2 & \cellcolor{rm-1}3 & \cellcolor{rm-1} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Low impact (2)} & \cellcolor{rm-0} & \cellcolor{rm-0} & \cellcolor{rm-1} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Very Low impact (1)} & \cellcolor{rm-0} & \cellcolor{rm-0} & \cellcolor{rm-0} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\end{tabular} 
+\end{table}
+
+ \todo[inline]{Discuss the mitigated map, and alter the text if needed.}

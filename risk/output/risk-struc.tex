@@ -1,0 +1,69 @@
+\noindent The following risks have been analysed and mitigated as part of the Structures subsystem:
+
+\begin{itemize}
+	 \item \textbf{SRV-RISK-STRUC-1} Propellant tank rupture (P=2), results in vehicle explosion (I=5).
+	\begin{itemize}
+		 \item Probability mitigation (P-1): overdesign structure with safety margins, inspection before every mission.		 \item Impact mitigation (I-1): having an abort system .	\end{itemize}
+	 \item \textbf{SRV-RISK-STRUC-2} Thrust structure failure (P=2), results in possible damage of the tanks, unwanted side thrust, engine damage (I=4).
+	\begin{itemize}
+		 \item Probability mitigation (P-1): overdesign structure with safety margins, often inspections.		 \item Impact mitigation (I-1): designing for specific failure modes.	\end{itemize}
+	 \item \textbf{SRV-RISK-STRUC-3} Pipe leakage (P=2), results in lost of the propellant, depressurization of the propulsion system, vehicle explosion (I=5).
+	\begin{itemize}
+		 \item Probability mitigation (P-1): plumbing testing before mission, system redundancy.		 \item Impact mitigation (I-1): having an abort system .	\end{itemize}
+	 \item \textbf{SRV-RISK-STRUC-4} Landing leg collapsing (P=3), results in vehicle with tilt angle after landing, possible falling over (I=4).
+	\begin{itemize}
+		 \item Probability mitigation (P-1): redundancy in a system, overdesign structure with safety margins, .		 \item Impact mitigation (I-2): special crumple zones, designing for specific failure modes.	\end{itemize}
+	 \item \textbf{SRV-RISK-STRUC-5} Skirt buckling (P=2), results in damage of the structure, load path interruption (I=4).
+	\begin{itemize}
+		 \item Probability mitigation (P-1): overdesign structure with safety margins, .		 \item Impact mitigation (I-1): designing for specific failure modes.	\end{itemize}
+	 \item \textbf{SRV-RISK-STRUC-6} Separation mechanism failure (P=2), results in launch abort failure (I=5).
+	\begin{itemize}
+		 \item Probability mitigation (P-1): redundancy in a system, inspection before every mission, fail-safe system.	\end{itemize}
+	 \item \textbf{SRV-RISK-STRUC-7} Hydraulics system failure (P=2), results in propulsion system failure, landing legs failure (I=4).
+	\begin{itemize}
+		 \item Probability mitigation (P-1): redundancy in a system, often inspections.	\end{itemize}
+	 \item \textbf{SRV-RISK-STRUC-8} Legs not deploying (P=2), results in raugh landing, damage of the vehicle, crew abort (I=4).
+	\begin{itemize}
+		 \item Probability mitigation (P-1): redundancy in a system, often inspections.		 \item Impact mitigation (I-1): special crumple zones in case of rough landing.	\end{itemize}
+	 \item \textbf{SRV-RISK-STRUC-9} Decompression of the capsule (P=2), results in lack of breathable atmosphere, possible rupture of the capsule (I=4).
+	\begin{itemize}
+		 \item Probability mitigation (P-1): overdesign structure with safety margins, leak testing before missions.		 \item Impact mitigation (I-1): having spacesuits for crew.	\end{itemize}
+	 \item \textbf{SRV-RISK-STRUC-10} Buckling of the capsule (P=2), results in structure failure, possible decompression and rupture of the capsule (I=4).
+	\begin{itemize}
+		 \item Probability mitigation (P-1): overdesign structure with safety margins, testing before missions.		 \item Impact mitigation (I-1): designing for specific failure modes.	\end{itemize}
+	 \item \textbf{SRV-RISK-STRUC-11} Attenuation system failure (P=3), results in crew injuries (I=5).
+	\begin{itemize}
+		 \item Probability mitigation (P-2): redundancy in a system, overdesign structure with safety margins, .		 \item Impact mitigation (I-1): designing for specific failure modes.	\end{itemize}
+	 \item \textbf{SRV-RISK-STRUC-12} Side hatch not opening (P=3), results in only main hatch usable (I=2).
+	\begin{itemize}
+		 \item Probability mitigation (P-1): redundancy in a system, inspections before missions, .		 \item Impact mitigation (I-1): ability to perform entire mission through main hatch.	\end{itemize}
+	 \item \textbf{SRV-RISK-STRUC-13} Docking hatch not opening (P=2), results in unable to transport anything through the hatch (I=3).
+	\begin{itemize}
+		 \item Probability mitigation (P-1): redundancy in a system, possibility for manual opening.	\end{itemize}
+	 \item \textbf{SRV-RISK-STRUC-14} Capsule ring not deploying (P=2), results in unable to dock to the orbital node (I=3).
+	\begin{itemize}
+		 \item Probability mitigation (P-1): redundancy in a system, possibility for manual deployment .	\end{itemize}
+	 \item \textbf{SRV-RISK-STRUC-15} Non-sealed connection (P=2), results in depressurization of the system, unable to open main hatch (I=3).
+	\begin{itemize}
+		 \item Probability mitigation (P-1): redundancy in a system, repeating docking procedure.	\end{itemize}
+	 \item \textbf{SRV-RISK-STRUC-16} Natural frequency oscillation (P=1), results in vehicle rupture and explosion (I=4).
+\end{itemize}
+
+\noindent From this list, a mitigated risk map has been created, and can be seen in \autoref{tab:risk-map-struc-mitig}.
+
+\definecolor{rm-3}{HTML}{FE0000}\definecolor{rm-2}{HTML}{FF9900}\definecolor{rm-1}{HTML}{FCFF2F}\definecolor{rm-0}{HTML}{00FF00}
+\begin{table}[H]
+\centering
+\caption{Risk map of the Structures subsystem, after mitigation}
+\label{tab:risk-map-struc-mitig}\begin{tabular}{l|c|c|c|c|c|}
+\cline{2-6}
+& \multicolumn{1}{l|}{Very unlikely (1)} & \multicolumn{1}{l|}{Unlikely (2)} & \multicolumn{1}{l|}{Possible (3)} & \multicolumn{1}{l|}{Likely (4)} & \multicolumn{1}{l|}{Very likely (5)} \\ \hline
+\multicolumn{1}{|l|}{Very high impact (5)} & \cellcolor{rm-3}6 & \cellcolor{rm-3} & \cellcolor{rm-3} & \cellcolor{rm-3} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{High impact (4)} & \cellcolor{rm-2}1, 3, 7, 11, 16 & \cellcolor{rm-2} & \cellcolor{rm-2} & \cellcolor{rm-3} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Medium impact (3)} & \cellcolor{rm-0}2, 5, 8, 9, 10, 13, 14, 15 & \cellcolor{rm-1} & \cellcolor{rm-1} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Low impact (2)} & \cellcolor{rm-0} & \cellcolor{rm-0}4 & \cellcolor{rm-1} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\multicolumn{1}{|l|}{Very Low impact (1)} & \cellcolor{rm-0} & \cellcolor{rm-0}12 & \cellcolor{rm-0} & \cellcolor{rm-2} & \cellcolor{rm-3}\\ \hline 
+\end{tabular} 
+\end{table}
+
+ \todo[inline]{Discuss the mitigated map, and alter the text if needed.}

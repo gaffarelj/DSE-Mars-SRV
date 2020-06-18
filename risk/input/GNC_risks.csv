@@ -1,34 +1,15 @@
 Event (name),Consequence (text),Probability (1-5),Impact (1-5),Prob. mitigation (text),Impact mitig. (text),New prob.,New impact
-Life support failure,Crew fatality,2,5,Redundant system,Equip crew with combinations,1,3
-Abort system failure,Crew stuck in hazardous vehicle,1,5,,,,
-Unwanted abort initiation,"Crew separated from vehicle, vehicle destruction  ",3,4,,Test,,2
-
-
-
-Docking camera failure, LOM: Not being able to dock, 3, 3, None, Redundancy, 0, -2
-
-Landing camera failure, Possible vehicle damage, 3, 3, None, Redundancy, 0, -2
-
-Star tracker failure, LOC: Not being able to successfully reentry, None, Redundancy, 2, 5, 0, -3
-
-Gyroscope failure, LOM: Loss of attitude, 4, 4, None, Redundancy, 0, -3
-
-Accelerometer, LOM: Loss of position, 4, 4, None, Redundancy, 0, -3
-
-Flight computer failure, LOC: Loss of control of vehicle, 2, 5, Extensive validation and testing, Redundancy, -1, -2
-
-Thruster failure, LOV: Loss of manoeuvrability , 4, 4, None, Redundancy, 0, -3
-
-Ignition failure, LOM: Momentary loss of control, 4, 4, None, Automatic monitoring system of the engines, 0, -3
-
-Valve/Feedsystem Failure, LOM: Loss of single thruster, 4, 4, None, Redundancy, 0, -3
-
-Critical thruster failure: Vehicle damage, 2, 5, None, Adding shutoff valves in the feedsystem, 0, -2
-
-Propellant leakage, Loss of multiple thrusters , 1, 5, None, Adding shutoff valves in the feedsystem, 0, -2
-
-Control algorithm errors, LOV: Terminal loss of control and possible ill manoeuvring, 2, 5, Extensive V&V, Alternate emergency control software, -1, -2
-
-Guidance algorithm errors, LOM: Terminal loss of guidance information, 2, 3, Extensive V&V, None, -1, 0
-
-Engine thruster misalignment, Introduces an extra disturbance torque, 5, 2, Installment checks, Compensation, -2, -1
+Docking camera failure, LOM: Not being able to dock,3,3,, Redundancy,,1
+Landing camera failure, Possible vehicle damage,3,3,, Redundancy,,1
+Star tracker failure, LOC: Not being able to successfully reentry,2,5,, Redundancy,,2
+Gyroscope failure, LOM: Loss of attitude,4,4,, Redundancy,,1
+Accelerometer, LOM: Loss of position,4,4,, Redundancy,,1
+Flight computer failure, LOC: Loss of control of vehicle,2,5, Extensive validation and testing, Redundancy,1,3
+Thruster failure, LOV: Loss of manoeuvrability ,4,4,, Redundancy,,1
+Ignition failure, LOM: Momentary loss of control,4,4,, Automatic monitoring system of the engines,,1
+Valve/Feedsystem Failure, LOM: Loss of single thruster,4,4,, Redundancy,,1
+Critical thruster failure,LOV: : Vehicle damage,2,5,, Adding shutoff valves in the feedsystem,,3
+Propellant leakage, Loss of multiple thrusters ,1,5,, Adding shutoff valves in the feedsystem,,3
+Control algorithm errors, LOV: Terminal loss of control and possible ill manoeuvring,2,5, Extensive V\&V, Alternate emergency control software,1,3
+Guidance algorithm errors, LOM: Terminal loss of guidance information,2,3, Extensive V\&V,,1,
+Engine thruster misalignment, Introduces an extra disturbance torque,5,2, Installment checks, Compensation,3,1

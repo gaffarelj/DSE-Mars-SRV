@@ -1,0 +1,17 @@
+﻿Event (name),Consequence (text),Probability (1-5),Impact (1-5),Prob. mitigation (text),Impact mitig. (text),New prob.,New impact
+Propellant tank rupture,Vehicle explosion ,2,5,"Overdesign structure with safety margins, inspection before every mission",Having an abort system ,1,4
+Thrust structure failure,"Possible damage of the tanks, unwanted side thrust, engine damage",2,4,"Overdesign structure with safety margins, often inspections",Designing for specific failure modes,1,3
+Pipe leakage,"Lost of the propellant, depressurization of the propulsion system, Vehicle explosion",2,5,"Plumbing testing before mission, system redundancy",Having an abort system ,1,4
+Landing leg collapsing,"Vehicle with tilt angle after landing, possible falling over",3,4,"Redundancy in a system, overdesign structure with safety margins, ","Special crumple zones, designing for specific failure modes",2,2
+Skirt buckling,"Damage of the structure, load path interruption",2,4,"Overdesign structure with safety margins, ",Designing for specific failure modes,1,3
+Separation mechanism failure,Launch abort failure,2,5,"Redundancy in a system, inspection before every mission, fail-safe system",,1,5
+Hydraulics system failure,"Propulsion system failure, landing legs failure",2,4,"Redundancy in a system, often inspections",Auxiliary system backups,1,4
+Legs not deploying,"Raugh landing, damage of the vehicle, crew abort",2,4,"Redundancy in a system, often inspections",Special crumple zones in case of rough landing,1,3
+Decompression of the capsule,"Lack of breathable atmosphere, possible rupture of the capsule",2,4,"Overdesign structure with safety margins, leak testing before missions",Having spacesuits for crew,1,3
+Buckling of the capsule,"Structure failure, possible decompression and rupture of the capsule",2,4,"overdesign structure with safety margins, Testing before missions",Designing for specific failure modes,1,3
+Attenuation system failure,Crew injuries,3,5,"Redundancy in a system, overdesign structure with safety margins, ",Designing for specific failure modes,1,4
+Side Hatch not opening,Only main hatch usable,3,2,"Redundancy in a system, inspections before missions, ",Ability to perform entire mission through main hatch,2,1
+Docking hatch not opening,unable to transport anything through the hatch,2,3,"Redundancy in a system, possibility for manual opening",,1,3
+Capsule ring not deploying,Unable to dock to the orbital node,2,3,"Redundancy in a system, possibility for manual deployment ",,1,3
+Non-sealed connection,"Depressurization of the system, Unable to open main hatch",2,3,"Redundancy in a system, repeating docking procedure",,1,3
+Natural frequency oscillation,vehicle rupture and explosion ,1,4,"Overdesigning the vehicle, have adequate safety margins",,1,4
