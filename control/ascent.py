@@ -113,7 +113,7 @@ def ascent_control(tm,am,I,cg_orbit,tburn,RCS_thrust_rot,Isp):
     RCS_error_pitch_y  = margin * act.RCS_torque_to_thrust(T_error_pitch_y,'x',cg_orbit,'error_bottom')
     RCS_error_pitch_z  = margin * act.RCS_torque_to_thrust(T_error_pitch_z,'z',cg_orbit,'error_bottom')
 
-    RCS_pitch_error  = max([RCS_error_pitch_x,RCS_error_pitch_y,RCS_error_pitch_z])
+    RCS_pitch_error  = np.max([RCS_error_pitch_x,RCS_error_pitch_y,RCS_error_pitch_z])
     mp_pitch_error     = 18 * act.RCSpropellant(RCS_pitch_error,tm[-1],Isp)
     #=====================================================================================================================================================================================================================
     #Total
