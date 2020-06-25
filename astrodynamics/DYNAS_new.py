@@ -326,8 +326,8 @@ omega_mars=0.7088218*10**(-4)  #[rad/s] Martian angular velocity
 M_atm=43.34                    #[g/mol] Mean molecular weight
 Rgas=8314.4621/M_atm           #[J/(kg*K)] Martian air gas constant
 gamma_gas=1.37                 #[-] heat capacity of Martian air
-delta0=41*np.pi/180             #[rad] latitude of the Martian base 
-tau0=(23.5)*np.pi/180             #[rad] east longitude of the Martian base
+delta0=42.48*np.pi/180             #[rad] latitude of the Martian base 
+tau0=(25.5)*np.pi/180             #[rad] east longitude of the Martian base
 h0=-3*10**3					   #[m] altitude wrt R of Mars base
 h_phasing=609.74*10**3         #[m] altitude of the phasing orbit
 V_phasing=3272.466             #[m/s]
@@ -474,6 +474,7 @@ while R[-1]<Rmars+h_phasing:
 	Vd_dot=get_Vd_dot(M[-1], Fz, Ve[-1], Vn[-1], R[-1], delta[-1], Omegat=omega_mars)
 	#break
 	ac.append(np.sqrt(Vn_dot*Vn_dot + Ve_dot*Ve_dot + Vd_dot*Vd_dot))
+	print(ac[-1]-g)
     ########################################
 	# Compute Velocities                   #
 	########################################
@@ -492,9 +493,9 @@ while R[-1]<Rmars+h_phasing:
 	deltanew = delta[-1] + dt * delta_dot
 	taunew = tau[-1] + dt * tau_dot
 	
-	print()
-	print("Altitude is: ", Rnew-Rmars)
-	print("time is: ",t[-1])
+	#print()
+	#print("Altitude is: ", Rnew-Rmars)
+	#print("time is: ",t[-1])
 	
     ########################################
 	# Compute MOIs                         #
@@ -616,7 +617,12 @@ TWe=4
 mdot=np.array(mdot_list)
 a_array=np.array(ac)			 
 t=np.array(t)	
-				 
+
+#g's experienced by the crew
+a_crew=[]
+for i in range(len(g)):
+	a_crew.append(a_array[i]-g[i])
+a_crew=np.array(a_crew)				 
 #compute cartesian coordinates of the trajectory
 X = R * np.cos(delta) * np.cos(tau)
 Y = R * np.cos(delta) * np.sin(tau)
@@ -645,6 +651,23 @@ if plotting:
     plt.title("Time vs Altitude")
     plt.xlabel("Time [s]")
     plt.ylabel("Altitude [km]")
+    plt.show()
+    """
+    plt.figure()
+    plt.plot(t,(R-Rmars+300)/10**3,color="navy")    
+    plt.grid(color="gainsboro")
+    plt.title("Time vs Altitude from surface")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Altitude [km]")
+    plt.show()
+    """
+	#t vs R
+    plt.figure()
+    plt.plot(t[1::],a_crew*3.71/9.81,color="red")    
+    plt.grid(color="gainsboro")
+    plt.title("Acceleration experienced by the crew vs time")
+    plt.xlabel("Time [s]")
+    plt.ylabel("acceleration [g_earth]")
     plt.show()
 
     #t vs Ft
