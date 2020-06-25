@@ -81,3 +81,8 @@ class tank():
 #RCS_tank.plot()
 #r, L, t, m = RCS_tank.select(L_r=4)
 #print(r, L, t, m)
+
+RCS_tank = tank(0.01, 1, 0.21, 8.75e6)
+#RCS_tank.plot()
+r, L, t, m = RCS_tank.select(L_r=4)
+print(r, L, t, m)

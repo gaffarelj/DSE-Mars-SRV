@@ -19,7 +19,7 @@ def run_ascent(max_M=8, min_q=100, mars=AT.Planet()):
 	Mach_T_i = np.where(np.array(ascent["Mach"]) >= max_M)[0][0]
 	# Get index when q = 50 Pa (after max reached)
 	q_max_i = np.where(ascent["q"] == max(ascent["q"]))[0][0]
-	print("max q is at t = ", ascent["time"][q_max_i])
+	print("max q is at t = ", ascent["time"][q_max_i], max(ascent["q"]), "Pa")
 	q_T_i = np.where(ascent["q"][q_max_i:] <= min_q)[0][0] + q_max_i
 	# Take minimum
 	LAS_T_i = min(q_T_i, Mach_T_i)
@@ -69,10 +69,10 @@ def dV(Isp, m0, mf):
 	return 9.81 * Isp * np.log(m0 / (m0 - mf))
 
 if __name__ == "__main__":
-	V_T, gamma, h_T, LAS_T, downr = run_ascent(max_M=8)
-	print(V_T, gamma, h_T, LAS_T)
+	#V_T, gamma, h_T, LAS_T, downr = run_ascent(max_M=8)
+	#print(V_T, gamma, h_T, LAS_T)
 	#V_T, gamma, h_T, t_T, downr = 1482.11, 3.712, 32231.35, 79.55, 0
-	#V_T, gamma, h_T, t_T, downr = 1644.01, 3.7124, 37703.52, 85.82, 2689957.867
+	V_T, gamma, h_T, t_T, downr = 1644.01, 3.7124, 37703.52, 85.82, 2689957.867
 	from_pad = False
 	if from_pad:
 		V_T, gamma, h_T, t_T = 0, 95, 1, 0	
