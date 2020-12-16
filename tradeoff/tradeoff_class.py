@@ -157,7 +157,7 @@ class tradeoff:
 			output = "\multicolumn{2}{|l|}{\multirow{-2}{*}{}}"
 			for param in self.param_list:
 				output += "& \multicolumn{2}{c|}{("+ val_s(param.Lv) + ", " + val_s(param.Hv) + ")}"
-			print(str(output) + "& \multirow{-4}{*}{} \\\\")
+			print(str(output) + "& \multirow{-4}{*}{} \\\\[-1pt]")
 				
 			output = "\multicolumn{2}{|l|}{\multirow{-2}{*}{\\textbf{Design Concept}}}"
 			for param in self.param_list:
@@ -168,7 +168,7 @@ class tradeoff:
 					output += " Low Best"
 				output += ", $\sigma="+ val_s(param.sd) + "$}"
 
-			print(str(output) + "& \multirow{-4}{*}{\\textbf{Total}} \\\\ \hline")
+			print(str(output) + "& \multirow{-4}{*}{\\textbf{Total}} \\\\[-1pt] \hline")
 			for i in range(len(self.design_list)):
 				design = self.design_list[i]
 				output = "\multicolumn{2}{|c|}{}"
@@ -179,12 +179,12 @@ class tradeoff:
 					output += "   & \cellcolor{to-" + param.color[i].name + "} & \cellcolor{to-" + param.color[i].name + "} " + str(param.color[i].name) + ""
 					end_output += " \cline{" + str(k) + "-" + str(k) + "} "
 					k += 2
-				print(str(output) + " & \\\\" + str(end_output))
+				print(str(output) + " & \\\\[-1pt]" + str(end_output))
 
 				output = "\multicolumn{2}{|c|}{}"
 				for param in self.param_list:
 					output += "   & \multicolumn{2}{c|}{\cellcolor{to-" + param.color[i].name + "}}"
-				print(str(output) + "& \\\\")
+				print(str(output) + "& \\\\[-1pt]")
 
 				output = "\multicolumn{2}{|c|}{\multirow{-3}{*}{" + str(design.name) + "}}"
 				for param in self.param_list:
@@ -192,7 +192,7 @@ class tradeoff:
 						output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor{to-" + param.color[i].name + "} " + val_s(param.val_in[i]) + "}}"
 					else:
 						output += "   &\multicolumn{2}{c|}{\multirow{-2}{*}{\cellcolor{to-" + param.color[i].name + "} " + val_s(param.val_in[i]) + " $\\rightarrow$ " + val_s(param.val_out[i]) + "}}"
-				print(str(output) + " & \multirow{-3}{*}{$" + str(round(self.total[i], 3)) + "$} \\\\ \hline")
+				print(str(output) + " & \multirow{-3}{*}{$" + str(round(self.total[i], 3)) + "$} \\\\[-1pt] \hline")
 
 			print("\end{tabular}")
 			print("\end{adjustbox}")
